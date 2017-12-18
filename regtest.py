@@ -166,7 +166,10 @@ def copy_benchmarks(old_full_test_dir, full_web_dir, test_list, bench_dir, log):
                 shutil.rmtree(diff_dir_bench)
                 shutil.copytree(t.diffDir, diff_dir_bench)
             else:
-                shutil.copy(t.diffDir, diff_dir_bench)
+                if os.path.isdir(t.diffDir):
+                    shutil.copytree(t.diffDir, diff_dir_bench)
+                else:
+                    shutil.copy(t.diffDir, diff_dir_bench)
             log.log("new diffDir: {}_{}".format(t.name, t.diffDir))
 
         os.chdir(td)
@@ -741,7 +744,10 @@ def test_suite(argv):
                         shutil.rmtree(diff_dir_bench)
                         shutil.copytree(test.diffDir, diff_dir_bench)
                     else:
-                        shutil.copy(test.diffDir, diff_dir_bench)
+                        if os.path.isdir(test.diffDir):
+                            shutil.copytree(test.diffDir, diff_dir_bench)
+                        else:
+                            shutil.copy(test.diffDir, diff_dir_bench)
                     suite.log.log("new diffDir: {}_{}".format(test.name, test.diffDir))
 
         else:   # selfTest
