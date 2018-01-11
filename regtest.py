@@ -167,10 +167,19 @@ def copy_benchmarks(old_full_test_dir, full_web_dir, test_list, bench_dir, log):
                 shutil.copytree(t.diffDir, diff_dir_bench)
             else:
                 if os.path.isdir(t.diffDir):
-                    shutil.copytree(t.diffDir, diff_dir_bench)
+                    try:
+                        shutil.copytree(t.diffDir, diff_dir_bench)
+                    except IOError:
+                        log.warn("file {} not found".format(t.diffDir))
+                    else:
+                        log.log("new diffDir: {}_{}".format(t.name, t.diffDir))
                 else:
-                    shutil.copy(t.diffDir, diff_dir_bench)
-            log.log("new diffDir: {}_{}".format(t.name, t.diffDir))
+                    try:
+                        shutil.copy(t.diffDir, diff_dir_bench)
+                    except IOError:
+                        log.warn("file {} not found".format(t.diffDir))
+                    else:
+                        log.log("new diffDir: {}_{}".format(t.name, t.diffDir))
 
         os.chdir(td)
 
