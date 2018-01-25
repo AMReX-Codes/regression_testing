@@ -174,6 +174,15 @@ r"""
 <!--GOUPLINK-->
 <CENTER><H1>@TITLE@</H1></CENTER>
 <CENTER><H2>@SUBTITLE@</H2></CENTER>
+<P><TABLE class='maintable'>
+<CENTER>
+  <td align=center class="benchmade"><h3>Benchmark Updated</h3></td>
+  <td align=center class="failed"><h3>Comparison Failed</h3></td>
+  <td align=center class="compfailed"><h3>Compilation Failed</h3></td>
+  <td align=center class="crashed"><h3>Crashed</h3></td>
+  <td align=center class="passed"><h3>Passed</h3></td>
+</CENTER>
+</TABLE>
 """
 
 def create_css(table_height=16):
