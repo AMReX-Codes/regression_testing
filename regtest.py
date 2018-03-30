@@ -607,6 +607,7 @@ def test_suite(argv):
         #----------------------------------------------------------------------
         # do the comparison
         #----------------------------------------------------------------------
+        output_file = ""
         if not test.selfTest:
 
             if test.outputFile == "":
@@ -632,7 +633,7 @@ def test_suite(argv):
             if not type(params.convert_type(test.nlevels)) is int:
                 test.nlevels = ""
 
-            if args.make_benchmarks is None:
+            if args.make_benchmarks is None and test.doComparison:
 
                 suite.log.log("doing the comparison...")
                 suite.log.indent()
@@ -713,7 +714,7 @@ def test_suite(argv):
 
                     test.compare_successful = test.compare_successful and diff_successful
 
-            else:   # make_benchmarks
+            elif test.doComparison:   # make_benchmarks
 
                 suite.log.log("storing output of {} as the new benchmark...".format(test.name))
                 suite.log.indent()
@@ -758,6 +759,9 @@ def test_suite(argv):
                         else:
                             shutil.copy(test.diffDir, diff_dir_bench)
                     suite.log.log("new diffDir: {}_{}".format(test.name, test.diffDir))
+
+            else:  # don't do a pltfile comparison
+                test.compare_successful = True
 
         else:   # selfTest
 
@@ -891,7 +895,8 @@ def test_suite(argv):
             if os.path.isfile("{}.err.out".format(test.name)):
                 shutil.copy("{}.err.out".format(test.name), suite.full_web_dir)
                 test.has_stderr = True
-            shutil.copy("{}.compare.out".format(test.name), suite.full_web_dir)
+            if test.doComparison:
+                shutil.copy("{}.compare.out".format(test.name), suite.full_web_dir)
             try:
                 shutil.copy("{}.analysis.out".format(test.name), suite.full_web_dir)
             except:
@@ -932,7 +937,8 @@ def test_suite(argv):
             suite.copy_backtrace(test)
 
         else:
-            shutil.copy("{}.status".format(test.name), suite.full_web_dir)
+            if test.doComparison:
+                shutil.copy("{}.status".format(test.name), suite.full_web_dir)
 
 
         #----------------------------------------------------------------------
