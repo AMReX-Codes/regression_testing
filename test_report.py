@@ -323,6 +323,10 @@ def report_single_test(suite, test, tests, failure_msg=None):
     # we stored compilation success in the test object
     compile_successful = test.compile_successful
 
+    analysis_successful = True
+    if (test.analysisRoutine != ''):
+        analysis_successful = test.analysis_successful
+
     # we store comparison success in the test object but also read
     # in the comparison report for displaying
     if failure_msg is None:
@@ -349,7 +353,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
             if (compile_successful and
                 (test.compileTest or ((not test.compileTest) and 
                                           compare_successful and 
-                                      test.analysis_successful))):
+                                          analysis_successful))):
                 sf.write("PASSED\n")
                 suite.log.success("{} PASSED".format(test.name))
             elif not compile_successful:
