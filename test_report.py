@@ -347,7 +347,9 @@ def report_single_test(suite, test, tests, failure_msg=None):
         status_file = "{}.status".format(test.name)
         with open(status_file, 'w') as sf:
             if (compile_successful and
-                (test.compileTest or (not test.compileTest and compare_successful))):
+                (test.compileTest or ((not test.compileTest) and 
+                                          compare_successful and 
+                                      test.analysis_successful))):
                 sf.write("PASSED\n")
                 suite.log.success("{} PASSED".format(test.name))
             elif not compile_successful:
@@ -522,7 +524,20 @@ def report_single_test(suite, test, tests, failure_msg=None):
                 ll.item("<h3 class=\"passed\">Successful</h3>")
             else:
                 ll.item("<h3 class=\"failed\">Failed</h3>")
+            ll.outdent()
 
+        if test.analysisRoutine != "":
+            ll.item("Analysis: ")
+            ll.indent()
+
+            if test.analysis_successful:
+                ll.item("<h3 class=\"passed\">Successful</h3>")
+            else:
+                ll.item("<h3 class=\"failed\">Failed</h3>")
+
+            ll.item("<a href=\"{}.analysis.out\">execution output</a>".format(test.name))
+            ll.outdent()
+                            
     ll.write_list()
 
     if (not test.compileTest) and test.doComparison and failure_msg is None:

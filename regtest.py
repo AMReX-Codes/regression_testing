@@ -880,7 +880,7 @@ def test_suite(argv):
                             analysis_successful = False
                             suite.log.warn("analysis failed...")
 
-                        test.compare_successful = test.compare_successful and analysis_successful
+                        test.analysis_successful = analysis_successful
 
             else:
                 if test.doVis or test.analysisRoutine != "":
