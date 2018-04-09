@@ -107,6 +107,7 @@ class Test(object):
 
         self.compile_successful = False  # filled automatically
         self.compare_successful = False  # filled automatically
+        self.analysis_successful = False # filled automatically
 
         self.customRunCmd = None
 
