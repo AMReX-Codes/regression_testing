@@ -356,6 +356,7 @@ def run(string, stdin=False, outfile=None, store_command=False, env=None,
         else:
             if store_command:
                 cf.write(string)
+                cf.write('\n')
             for line in stdout0:
                 cf.write(line)
 

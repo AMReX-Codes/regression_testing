@@ -66,6 +66,8 @@ class Test(object):
         self.doVis = 0
         self.visVar = ""
 
+        self.doComparison = True
+
         self.analysisRoutine = ""
         self.analysisMainArgs = ""
         self.analysisOutputImage = ""
@@ -105,6 +107,7 @@ class Test(object):
 
         self.compile_successful = False  # filled automatically
         self.compare_successful = False  # filled automatically
+        self.analysis_successful = False # filled automatically
 
         self.customRunCmd = None
 

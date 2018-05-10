@@ -174,6 +174,15 @@ r"""
 <!--GOUPLINK-->
 <CENTER><H1>@TITLE@</H1></CENTER>
 <CENTER><H2>@SUBTITLE@</H2></CENTER>
+<P><TABLE class='maintable'>
+<CENTER>
+  <td align=center class="benchmade"><h3>Benchmark Updated</h3></td>
+  <td align=center class="failed"><h3>Comparison Failed</h3></td>
+  <td align=center class="compfailed"><h3>Compilation Failed</h3></td>
+  <td align=center class="crashed"><h3>Crashed</h3></td>
+  <td align=center class="passed"><h3>Passed</h3></td>
+</CENTER>
+</TABLE>
 """
 
 def create_css(table_height=16):
@@ -288,6 +297,12 @@ class HTMLTable(object):
                 self.hf.write("</div>\n")
 
 
+def get_particle_compare_command(diff_lines):
+    for line in diff_lines:
+        if line.find('particle_compare') > 0:
+            return line
+
+
 def report_single_test(suite, test, tests, failure_msg=None):
     """ generate a single problem's test result page.  If
         failure_msg is set to a string, then it is assumed
@@ -308,30 +323,37 @@ def report_single_test(suite, test, tests, failure_msg=None):
     # we stored compilation success in the test object
     compile_successful = test.compile_successful
 
+    analysis_successful = True
+    if (test.analysisRoutine != ''):
+        analysis_successful = test.analysis_successful
+
     # we store comparison success in the test object but also read
     # in the comparison report for displaying
     if failure_msg is None:
         if not test.compileTest:
             compare_successful = test.compare_successful
 
-            compare_file = "{}.compare.out".format(test.name)
-            try: cf = open(compare_file, 'r')
-            except IOError:
-                suite.log.warn("WARNING: no comparison file found")
-                diff_lines = ['']
-            else:
-                diff_lines = cf.readlines()
-                cf.close()
+            if test.doComparison:
+                compare_file = "{}.compare.out".format(test.name)
+                try: cf = open(compare_file, 'r')
+                except IOError:
+                    suite.log.warn("WARNING: no comparison file found")
+                    diff_lines = ['']
+                else:
+                    diff_lines = cf.readlines()
+                    cf.close()
 
-                # last check: did we produce any backtrace files?
-                if len(test.backtrace) > 0: compare_successful = False
+            # last check: did we produce any backtrace files?
+            if len(test.backtrace) > 0: compare_successful = False
 
         # write out the status file for this problem, with either
         # PASSED, COMPILE FAILED, or FAILED
         status_file = "{}.status".format(test.name)
         with open(status_file, 'w') as sf:
             if (compile_successful and
-                (test.compileTest or (not test.compileTest and compare_successful))):
+                (test.compileTest or ((not test.compileTest) and 
+                                          compare_successful and 
+                                          analysis_successful))):
                 sf.write("PASSED\n")
                 suite.log.success("{} PASSED".format(test.name))
             elif not compile_successful:
@@ -506,10 +528,23 @@ def report_single_test(suite, test, tests, failure_msg=None):
                 ll.item("<h3 class=\"passed\">Successful</h3>")
             else:
                 ll.item("<h3 class=\"failed\">Failed</h3>")
+            ll.outdent()
 
+        if test.analysisRoutine != "":
+            ll.item("Analysis: ")
+            ll.indent()
+
+            if test.analysis_successful:
+                ll.item("<h3 class=\"passed\">Successful</h3>")
+            else:
+                ll.item("<h3 class=\"failed\">Failed</h3>")
+
+            ll.item("<a href=\"{}.analysis.out\">execution output</a>".format(test.name))
+            ll.outdent()
+                            
     ll.write_list()
 
-    if (not test.compileTest) and failure_msg is None:
+    if (not test.compileTest) and test.doComparison and failure_msg is None:
 
         # parse the compare output and make an HTML table
         ht = HTMLTable(hf, columns=3, divs=["summary", "compare"])
@@ -520,6 +555,8 @@ def report_single_test(suite, test, tests, failure_msg=None):
         variables_error = False
         no_bench_error = False
         
+        pcomp_line = get_particle_compare_command(diff_lines)
+
         for line in diff_lines:
             if "number of boxes do not match" in line:
                 box_error = True
@@ -539,6 +576,8 @@ def report_single_test(suite, test, tests, failure_msg=None):
             if not in_diff_region:
                 if line.find("fcompare") > 1:
                     hf.write("<tt>"+line+"</tt>\n")
+                    if pcomp_line:
+                        hf.write("<tt>"+pcomp_line+"</tt>\n")
 
                     ht.start_table()
                     continue
@@ -615,6 +654,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
         if variables_error:
             hf.write("<p>variables differ in files</p>\n")
 
+    if (not test.compileTest) and failure_msg is None:
         # show any visualizations
         if test.doVis:
             if not test.png_file is None:
