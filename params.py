@@ -38,7 +38,11 @@ def load_params(args):
 
     test_list = []
 
-    cp = configparser.ConfigParser()    # note, need strict=False for Python3
+    try: 
+        cp = configparser.ConfigParser(strict=False)
+    except:
+        cp = configparser.ConfigParser()
+
     cp.optionxform = str
 
     log = test_util.Log(output_file=args.log_file)

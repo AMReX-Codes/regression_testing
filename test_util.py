@@ -349,6 +349,10 @@ def run(string, stdin=False, outfile=None, store_command=False, env=None,
     p0.stdout.close()
     p0.stderr.close()
 
+    if sys.version_info >= (3, 0):
+        stdout0 = stdout0.decode('utf-8')
+        stderr0 = stderr0.decode('utf-8')
+
     if outfile is not None:
         try: cf = open(outfile, outfile_mode)
         except IOError:
