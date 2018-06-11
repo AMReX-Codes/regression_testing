@@ -670,7 +670,7 @@ class Suite(object):
 
         try:
             os.chdir(self.c_compare_tool_dir)
-        except FileNotFoundError:
+        except OSError:
             ctools = []
         else:
             ctools = ["particle_compare"]
