@@ -48,7 +48,7 @@ class Test(object):
         self.restartTest = 0
         self.restartFileNum = -1
 
-        self.compileTest = 0
+        self._compileTest = 0
 
         self.selfTest = 0
         self.stSuccessString = ""
@@ -56,7 +56,7 @@ class Test(object):
         self.debug = 0
 
         self.acc = 0
-        
+
         self.useMPI = 0
         self.numprocs = -1
 
@@ -115,7 +115,7 @@ class Test(object):
         self.particleTypes = ""
 
         self.keywords = []
-        
+
     def __lt__(self, other):
         return self.value() < other.value()
 
@@ -155,12 +155,36 @@ class Test(object):
 
         return last_plot
 
+    def set_compile_test(self, value):
+        """ Sets whether this test is compile-only """
+
+        self._compileTest = value
+
+    def get_compile_only(self):
+        """ Returns True if the global --compile_only flag was set or
+        this test is compile-only, False otherwise
+        """
+
+        return self._compileTest or Test.compile_only
+
+    def get_compile_test(self):
+        """ Returns whether this specific test is compile-only, regardless
+        of the global setting
+        """
+
+        return self._compileTest;
+
+    compile_only = False
+    # Allows for direct access as an attribute (e.g. test.compileTest) while
+    # still utilizing getters and setters
+    compileTest = property(get_compile_only, set_compile_test)
 
 class Suite(object):
 
     def __init__(self, args):
 
         self.args = args
+        self.apply_args()
 
         # this will hold all of the Repo() objects for the AMReX, source,
         # and build directories
@@ -268,7 +292,7 @@ class Suite(object):
         # if we specified any keywords, only run those
         if self.args.keyword is not None:
             test_list = [t for t in test_list_old if self.args.keyword in t.keywords]
-            
+
         # if we are doing a single test, remove all other tests; if we
         # specified a list of tests, check each one; if we did both
         # --single_test and --tests, complain
@@ -585,7 +609,7 @@ class Suite(object):
             if "source" in self.repos:
                 if not self.repos["source"].comp_string is None:
                     build_opts += self.repos["source"].comp_string + " "
-                
+
             if not test.addToCompileString == "":
                 build_opts += test.addToCompileString + " "
 
@@ -700,7 +724,15 @@ class Suite(object):
         cmd = "curl -X POST --data-urlencode 'payload={}' {}".format(s, self.slack_webhook_url)
         test_util.run(cmd)
 
+    def apply_args(self):
+        """
+        makes any necessary adjustments to module settings based on the
+        command line arguments supplied to the main module
+        """
 
+        args = self.args
+
+        Test.compile_only = args.compile_only
 
     #######################################################
     #        CMake utilities                              #

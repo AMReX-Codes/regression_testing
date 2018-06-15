@@ -38,7 +38,7 @@ def load_params(args):
 
     test_list = []
 
-    try: 
+    try:
         cp = configparser.ConfigParser(strict=False)
     except:
         cp = configparser.ConfigParser()
@@ -65,7 +65,7 @@ def load_params(args):
         # get the value of the current option
         value = convert_type(cp.get("main", opt))
 
-        if opt in valid_options:
+        if opt in valid_options or "_" + opt in valid_options:
 
             if opt == "sourceTree":
                 if not value in ["C_Src", "F_Src", "AMReX", "amrex"]:
@@ -145,7 +145,7 @@ def load_params(args):
         if not s is None:
             mysuite.repos[r].comp_string = \
                 s.replace("@self@", mysuite.repos[r].dir).replace("@source@", mysuite.repos["source"].dir)
-            
+
     # the suite needs to know any ext_src_comp_string
     for r in mysuite.repos.keys():
         if not mysuite.repos[r].build == 1:
@@ -222,7 +222,7 @@ def load_params(args):
             # get the value of the current option
             value = convert_type(cp.get(sec, opt))
 
-            if opt in valid_options:
+            if opt in valid_options or "_" + opt in valid_options:
 
                 if opt in ["aux1File", "aux2File", "aux3File"]:
                     mytest.auxFiles.append(value)
@@ -232,7 +232,7 @@ def load_params(args):
 
                 elif opt == "keyword":
                     mytest.keywords = [k.strip() for k in value.split(",")]
-                    
+
                 else:
                     # generic setting of the object attribute
                     setattr(mytest, opt, value)
