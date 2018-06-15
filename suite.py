@@ -66,7 +66,7 @@ class Test(object):
         self.doVis = 0
         self.visVar = ""
 
-        self.doComparison = True
+        self._doComparison = True
 
         self.analysisRoutine = ""
         self.analysisMainArgs = ""
@@ -155,29 +155,42 @@ class Test(object):
 
         return last_plot
 
+    #######################################################
+    #           Static members and properties             #
+    #######################################################
+
     def set_compile_test(self, value):
         """ Sets whether this test is compile-only """
 
         self._compileTest = value
 
-    def get_compile_only(self):
+    def get_compile_test(self):
         """ Returns True if the global --compile_only flag was set or
         this test is compile-only, False otherwise
         """
 
         return self._compileTest or Test.compile_only
 
-    def get_compile_test(self):
-        """ Returns whether this specific test is compile-only, regardless
-        of the global setting
+    def set_do_comparison(self, value):
+        """ Sets whether this test is compile-only """
+
+        self._doComparison = value
+
+    def get_do_comparison(self):
+        """ Returns True if the global --compile_only flag was set or
+        this test is compile-only, False otherwise
         """
 
-        return self._compileTest;
+        return self._doComparison and not Test.skip_comparison
 
+    # Static member variables, set explicitly in apply_args in Suite class
     compile_only = False
-    # Allows for direct access as an attribute (e.g. test.compileTest) while
-    # still utilizing getters and setters
-    compileTest = property(get_compile_only, set_compile_test)
+    skip_comparison = False
+
+    # Properties - allow for direct access as an attribute
+    # (e.g. test.compileTest) while still utilizing getters and setters
+    compileTest = property(get_compile_test, set_compile_test)
+    doComparison = property(get_do_comparison, set_do_comparison)
 
 class Suite(object):
 
@@ -733,6 +746,7 @@ class Suite(object):
         args = self.args
 
         Test.compile_only = args.compile_only
+        Test.skip_comparison = args.skip_comparison
 
     #######################################################
     #        CMake utilities                              #

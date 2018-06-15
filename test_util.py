@@ -305,6 +305,8 @@ def get_args(arg_string=None):
                         help="run with valgrind")
     parser.add_argument("--compile_only", action="store_true",
                         help="test only that the code compiles, without running anything")
+    parser.add_argument("--skip_comparison", action="store_true",
+                        help="run analysis for each test without comparison to benchmarks")
     parser.add_argument("--valgrind_options", type=str, default="--leak-check=yes --log-file=vallog.%p",
                         help="valgrind options", metavar="'valgrind options'")
     parser.add_argument("--amrex_git_hash", type=str, default=None, metavar="hash",
