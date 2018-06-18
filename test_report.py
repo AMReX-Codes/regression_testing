@@ -351,8 +351,8 @@ def report_single_test(suite, test, tests, failure_msg=None):
         status_file = "{}.status".format(test.name)
         with open(status_file, 'w') as sf:
             if (compile_successful and
-                (test.compileTest or ((not test.compileTest) and 
-                                          compare_successful and 
+                (test.compileTest or ((not test.compileTest) and
+                                          compare_successful and
                                           analysis_successful))):
                 sf.write("PASSED\n")
                 suite.log.success("{} PASSED".format(test.name))
@@ -442,7 +442,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
             ll.item("Debug test")
 
         if test.acc:
-            ll.item("OpenACC test")            
+            ll.item("OpenACC test")
 
         if test.useMPI or test.useOMP:
             ll.item("Parallel run")
@@ -490,6 +490,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
     else:
         ll.item("<h3 class=\"failed\">Failed</h3>")
 
+    ll.item("Compilation time: {:.3f} s".format(test.build_time))
     ll.item("Compilation command:<br><tt>{}</tt>".format(test.comp_string))
     ll.item("<a href=\"{}.make.out\">make output</a>".format(test.name))
 
@@ -541,7 +542,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
 
             ll.item("<a href=\"{}.analysis.out\">execution output</a>".format(test.name))
             ll.outdent()
-                            
+
     ll.write_list()
 
     if (not test.compileTest) and test.doComparison and failure_msg is None:
@@ -554,7 +555,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
         grid_error = False
         variables_error = False
         no_bench_error = False
-        
+
         pcomp_line = get_particle_compare_command(diff_lines)
 
         for line in diff_lines:
@@ -572,7 +573,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
             if "no corresponding benchmark found" in line:
                 no_bench_error = True
                 break
-            
+
             if not in_diff_region:
                 if line.find("fcompare") > 1:
                     hf.write("<tt>"+line+"</tt>\n")
@@ -688,6 +689,10 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
     # switch to the web directory and open the report file
     os.chdir(suite.full_web_dir)
 
+    try:
+        build_time = sum([q.build_time for q in test_list])
+    except:
+        build_time = -1
 
     try:
         wall_time = sum([q.wall_time for q in test_list])
@@ -725,6 +730,9 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
 
     hf.write("<p><b>test input parameter file:</b> <A HREF=\"%s\">%s</A>\n" %
              (test_file, test_file) )
+
+    if build_time > 0:
+        hf.write("<p><b>combined build time for all tests:</b> {} s\n".format(build_time))
 
     if wall_time > 0:
         hf.write("<p><b>wall clock time for all tests:</b> {} s\n".format(wall_time))
@@ -765,7 +773,7 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
 
         cols = ["test name", "dim", "compare plotfile",
                 "# levels", "MPI procs", "OMP threads", "OpenACC", "debug",
-                "compile", "restart"] + special_cols + ["wall time", "result"]
+                "compile", "restart"] + special_cols + ["build time", "wall time", "result"]
         ht = HTMLTable(hf, columns=len(cols), divs=["summary"])
         ht.start_table()
         ht.header(cols)
@@ -782,7 +790,7 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
 
             # check if it passed or failed
             status_file = "%s.status" % (test.name)
-            
+
             status = None
             with open(status_file, 'r') as sf:
                 for line in sf:
@@ -838,7 +846,7 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
                 row_info.append("&check;")
             else:
                 row_info.append("")
-                
+
             # compile ?
             if test.compileTest:
                 row_info.append("&check;")
@@ -865,6 +873,8 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
                 row_info.append("<div class='small'>{}</div>".format(
                     test.job_info_field3))
 
+            # build time
+            row_info.append("{:.3f}&nbsp;s".format(test.build_time))
 
             # wallclock time
             row_info.append("{:.3f}&nbsp;s".format(test.wall_time))
@@ -1027,7 +1037,7 @@ def report_all_runs(suite, active_test_list):
                             emoji = ":("
                         elif line.find("CRASHED") >= 0:
                             status = "crashed"
-                            emoji = "xx"                            
+                            emoji = "xx"
                         elif line.find("FAILED") >= 0:
                             status = "failed"
                             emoji = "!&nbsp;"

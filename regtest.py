@@ -205,7 +205,7 @@ def test_suite(argv):
     for obj in test_list:
         suite.log.log(obj.name)
     suite.log.outdent()
-    
+
     if not args.complete_report_from_crash == "":
 
         # make sure the web directory from the crash run exists
@@ -413,6 +413,9 @@ def test_suite(argv):
             else:
                 suite.make_realclean()
 
+        # Register start time
+        test.build_time = time.time()
+
         suite.log.log("building...")
 
         coutfile="{}/{}.make.out".format(output_dir, test.name)
@@ -433,6 +436,8 @@ def test_suite(argv):
 
         # make return code is 0 if build was successful
         if rc == 0: test.compile_successful = True
+        # Compute compile time
+        test.build_time = time.time() - test.build_time
 
         # copy the make.out into the web directory
         shutil.copy("{}/{}.make.out".format(output_dir, test.name), suite.full_web_dir)
@@ -664,7 +669,7 @@ def test_suite(argv):
 
                         command = "{} -n 0 {} {}".format(
                                 suite.tools["fcompare"], bench_file, output_file)
-                            
+
                         sout, serr, ierr = test_util.run(command,
                                                          outfile="{}.compare.out".format(test.name), store_command=True)
 
@@ -810,7 +815,7 @@ def test_suite(argv):
                     else:
                         job_file_lines = jif.readlines()
                         jif.close()
-                        
+
                         if suite.summary_job_info_field1 is not "":
                             for l in job_file_lines:
                                 if l.startswith(suite.summary_job_info_field1.strip()) and l.find(":") >= 0:

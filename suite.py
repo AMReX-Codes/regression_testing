@@ -21,7 +21,6 @@ else:
 try: import matplotlib.dates as dates
 except: DO_TIMINGS_PLOTS = False
 
-
 class Test(object):
 
     def __init__(self, name):
@@ -89,6 +88,7 @@ class Test(object):
         self.reClean = 0    # set automatically, not by users
 
         self.wall_time = 0   # set automatically, not by users
+        self.build_time = 0 # set automatically, not by users
 
         self.nlevels = None  # set but running fboxinfo on the output
 
