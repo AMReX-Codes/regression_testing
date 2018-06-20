@@ -66,6 +66,7 @@ class Test(object):
         self.visVar = ""
 
         self._doComparison = True
+        self._tolerance = None
 
         self.analysisRoutine = ""
         self.analysisMainArgs = ""
@@ -166,7 +167,7 @@ class Test(object):
 
     def get_compile_test(self):
         """ Returns True if the global --compile_only flag was set or
-        this test is compile-only, False otherwise
+            this test is compile-only, False otherwise
         """
 
         return self._compileTest or Test.compile_only
@@ -178,19 +179,35 @@ class Test(object):
 
     def get_do_comparison(self):
         """ Returns True if the global --compile_only flag was set or
-        this test is compile-only, False otherwise
+            this test is compile-only, False otherwise
         """
 
         return self._doComparison and not Test.skip_comparison
 
+    def get_tolerance(self):
+        """ Returns the global tolerance if one was set,
+            and the test-specific one otherwise.
+        """
+
+        if Test.global_tolerance is None:
+            return self._tolerance
+        return Test.global_tolerance
+
+    def set_tolerance(self, value):
+        """ Sets the test-specific tolerance to the specified value. """
+
+        self._tolerance = value
+
     # Static member variables, set explicitly in apply_args in Suite class
     compile_only = False
     skip_comparison = False
+    global_tolerance = None
 
     # Properties - allow for direct access as an attribute
     # (e.g. test.compileTest) while still utilizing getters and setters
     compileTest = property(get_compile_test, set_compile_test)
     doComparison = property(get_do_comparison, set_do_comparison)
+    tolerance = property(get_tolerance, set_tolerance)
 
 class Suite(object):
 
@@ -747,6 +764,7 @@ class Suite(object):
 
         Test.compile_only = args.compile_only
         Test.skip_comparison = args.skip_comparison
+        Test.global_tolerance = args.tolerance
 
     #######################################################
     #        CMake utilities                              #
