@@ -184,28 +184,42 @@ def copy_benchmarks(old_full_test_dir, full_web_dir, test_list, bench_dir, log):
 
         os.chdir(td)
 
-def process_comparison_results(stdout, test):
+def get_variable_names(suite, plotfile):
+    """ uses fvarnames to extract the names of variables
+        stored in a plotfile """
+
+    # Run fvarnames
+    command = "{} {}".format(suite.tools["fvarnames"], plotfile)
+    sout, serr, ierr = test_util.run(command)
+
+    if ierr != 0:
+        return serr
+
+    # Split on whitespace
+    vars = re.split("\s+", sout)[2:-1:2]
+
+    print(vars)
+    return set(vars)
+
+def process_comparison_results(stdout, vars, test):
     """ checks the output of fcompare (passed in as stdout)
         to determine whether all relative errors fall within
         the test's tolerance """
+
+    # Alternative solution - just split on whitespace
+    # and iterate through resulting list, attempting
+    # to convert the next two items to floats. Assume
+    # the current item is a variable if successful.
 
     # Split on whitespace
     regex = "\s+"
     words = re.split(regex, stdout)
 
-    # Loop through results and check errors
-    for i in range(0, len(words) - 2, 1):
+    indices = filter(lambda i: words[i] in vars, range(len(words)))
 
-        var, abs_err, rel_err = words[i : i + 3]
-
-        # Try to convert the next two values to floats
-        try: abs_err, rel_err = float(abs_err), float(rel_err)
-        except ValueError: continue
-
-        # If successful, increment by two
-        i += 2
-        # Can do some other processing - here just checks relative errors
-        if abs(test.tolerance) <= abs(rel_err): return False
+    for i in indices:
+        var, abs_err, rel_err = words[i: i + 3]
+        if abs(test.tolerance) <= abs(float(rel_err)): return False
 
     return True
 
@@ -698,9 +712,10 @@ def test_suite(argv):
                         sout, serr, ierr = test_util.run(command,
                                                          outfile="{}.compare.out".format(test.name), store_command=True)
 
-                        # Temporary solution - reliant on fcompare having consistent output
+                        # Comparison within tolerance is reliant on fvarnames
                         if test.tolerance is not None:
-                            test.compare_successful = process_comparison_results(sout, test)
+                            vars = get_variable_names(suite, bench_file)
+                            test.compare_successful = process_comparison_results(sout, vars, test)
                         else:
                             test.compare_successful = ierr == 0
 

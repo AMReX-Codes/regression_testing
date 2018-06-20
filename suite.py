@@ -709,6 +709,7 @@ class Suite(object):
         ftools = ["fcompare", "fboxinfo"]
         if any([t for t in test_list if t.dim == 2]): ftools.append("fsnapshot2d")
         if any([t for t in test_list if t.dim == 3]): ftools.append("fsnapshot3d")
+        if any([t for t in test_list if t.tolerance is not None]): ftools.append("fvarnames")
 
         for t in ftools:
             self.log.log("building {}...".format(t))
