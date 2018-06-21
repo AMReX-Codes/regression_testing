@@ -89,7 +89,7 @@ class Test(object):
         self.reClean = 0    # set automatically, not by users
 
         self.wall_time = 0   # set automatically, not by users
-        self.build_time = 0 # set automatically, not by users
+        self.build_time = 0  # set automatically, not by users
 
         self.nlevels = None  # set but running fboxinfo on the output
 
@@ -114,6 +114,11 @@ class Test(object):
 
         self.compareParticles = False
         self.particleTypes = ""
+
+        self._check_performance = 0
+        self._performance_threshold = 1.5
+        self._runs_to_average = 5
+        self.past_average = None
 
         self.keywords = []
 
@@ -155,6 +160,23 @@ class Test(object):
             return ""
 
         return last_plot
+
+    def measure_performance(self):
+        """ returns performance relative to past average, as a tuple of:
+            meets threshold, percentage slower/faster, whether slower/faster """
+
+        try:
+            ratio = self.wall_time / self.past_average
+        except (ZeroDivisionError, TypeError):
+            return None, 0.0, "error computing ratio"
+
+        meets_threshold = ratio < self.performance_threshold
+        percentage = 100 * (1 - ratio)
+
+        if percentage < 0: compare_str = "slower"
+        else: compare_str = "faster"
+
+        return meets_threshold, abs(percentage), compare_str
 
     #######################################################
     #           Static members and properties             #
@@ -198,16 +220,54 @@ class Test(object):
 
         self._tolerance = value
 
+    def get_check_performance(self):
+        """ Returns whether to check performance for this test. """
+
+        return self._check_performance or Test.performance_params
+
+    def set_check_performance(self, value):
+        """ Setter for check_performance. """
+
+        self._check_performance = value
+
+    def get_performance_threshold(self):
+        """ Returns the threshold at which to warn of a performance drop. """
+
+        if Test.performance_params: return float(Test.performance_params[0])
+        elif self._check_performance: return self._performance_threshold
+        else: return None
+
+    def set_performance_threshold(self, value):
+        """ Setter for performance_threshold. """
+
+        self._performance_threshold = value
+
+    def get_runs_to_average(self):
+        """ Returns the number of past runs to include in the running runtime average. """
+
+        if Test.performance_params: return int(Test.performance_params[1])
+        elif self._check_performance: return self._runs_to_average
+        else: return None
+
+    def set_runs_to_average(self, value):
+        """ Setter for runs_to_average. """
+
+        self._runs_to_average = value
+
     # Static member variables, set explicitly in apply_args in Suite class
     compile_only = False
     skip_comparison = False
     global_tolerance = None
+    performance_params = []
 
     # Properties - allow for direct access as an attribute
     # (e.g. test.compileTest) while still utilizing getters and setters
     compileTest = property(get_compile_test, set_compile_test)
     doComparison = property(get_do_comparison, set_do_comparison)
     tolerance = property(get_tolerance, set_tolerance)
+    check_performance = property(get_check_performance, set_check_performance)
+    performance_threshold = property(get_performance_threshold, set_performance_threshold)
+    runs_to_average = property(get_runs_to_average, set_runs_to_average)
 
 class Suite(object):
 
@@ -422,11 +482,12 @@ class Suite(object):
         # start by finding the list of valid test directories
         for f in os.listdir(self.webTopDir):
 
+            f_path = os.path.join(self.webTopDir, f)
             # look for a directory of the form 20* (this will work up until 2099
-            if f.startswith("20") and os.path.isdir(f):
+            if f.startswith("20") and os.path.isdir(f_path):
 
                 # look for the status file
-                status_file = f + '/' + f + '.status'
+                status_file = f_path + '/' + f + '.status'
                 if os.path.isfile(status_file):
                     valid_dirs.append(f)
 
@@ -449,10 +510,13 @@ class Suite(object):
 
         return valid_dirs, all_tests
 
-    def make_timing_plots(self, active_test_list):
-        """ plot the wallclock time history for all the valid tests """
+    def get_wallclock_history(self, active_test_list=None, valid_dirs=None, all_tests=None, filter_times=True):
+        """ returns the wallclock time history for all the valid tests as a dictionary
+            of NumPy arrays. Set filter_times to False to return 0.0 as a placeholder
+            when there was no available execution time. """
 
-        valid_dirs, all_tests = self.get_run_history(active_test_list)
+        if active_test_list is not None:
+            valid_dirs, all_tests = self.get_run_history(active_test_list)
 
         # store the timings in NumPy arrays in a dictionary
         timings = {}
@@ -487,6 +551,17 @@ class Suite(object):
                 f.close()
                 if not found:
                     timings[t][n] = 0.0
+
+        if filter_times:
+            return {k: v[np.nonzero(v)] for k, v in timings.items()}
+        return timings
+
+    def make_timing_plots(self, active_test_list=None, valid_dirs=None, all_tests=None):
+        """ plot the wallclock time history for all the valid tests """
+
+        if active_test_list is not None:
+            valid_dirs, all_tests = self.get_run_history(active_test_list)
+        timings = self.get_wallclock_history(valid_dirs=valid_dirs, all_tests=all_tests, filter_times=False)
 
         # make the plots
         for t in all_tests:
@@ -531,7 +606,6 @@ class Suite(object):
             fig.autofmt_xdate()
 
             plt.savefig("{}/{}-timings.png".format(self.webTopDir, t))
-
 
     def get_last_run(self):
         """ return the name of the directory corresponding to the previous
@@ -766,6 +840,7 @@ class Suite(object):
         Test.compile_only = args.compile_only
         Test.skip_comparison = args.skip_comparison
         Test.global_tolerance = args.tolerance
+        Test.performance_params = args.check_performance
 
     #######################################################
     #        CMake utilities                              #

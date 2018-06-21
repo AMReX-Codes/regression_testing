@@ -40,6 +40,8 @@ a.benchmade:visited {color: black; text-decoration: none;}
 a.benchmade:hover {color: #00ffff; text-decoration: underline;}
 
 span.nobreak {white-space: nowrap;}
+span.mild-success {color: green;}
+span.mild-failure {color: red;}
 
 a.main:link {color: yellow; text-decoration: none;}
 a.main:visited {color: yellow; text-decoration: none;}
@@ -503,6 +505,20 @@ def report_single_test(suite, test, tests, failure_msg=None):
         ll.item("Execution:")
         ll.indent()
         ll.item("Execution time: {:.3f} s".format(test.wall_time))
+
+        if test.check_performance:
+
+            meets_threshold, percentage, compare_str = test.measure_performance()
+
+            if meets_threshold is not None:
+
+                if meets_threshold: style = "mild-success"
+                else: style = "mild-failure"
+
+                ll.item("{} run average: {:.3f} s".format(test.runs_to_average, test.past_average))
+                ll.item("Relative performance: <span class=\"{}\">{:.1f}% {}</span>".format(
+                    style, percentage, compare_str))
+
         ll.item("Execution command:<br><tt>{}</tt>".format(test.run_command))
         ll.item("<a href=\"{}.run.out\">execution output</a>".format(test.name))
         if test.has_stderr:
@@ -954,7 +970,7 @@ def report_all_runs(suite, active_test_list):
 
     valid_dirs, all_tests = suite.get_run_history(active_test_list)
 
-    if suite.do_timings_plots: suite.make_timing_plots(active_test_list)
+    if suite.do_timings_plots: suite.make_timing_plots(valid_dirs=valid_dirs, all_tests=all_tests)
 
     #--------------------------------------------------------------------------
     # generate the HTML

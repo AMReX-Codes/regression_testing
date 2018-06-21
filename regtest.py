@@ -198,7 +198,6 @@ def get_variable_names(suite, plotfile):
     # Split on whitespace
     vars = re.split("\s+", sout)[2:-1:2]
 
-    print(vars)
     return set(vars)
 
 def process_comparison_results(stdout, vars, test):
@@ -222,6 +221,37 @@ def process_comparison_results(stdout, vars, test):
         if abs(test.tolerance) <= abs(float(rel_err)): return False
 
     return True
+
+def test_performance(test, suite, past_runtimes):
+    """ outputs a warning if the execution time of the test this run
+        does not compare favorably to past logged times """
+
+    if test.name not in past_runtimes: return
+    old_times = past_runtimes[test.name]
+
+    if len(old_times) < 1:
+        suite.log.log("no completed runs found.")
+        return
+
+    num_times = len(old_times)
+    suite.log.log("{} completed run(s) found.".format(num_times))
+    suite.log.log("checking performance ...")
+
+    # Slice out correct number of times
+    run_diff = num_times - test.runs_to_average
+    if run_diff > 0:
+        old_times = old_times[:-run_diff]
+        num_times = test.runs_to_average
+    else:
+        test.runs_to_average = num_times
+
+    test.past_average = old_times.mean()
+
+    # Test against threshold
+    meets_threshold, percentage, compare_str = test.measure_performance()
+    if meets_threshold is not None and not meets_threshold:
+        suite.log.warn("test ran {:.1f}% {} than running average of the past {} runs".format(
+            percentage, compare_str, num_times))
 
 def test_suite(argv):
     """
@@ -409,6 +439,11 @@ def test_suite(argv):
     if ( suite.useCmake ):
         cmake_setup(suite)
 
+
+    #--------------------------------------------------------------------------
+    # Get execution times from previous runs
+    #--------------------------------------------------------------------------
+    past_runtimes = suite.get_wallclock_history([test.name for test in test_list])
 
     #--------------------------------------------------------------------------
     # main loop over tests
@@ -647,6 +682,8 @@ def test_suite(argv):
 
         test.wall_time = time.time() - test.wall_time
 
+        # Check for performance drop
+        if test.check_performance: test_performance(test, suite, past_runtimes)
 
         #----------------------------------------------------------------------
         # do the comparison
@@ -712,7 +749,7 @@ def test_suite(argv):
                         sout, serr, ierr = test_util.run(command,
                                                          outfile="{}.compare.out".format(test.name), store_command=True)
 
-                        # Comparison within tolerance is reliant on fvarnames
+                        # Comparison within tolerance - reliant on fvarnames and fcompare
                         if test.tolerance is not None:
                             vars = get_variable_names(suite, bench_file)
                             test.compare_successful = process_comparison_results(sout, vars, test)

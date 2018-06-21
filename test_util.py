@@ -307,8 +307,11 @@ def get_args(arg_string=None):
                         help="test only that the code compiles, without running anything")
     parser.add_argument("--skip_comparison", action="store_true",
                         help="run analysis for each test without comparison to benchmarks")
-    parser.add_argument("--tolerance", type=float, default=None,
+    parser.add_argument("--tolerance", type=float, default=None, metavar="value",
                         help="largest relative error permitted during comparison")
+    parser.add_argument("--check_performance", nargs=2, metavar=("performance_threshold", "runs_to_average"),
+                        help="measure the performance of each test run against the last runs_to_average runs, "
+                            + "supplying a warning on a ratio greater than performance_threshold")
     parser.add_argument("--valgrind_options", type=str, default="--leak-check=yes --log-file=vallog.%p",
                         help="valgrind options", metavar="'valgrind options'")
     parser.add_argument("--amrex_git_hash", type=str, default=None, metavar="hash",
