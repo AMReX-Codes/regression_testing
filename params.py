@@ -150,7 +150,7 @@ def load_params(args):
     for r in mysuite.repos.keys():
         if not mysuite.repos[r].build == 1:
             if not mysuite.repos[r].comp_string is None:
-                mysuite.extra_src_comp_string += "{} ".format(mysuite.repos[r].comp_string)
+                mysuite.extra_src_comp_string += " {} ".format(mysuite.repos[r].comp_string)
 
     # checks
     if args.send_no_email:

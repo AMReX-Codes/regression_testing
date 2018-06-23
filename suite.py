@@ -670,12 +670,20 @@ class Suite(object):
         self.c_compare_tool_dir = "{}/Tools/Postprocessing/C_Src/".format(
             os.path.normpath(self.amrex_dir))
 
+
         os.chdir(self.c_compare_tool_dir)
 
         if self.use_ctools:
             ctools = ["particle_compare"]
         else:
             ctools = []
+
+        try:
+            os.chdir(self.c_compare_tool_dir)
+        except OSError:
+            ctools = []
+        else:
+            ctools = ["particle_compare"]
 
         for t in ctools:
             self.log.log("building {}...".format(t))
