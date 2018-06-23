@@ -671,8 +671,6 @@ class Suite(object):
             os.path.normpath(self.amrex_dir))
 
 
-        os.chdir(self.c_compare_tool_dir)
-
         if self.use_ctools:
             ctools = ["particle_compare"]
         else:
