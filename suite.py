@@ -177,6 +177,8 @@ class Suite(object):
 
         self.useCmake = 0
 
+        self.use_ctools = 1
+
         # set automatically
         self.source_dir = ""
         self.source_build_dir ="" # Cmake build dir
@@ -670,7 +672,10 @@ class Suite(object):
 
         os.chdir(self.c_compare_tool_dir)
 
-        ctools = ["particle_compare"]
+        if self.use_ctools:
+            ctools = ["particle_compare"]
+        else:
+            ctools = []
 
         for t in ctools:
             self.log.log("building {}...".format(t))
