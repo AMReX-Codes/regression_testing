@@ -291,6 +291,8 @@ class Suite(object):
 
         self.useCmake = 0
 
+        self.use_ctools = 1
+
         # set automatically
         self.source_dir = ""
         self.source_build_dir ="" # Cmake build dir
@@ -797,12 +799,16 @@ class Suite(object):
         self.c_compare_tool_dir = "{}/Tools/Postprocessing/C_Src/".format(
             os.path.normpath(self.amrex_dir))
 
-        try:
-            os.chdir(self.c_compare_tool_dir)
-        except OSError:
-            ctools = []
+
+        if self.use_ctools:
+            try:
+                os.chdir(self.c_compare_tool_dir)
+            except OSError:
+                ctools = []
+            else:
+                ctools = ["particle_compare"]
         else:
-            ctools = ["particle_compare"]
+            ctools = []
 
         for t in ctools:
             self.log.log("building {}...".format(t))
