@@ -23,11 +23,11 @@ import sys
 import tarfile
 import time
 import re
+import json
 
 import params
 import test_util
 import test_report as report
-
 
 def find_build_dirs(tests):
     """ given the list of test objects, find the set of UNIQUE build
@@ -222,19 +222,19 @@ def process_comparison_results(stdout, vars, test):
 
     return True
 
-def test_performance(test, suite, past_runtimes):
+def test_performance(test, suite, runtimes):
     """ outputs a warning if the execution time of the test this run
         does not compare favorably to past logged times """
 
-    if test.name not in past_runtimes: return
-    old_times = past_runtimes[test.name]
+    if test.name not in runtimes: return
+    old_times = list(filter(lambda x: x > 0.0, runtimes[test.name]))
 
     if len(old_times) < 1:
-        suite.log.log("no completed runs found.")
+        suite.log.log("no completed runs found")
         return
 
     num_times = len(old_times)
-    suite.log.log("{} completed run(s) found.".format(num_times))
+    suite.log.log("{} completed run(s) found".format(num_times))
     suite.log.log("checking performance ...")
 
     # Slice out correct number of times
@@ -245,7 +245,7 @@ def test_performance(test, suite, past_runtimes):
     else:
         test.runs_to_average = num_times
 
-    test.past_average = old_times.mean()
+    test.past_average = sum(old_times) / len(old_times)
 
     # Test against threshold
     meets_threshold, percentage, compare_str = test.measure_performance()
@@ -443,7 +443,10 @@ def test_suite(argv):
     #--------------------------------------------------------------------------
     # Get execution times from previous runs
     #--------------------------------------------------------------------------
-    past_runtimes = suite.get_wallclock_history([test.name for test in test_list])
+    runtimes = suite.get_wallclock_history(active_test_list, use_numpy=False)
+    for test in set(runtimes.keys()).union(set(active_test_list)):
+        if test in runtimes: runtimes[test].append(0.0)
+        else: runtimes[test] = [0.0]
 
     #--------------------------------------------------------------------------
     # main loop over tests
@@ -683,7 +686,9 @@ def test_suite(argv):
         test.wall_time = time.time() - test.wall_time
 
         # Check for performance drop
-        if test.check_performance: test_performance(test, suite, past_runtimes)
+        if test.check_performance: test_performance(test, suite, runtimes)
+        # Assumes 0.0 has already been appended
+        runtimes[test.name][-1] = test.wall_time
 
         #----------------------------------------------------------------------
         # do the comparison
@@ -818,6 +823,9 @@ def test_suite(argv):
 
                     with open("{}.status".format(test.name), 'w') as cf:
                         cf.write("benchmarks updated.  New file:  {}\n".format(compare_file) )
+
+                    # Just get this test run
+                    runtimes[test.name] = runtimes[test.name][-1:]
 
                 else:
                     with open("{}.status".format(test.name), 'w') as cf:
@@ -1072,6 +1080,11 @@ def test_suite(argv):
         suite.cmake_clean("AMReX", suite.amrex_dir)
         suite.cmake_clean(suite.suiteName, suite.source_dir)
 
+    #--------------------------------------------------------------------------
+    # jsonify and save runtimes
+    #--------------------------------------------------------------------------
+    file_path = suite.get_wallclock_file()
+    with open(file_path, 'w') as json_file: json.dump(runtimes, json_file)
 
     #--------------------------------------------------------------------------
     # write the report for this instance of the test suite

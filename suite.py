@@ -7,6 +7,9 @@ import shutil
 import sys
 import test_util
 
+try: from json.decoder import JSONDecodeError
+except ImportError: JSONDecodeError = ValueError
+
 DO_TIMINGS_PLOTS = True
 
 try: import numpy as np
@@ -288,6 +291,7 @@ class Suite(object):
         self.sourceTree = ""
         self.testTopDir = ""
         self.webTopDir = ""
+        self.wallclockFile = "wallclock_history"
 
         self.useCmake = 0
 
@@ -423,6 +427,11 @@ class Suite(object):
                 self.log.fail("ERROR: benchmark directory, {}, does not exist".format(bench_dir))
         return bench_dir
 
+    def get_wallclock_file(self):
+        """ returns the path to the json file storing past runtimes for each test """
+
+        return os.path.join(self.get_bench_dir(), "{}.json".format(self.wallclockFile))
+
     def make_test_dirs(self):
         os.chdir(self.testTopDir)
 
@@ -473,7 +482,7 @@ class Suite(object):
         self.full_test_dir = full_test_dir
         self.full_web_dir = full_web_dir
 
-    def get_run_history(self, active_test_list):
+    def get_run_history(self, active_test_list=None, check_activity=True):
         """ return the list of output directories run over the
             history of the suite and a separate list of the tests
             run (unique names) """
@@ -505,26 +514,39 @@ class Suite(object):
                     test_name = f[0:index]
 
                     if all_tests.count(test_name) == 0:
-                        if (not self.reportActiveTestsOnly) or (test_name in active_test_list):
+                        if (not (self.reportActiveTestsOnly and check_activity)) or (test_name in active_test_list):
                             all_tests.append(test_name)
 
         all_tests.sort()
 
         return valid_dirs, all_tests
 
-    def get_wallclock_history(self, active_test_list=None, valid_dirs=None, all_tests=None, filter_times=True):
+    def get_wallclock_history(self, valid_dirs=None, all_tests=None, use_numpy=None):
         """ returns the wallclock time history for all the valid tests as a dictionary
             of NumPy arrays. Set filter_times to False to return 0.0 as a placeholder
             when there was no available execution time. """
 
-        if active_test_list is not None:
-            valid_dirs, all_tests = self.get_run_history(active_test_list)
+        if use_numpy is None: use_numpy = np in globals()
+
+        json_file = self.get_wallclock_file()
+
+        if os.path.isfile(json_file):
+
+            try:
+                timings = json.load(open(json_file, 'r'))
+                if use_numpy: return {k: np.array(v) for k, v in timings.items()}
+                return timings
+            except (IOError, OSError, JSONDecodeError): pass
+
+        if valid_dirs is None or all_tests is None:
+            valid_dirs, all_tests = self.get_run_history(check_activity=False)
 
         # store the timings in NumPy arrays in a dictionary
         timings = {}
         N = len(valid_dirs)
         for t in all_tests:
-            timings[t] = np.zeros(N, dtype=np.float64)
+            if use_numpy: timings[t] = np.zeros(N, dtype=np.float64)
+            else: timings[t] = [0.0] * N
 
         # now get the timings from the web output
         for n, d in enumerate(valid_dirs):
@@ -554,8 +576,6 @@ class Suite(object):
                 if not found:
                     timings[t][n] = 0.0
 
-        if filter_times:
-            return {k: v[np.nonzero(v)] for k, v in timings.items()}
         return timings
 
     def make_timing_plots(self, active_test_list=None, valid_dirs=None, all_tests=None):
@@ -563,7 +583,7 @@ class Suite(object):
 
         if active_test_list is not None:
             valid_dirs, all_tests = self.get_run_history(active_test_list)
-        timings = self.get_wallclock_history(valid_dirs=valid_dirs, all_tests=all_tests, filter_times=False)
+        timings = self.get_wallclock_history(valid_dirs=valid_dirs, all_tests=all_tests)
 
         # make the plots
         for t in all_tests:
@@ -926,9 +946,6 @@ class Suite(object):
                 shutil.rmtree(installdir)
 
         return
-
-
-
 
     def cmake_build( self, name, target, path, opts = '', env = None, outfile = None ):
         "Build target for a repo configured via cmake"
