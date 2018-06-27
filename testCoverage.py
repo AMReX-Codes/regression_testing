@@ -4,10 +4,10 @@ Start Date: 02/21/18
 Author: Patrick Payne
 
 Purpose: Check all of the tests for MAESTRO or CASTRO to see if every
-         parameter has been tested at a value different from the 
+         parameter has been tested at a value different from the
          default value
 
-In order for this script to function: the output of the tests that it is 
+In order for this script to function: the output of the tests that it is
  looking at should be in a form similar to what is shown below:
 
 [START EXAMPLE]
@@ -26,12 +26,12 @@ The '[*]' can be preceeded by a space, as is done in MAESTRO (04/24/18), but
  to begin reading the parameters immediately following the line "[*] indicates
  overridden default" and so will expect the barrier line and that line as well.
 
-As for the form of the tests, the produce plot files should be compressed in a 
+As for the form of the tests, the produce plot files should be compressed in a
  tarfile (".tgz"). This tarfile contains a job_info file where all of the
- runtime parameters that were used in the simulation are listed, in the form 
+ runtime parameters that were used in the simulation are listed, in the form
  that was expressed above. The values that were set different from the default
- values are marked with a [*]. This is the feature that we are looking for to 
- determine if the quantity is covered. 
+ values are marked with a [*]. This is the feature that we are looking for to
+ determine if the quantity is covered.
 
 The basic function of the script is as follows:
  1) All of the test directories are recorded
@@ -50,8 +50,8 @@ Output: Two ".out" files, one that includes any problem specific parameters
  (parameters that are only appear in one test) and one that excludes these
  parameters. The are titled "Coverage.out" and "Coverage-NoSpecific.out",
  respectively.
- 
-MAESTRO: There should be ~260 total parameters, this includes the problem 
+
+MAESTRO: There should be ~260 total parameters, this includes the problem
          specific parameters.
 
 CASTRO: There should be ~140 total parameters, this includes the problem
@@ -70,13 +70,22 @@ import re as re
 import sys
 import tarfile
 
-def main():
+SPEC_FILE = "coverage.out"
+NONSPEC_FILE = "coverage_nonspecific.out"
+
+def main(cwd=None):
+
+    # Change directories if necessary
+    if cwd is not None:
+        old_dir = os.getcwd()
+        os.chdir(cwd)
 
     # Gets the paths of the files of interest
-    file_paths = get_files()  
+    file_paths = get_files()
+    if not file_paths: return (None,) * 4
 
     # Initialize lists
-    covered = []           
+    covered = []
     no_cover = []
     ignore = []
     ignore_master = []
@@ -84,9 +93,9 @@ def main():
     no_cover_no_specific = []
     all_params = []
     All = []
-    
+
     for i in range(0, len(file_paths)):
-                   
+
         start_line = get_start_line(file_paths[i])
 
         covered_temp,  no_cover_temp, All = list_parameters(file_paths[i],
@@ -107,7 +116,7 @@ def main():
         ignore, ignore_master, all_params)
 
     covered_Frac, no_cover_Frac = get_frac(covered,no_cover)
-    output_coverage("Coverage.out", covered, no_cover, covered_Frac,
+    output_coverage(SPEC_FILE, covered, no_cover, covered_Frac,
                     no_cover_Frac)
 
     covered_no_specific, no_cover_no_specific = remove_specific_params(covered,
@@ -115,22 +124,29 @@ def main():
                                                                        ignore)
     covered_no_specificFrac, no_cover_no_specificFrac = get_frac(
         covered_no_specific, no_cover_no_specific)
-    output_coverage("Coverage-NoSpecific.out", covered_no_specific,
+    output_coverage(NONSPEC_FILE, covered_no_specific,
                     no_cover_no_specific, covered_no_specificFrac,
                     no_cover_no_specificFrac, specific = ignore)
 
     clean(file_paths)
-    
+
+    # Return to original directory
+    if cwd is not None: os.chdir(old_dir)
+
+    total_specific = len(covered) + len(no_cover)
+    total_no_specific = len(covered_no_specific) + len(no_cover_no_specific)
+    return covered_Frac, total_specific, covered_no_specificFrac, total_no_specific
+
 def get_start_line(data_file):
     # This routine finds the line number where the list of runtime
     # parameters begins
 
-    
+
     # The line where the Runtime Parameter Information begins
     start_line = 0
     # Used to keep track of the line to determine start_line
     counter = 0
-    
+
     # Finds the Runtime Section and claculates the start_line
     with open(data_file, mode='r') as data_file:
         for line in data_file:
@@ -150,13 +166,13 @@ def get_start_line(data_file):
             data_file.close()
             return start_line;
 
-        
+
 def list_parameters(data_file, start_line, All):
     # This routine finds the parameters that have been covered by the test suite
     # and those that haven't been covered by the test suite and outputs two
     # lists, one for each type of parameter, covered and no_cover
 
-    
+
     covered = []      # List to store the names of the covered parameters
     no_cover = []     # List to store the names of the non-covered parameters
 
@@ -177,7 +193,7 @@ def list_parameters(data_file, start_line, All):
                    parameter_no_check = re.split(r' +', line)
                    if parameter_no_check and parameter_no_check[1] != "Restart":
                        no_cover.append(parameter_no_check[1])
-                       
+
     data_file.close()
     All = covered+no_cover+All
     return covered, no_cover, All
@@ -187,8 +203,8 @@ def build_master(covered_temp, no_cover_temp, covered, no_cover, ignore,
                  ignore_master, all_params):
     # Updates the master list of covered and not covered variables.
 
-    
-    # Handles the set of no_cover parameters for a test    
+
+    # Handles the set of no_cover parameters for a test
     for i in range(0, len(no_cover_temp)):
 
         if no_cover_temp[i] in ignore:
@@ -203,7 +219,7 @@ def build_master(covered_temp, no_cover_temp, covered, no_cover, ignore,
             no_cover.append(no_cover_temp[i])
         else:
             pass
-        
+
         if no_cover_temp[i] not in all_params:
             all_params.append(no_cover_temp[i])
         else:
@@ -219,7 +235,7 @@ def build_master(covered_temp, no_cover_temp, covered, no_cover, ignore,
             ignore_master.append(covered_temp[i])
         else:
             pass
-        
+
         if covered_temp[i] in covered:
             pass
         else:
@@ -251,7 +267,7 @@ def build_master(covered_temp, no_cover_temp, covered, no_cover, ignore,
         no_cover.remove("\n")
     except ValueError:
         pass
-        
+
     return covered, no_cover, ignore, ignore_master, all_params
 
 
@@ -259,10 +275,10 @@ def remove_specific_params(covered, no_cover, ignore):
     # Determines the parameters that are specific to some of the
     # tests in the suit.
 
-    
+
     covered_temp = covered
     no_cover_temp = no_cover
-    
+
     for i in range(0, len(ignore)):
 
         if ignore[i] in no_cover:
@@ -270,12 +286,12 @@ def remove_specific_params(covered, no_cover, ignore):
         else:
             pass
 
-        
+
         if ignore[i] in covered:
             covered_temp.remove(ignore[i])
         else:
             pass
-           
+
     return covered_temp, no_cover_temp
 
 
@@ -284,11 +300,11 @@ def get_files():
     # The argunemnt is the name of the file that we are interested
     # in reading.
 
-    
+
     # Determines current working directory, which should be the directory
     # of the most recent test.
     data = os.getcwd()
-    
+
     # Determines tests in the most recent test
     dirs = []
     dirs = [ d for d in os.listdir(data) if os.path.isdir(d) ]
@@ -312,7 +328,7 @@ def get_files():
                 tarfile.open(tmp).extract(os.path.splitext(file)[0]
                                           +"/job_info")
                 file_name = file_name+"/job_info"
-                
+
                 file_here = os.path.join(abs_dirs[i], file_name)
                 file_paths.append(file_here)
 
@@ -324,7 +340,7 @@ def get_frac(covered, no_cover):
     # Determines the percentage of the parameters that were covered
     # by the test suite
 
-    
+
     num_covered = len(covered)
     num_no_cover = len(no_cover)
 
@@ -333,7 +349,7 @@ def get_frac(covered, no_cover):
     covered_frac = num_covered / float(total)
 
     no_cover_frac = num_no_cover / float(total)
-    
+
     return covered_frac, no_cover_frac
 
 
@@ -341,7 +357,7 @@ def output_coverage(output_name, covered, no_cover, covered_frac,
                     no_cover_frac, specific = []):
     # Prints the results of the coverage tests to coverage files
 
-    
+
     with open(output_name, mode='w') as coverage:
         # Makes a file and to list the parameters that were not covered
         # by the tests
@@ -381,7 +397,7 @@ def clean(file_paths):
 
 
     for i in range(0,len(file_paths)):
-        
+
         os.remove(file_paths[i])
         directory = file_paths[i].replace("/job_info","")
         os.rmdir(directory)

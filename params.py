@@ -75,7 +75,7 @@ def load_params(args):
 
             elif opt == "testTopDir": mysuite.testTopDir = mysuite.check_test_dir(value)
             elif opt == "webTopDir": mysuite.webTopDir = os.path.normpath(value) + "/"
-
+            elif opt == "reportCoverage": mysuite.reportCoverage = mysuite.reportCoverage or value
             elif opt == "emailTo": mysuite.emailTo = value.split(",")
 
             else:

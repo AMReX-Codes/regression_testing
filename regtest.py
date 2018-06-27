@@ -28,6 +28,7 @@ import json
 import params
 import test_util
 import test_report as report
+import testCoverage as coverage
 
 def find_build_dirs(tests):
     """ given the list of test objects, find the set of UNIQUE build
@@ -1085,6 +1086,23 @@ def test_suite(argv):
     #--------------------------------------------------------------------------
     file_path = suite.get_wallclock_file()
     with open(file_path, 'w') as json_file: json.dump(runtimes, json_file)
+
+    #--------------------------------------------------------------------------
+    # parameter coverage
+    #--------------------------------------------------------------------------
+    if suite.reportCoverage:
+
+        results = coverage.main(suite.full_test_dir)
+
+        if not any([res is None for res in results]):
+
+            suite.covered_frac = results[0]
+            suite.total = results[1]
+            suite.covered_nonspecific_frac = results[2]
+            suite.total_nonspecific = results[3]
+
+            shutil.copy(suite.full_test_dir + coverage.SPEC_FILE, suite.full_web_dir)
+            shutil.copy(suite.full_test_dir + coverage.NONSPEC_FILE, suite.full_web_dir)
 
     #--------------------------------------------------------------------------
     # write the report for this instance of the test suite
