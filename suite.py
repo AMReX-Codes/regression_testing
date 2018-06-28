@@ -7,6 +7,9 @@ import shutil
 import sys
 import test_util
 
+try: from json.decoder import JSONDecodeError
+except ImportError: JSONDecodeError = ValueError
+
 DO_TIMINGS_PLOTS = True
 
 try: import numpy as np
@@ -20,7 +23,6 @@ else:
 
 try: import matplotlib.dates as dates
 except: DO_TIMINGS_PLOTS = False
-
 
 class Test(object):
 
@@ -48,7 +50,7 @@ class Test(object):
         self.restartTest = 0
         self.restartFileNum = -1
 
-        self.compileTest = 0
+        self._compileTest = 0
 
         self.selfTest = 0
         self.stSuccessString = ""
@@ -56,7 +58,7 @@ class Test(object):
         self.debug = 0
 
         self.acc = 0
-        
+
         self.useMPI = 0
         self.numprocs = -1
 
@@ -66,7 +68,8 @@ class Test(object):
         self.doVis = 0
         self.visVar = ""
 
-        self.doComparison = True
+        self._doComparison = True
+        self._tolerance = None
 
         self.analysisRoutine = ""
         self.analysisMainArgs = ""
@@ -89,6 +92,7 @@ class Test(object):
         self.reClean = 0    # set automatically, not by users
 
         self.wall_time = 0   # set automatically, not by users
+        self.build_time = 0  # set automatically, not by users
 
         self.nlevels = None  # set but running fboxinfo on the output
 
@@ -114,8 +118,13 @@ class Test(object):
         self.compareParticles = False
         self.particleTypes = ""
 
+        self._check_performance = 0
+        self._performance_threshold = 1.5
+        self._runs_to_average = 5
+        self.past_average = None
+
         self.keywords = []
-        
+
     def __lt__(self, other):
         return self.value() < other.value()
 
@@ -155,12 +164,120 @@ class Test(object):
 
         return last_plot
 
+    def measure_performance(self):
+        """ returns performance relative to past average, as a tuple of:
+            meets threshold, percentage slower/faster, whether slower/faster """
+
+        try:
+            ratio = self.wall_time / self.past_average
+        except (ZeroDivisionError, TypeError):
+            return None, 0.0, "error computing ratio"
+
+        meets_threshold = ratio < self.performance_threshold
+        percentage = 100 * (1 - ratio)
+
+        if percentage < 0: compare_str = "slower"
+        else: compare_str = "faster"
+
+        return meets_threshold, abs(percentage), compare_str
+
+    #######################################################
+    #           Static members and properties             #
+    #######################################################
+
+    def set_compile_test(self, value):
+        """ Sets whether this test is compile-only """
+
+        self._compileTest = value
+
+    def get_compile_test(self):
+        """ Returns True if the global --compile_only flag was set or
+            this test is compile-only, False otherwise
+        """
+
+        return self._compileTest or Test.compile_only
+
+    def set_do_comparison(self, value):
+        """ Sets whether this test is compile-only """
+
+        self._doComparison = value
+
+    def get_do_comparison(self):
+        """ Returns True if the global --compile_only flag was set or
+            this test is compile-only, False otherwise
+        """
+
+        return self._doComparison and not Test.skip_comparison
+
+    def get_tolerance(self):
+        """ Returns the global tolerance if one was set,
+            and the test-specific one otherwise.
+        """
+
+        if Test.global_tolerance is None:
+            return self._tolerance
+        return Test.global_tolerance
+
+    def set_tolerance(self, value):
+        """ Sets the test-specific tolerance to the specified value. """
+
+        self._tolerance = value
+
+    def get_check_performance(self):
+        """ Returns whether to check performance for this test. """
+
+        return self._check_performance or Test.performance_params
+
+    def set_check_performance(self, value):
+        """ Setter for check_performance. """
+
+        self._check_performance = value
+
+    def get_performance_threshold(self):
+        """ Returns the threshold at which to warn of a performance drop. """
+
+        if Test.performance_params: return float(Test.performance_params[0])
+        elif self._check_performance: return self._performance_threshold
+        else: return None
+
+    def set_performance_threshold(self, value):
+        """ Setter for performance_threshold. """
+
+        self._performance_threshold = value
+
+    def get_runs_to_average(self):
+        """ Returns the number of past runs to include in the running runtime average. """
+
+        if Test.performance_params: return int(Test.performance_params[1])
+        elif self._check_performance: return self._runs_to_average
+        else: return None
+
+    def set_runs_to_average(self, value):
+        """ Setter for runs_to_average. """
+
+        self._runs_to_average = value
+
+    # Static member variables, set explicitly in apply_args in Suite class
+    compile_only = False
+    skip_comparison = False
+    global_tolerance = None
+    performance_params = []
+
+    # Properties - allow for direct access as an attribute
+    # (e.g. test.compileTest) while still utilizing getters and setters
+    compileTest = property(get_compile_test, set_compile_test)
+    doComparison = property(get_do_comparison, set_do_comparison)
+    tolerance = property(get_tolerance, set_tolerance)
+    check_performance = property(get_check_performance, set_check_performance)
+    performance_threshold = property(get_performance_threshold, set_performance_threshold)
+    runs_to_average = property(get_runs_to_average, set_runs_to_average)
 
 class Suite(object):
 
     def __init__(self, args):
 
         self.args = args
+        self.apply_args()
 
         # this will hold all of the Repo() objects for the AMReX, source,
         # and build directories
@@ -174,6 +291,7 @@ class Suite(object):
         self.sourceTree = ""
         self.testTopDir = ""
         self.webTopDir = ""
+        self.wallclockFile = "wallclock_history"
 
         self.useCmake = 0
 
@@ -270,7 +388,7 @@ class Suite(object):
         # if we specified any keywords, only run those
         if self.args.keyword is not None:
             test_list = [t for t in test_list_old if self.args.keyword in t.keywords]
-            
+
         # if we are doing a single test, remove all other tests; if we
         # specified a list of tests, check each one; if we did both
         # --single_test and --tests, complain
@@ -308,6 +426,11 @@ class Suite(object):
             else:
                 self.log.fail("ERROR: benchmark directory, {}, does not exist".format(bench_dir))
         return bench_dir
+
+    def get_wallclock_file(self):
+        """ returns the path to the json file storing past runtimes for each test """
+
+        return os.path.join(self.get_bench_dir(), "{}.json".format(self.wallclockFile))
 
     def make_test_dirs(self):
         os.chdir(self.testTopDir)
@@ -359,7 +482,7 @@ class Suite(object):
         self.full_test_dir = full_test_dir
         self.full_web_dir = full_web_dir
 
-    def get_run_history(self, active_test_list):
+    def get_run_history(self, active_test_list=None, check_activity=True):
         """ return the list of output directories run over the
             history of the suite and a separate list of the tests
             run (unique names) """
@@ -370,11 +493,12 @@ class Suite(object):
         # start by finding the list of valid test directories
         for f in os.listdir(self.webTopDir):
 
+            f_path = os.path.join(self.webTopDir, f)
             # look for a directory of the form 20* (this will work up until 2099
-            if f.startswith("20") and os.path.isdir(f):
+            if f.startswith("20") and os.path.isdir(f_path):
 
                 # look for the status file
-                status_file = f + '/' + f + '.status'
+                status_file = f_path + '/' + f + '.status'
                 if os.path.isfile(status_file):
                     valid_dirs.append(f)
 
@@ -390,23 +514,39 @@ class Suite(object):
                     test_name = f[0:index]
 
                     if all_tests.count(test_name) == 0:
-                        if (not self.reportActiveTestsOnly) or (test_name in active_test_list):
+                        if (not (self.reportActiveTestsOnly and check_activity)) or (test_name in active_test_list):
                             all_tests.append(test_name)
 
         all_tests.sort()
 
         return valid_dirs, all_tests
 
-    def make_timing_plots(self, active_test_list):
-        """ plot the wallclock time history for all the valid tests """
+    def get_wallclock_history(self, valid_dirs=None, all_tests=None, use_numpy=None):
+        """ returns the wallclock time history for all the valid tests as a dictionary
+            of NumPy arrays. Set filter_times to False to return 0.0 as a placeholder
+            when there was no available execution time. """
 
-        valid_dirs, all_tests = self.get_run_history(active_test_list)
+        if use_numpy is None: use_numpy = np in globals()
+
+        json_file = self.get_wallclock_file()
+
+        if os.path.isfile(json_file):
+
+            try:
+                timings = json.load(open(json_file, 'r'))
+                if use_numpy: return {k: np.array(v) for k, v in timings.items()}
+                return timings
+            except (IOError, OSError, JSONDecodeError): pass
+
+        if valid_dirs is None or all_tests is None:
+            valid_dirs, all_tests = self.get_run_history(check_activity=False)
 
         # store the timings in NumPy arrays in a dictionary
         timings = {}
         N = len(valid_dirs)
         for t in all_tests:
-            timings[t] = np.zeros(N, dtype=np.float64)
+            if use_numpy: timings[t] = np.zeros(N, dtype=np.float64)
+            else: timings[t] = [0.0] * N
 
         # now get the timings from the web output
         for n, d in enumerate(valid_dirs):
@@ -435,6 +575,15 @@ class Suite(object):
                 f.close()
                 if not found:
                     timings[t][n] = 0.0
+
+        return timings
+
+    def make_timing_plots(self, active_test_list=None, valid_dirs=None, all_tests=None):
+        """ plot the wallclock time history for all the valid tests """
+
+        if active_test_list is not None:
+            valid_dirs, all_tests = self.get_run_history(active_test_list)
+        timings = self.get_wallclock_history(valid_dirs=valid_dirs, all_tests=all_tests)
 
         # make the plots
         for t in all_tests:
@@ -479,7 +628,6 @@ class Suite(object):
             fig.autofmt_xdate()
 
             plt.savefig("{}/{}-timings.png".format(self.webTopDir, t))
-
 
     def get_last_run(self):
         """ return the name of the directory corresponding to the previous
@@ -587,7 +735,7 @@ class Suite(object):
             if "source" in self.repos:
                 if not self.repos["source"].comp_string is None:
                     build_opts += self.repos["source"].comp_string + " "
-                
+
             if not test.addToCompileString == "":
                 build_opts += test.addToCompileString + " "
 
@@ -657,6 +805,7 @@ class Suite(object):
         ftools = ["fcompare", "fboxinfo"]
         if any([t for t in test_list if t.dim == 2]): ftools.append("fsnapshot2d")
         if any([t for t in test_list if t.dim == 3]): ftools.append("fsnapshot3d")
+        if any([t for t in test_list if t.tolerance is not None]): ftools.append("fvarnames")
 
         for t in ftools:
             self.log.log("building {}...".format(t))
@@ -706,7 +855,18 @@ class Suite(object):
         cmd = "curl -X POST --data-urlencode 'payload={}' {}".format(s, self.slack_webhook_url)
         test_util.run(cmd)
 
+    def apply_args(self):
+        """
+        makes any necessary adjustments to module settings based on the
+        command line arguments supplied to the main module
+        """
 
+        args = self.args
+
+        Test.compile_only = args.compile_only
+        Test.skip_comparison = args.skip_comparison
+        Test.global_tolerance = args.tolerance
+        Test.performance_params = args.check_performance
 
     #######################################################
     #        CMake utilities                              #
@@ -786,9 +946,6 @@ class Suite(object):
                 shutil.rmtree(installdir)
 
         return
-
-
-
 
     def cmake_build( self, name, target, path, opts = '', env = None, outfile = None ):
         "Build target for a repo configured via cmake"

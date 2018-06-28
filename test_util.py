@@ -19,7 +19,7 @@ The "main" block specifies the global test suite parameters:
   testTopDir     = < full path to test output directory >
   webTopDir      = < full path to test web output directory >
 
-  useCmake       = < 0: GNU Make handles the build (default) 
+  useCmake       = < 0: GNU Make handles the build (default)
                      1: CMake handles the build >
 
   sourceTree = < C_Src, F_Src, or AMReX -- what type is it? >
@@ -233,7 +233,7 @@ class Log(object):
         print("{}{}".format(self.indent_str, nstr))
         if self.have_log:
             self.of.write("{}{}\n".format(self.indent_str, string))
-        
+
     def warn(self, warn_msg):
         """
         output a warning.  It is always prefix with 'WARNING:'
@@ -250,18 +250,18 @@ class Log(object):
         print(nstr)
         if self.have_log:
             self.of.write("{}\n".format(omsg))
-        
+
     def success(self, string):
         nstr = self.success_color + string + self.end_color
         print("{}{}".format(self.indent_str, nstr))
         if self.have_log:
             self.of.write("{}{}\n".format(self.indent_str, string))
-        
+
     def log(self, string):
         print("{}{}".format(self.indent_str, string))
         if self.have_log:
             self.of.write("{}{}\n".format(self.indent_str, string))
-        
+
     def skip(self):
         print("")
         if self.have_log:
@@ -272,7 +272,7 @@ class Log(object):
         print("{}{}".format(self.indent_str, nstr))
         if self.have_log:
             self.of.write("{}{}\n".format(self.indent_str, string))
-        
+
     def close_log(self):
         if self.have_log:
             self.of.close()
@@ -303,6 +303,15 @@ def get_args(arg_string=None):
                         help="do not send emails when tests fail")
     parser.add_argument("--with_valgrind", action="store_true",
                         help="run with valgrind")
+    parser.add_argument("--compile_only", action="store_true",
+                        help="test only that the code compiles, without running anything")
+    parser.add_argument("--skip_comparison", action="store_true",
+                        help="run analysis for each test without comparison to benchmarks")
+    parser.add_argument("--tolerance", type=float, default=None, metavar="value",
+                        help="largest relative error permitted during comparison")
+    parser.add_argument("--check_performance", nargs=2, metavar=("performance_threshold", "runs_to_average"),
+                        help="measure the performance of each test run against the last runs_to_average runs, "
+                            + "supplying a warning on a ratio greater than performance_threshold")
     parser.add_argument("--valgrind_options", type=str, default="--leak-check=yes --log-file=vallog.%p",
                         help="valgrind options", metavar="'valgrind options'")
     parser.add_argument("--amrex_git_hash", type=str, default=None, metavar="hash",
@@ -340,7 +349,7 @@ def run(string, stdin=False, outfile=None, store_command=False, env=None,
     sin = None
     if stdin: sin = subprocess.PIPE
 
-    p0 = subprocess.Popen(prog, stdin=sin, stdout=subprocess.PIPE, 
+    p0 = subprocess.Popen(prog, stdin=sin, stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE, env=env, cwd=cwd)
 
     stdout0, stderr0 = p0.communicate()
