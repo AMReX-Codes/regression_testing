@@ -307,6 +307,8 @@ def get_args(arg_string=None):
                         help="test only that the code compiles, without running anything")
     parser.add_argument("--skip_comparison", action="store_true",
                         help="run analysis for each test without comparison to benchmarks")
+    parser.add_argument("--with_coverage", action="store_true",
+                        help="report parameter coverage for this test run")
     parser.add_argument("--tolerance", type=float, default=None, metavar="value",
                         help="largest relative error permitted during comparison")
     parser.add_argument("--check_performance", nargs=2, metavar=("performance_threshold", "runs_to_average"),

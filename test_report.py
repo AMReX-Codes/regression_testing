@@ -1,5 +1,6 @@
 import os
 
+import testCoverage as coverage
 
 CSS_CONTENTS = \
 r"""
@@ -930,6 +931,9 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
 
     ht.end_table()
 
+    # Test coverage
+    if suite.reportCoverage: report_coverage(hf, suite)
+
     # close
     hf.write("</div></body>\n")
     hf.write("</html>\n")
@@ -959,6 +963,35 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
 
     return num_failed
 
+def report_coverage(html_file, suite):
+
+    cols = ["coverage type", "coverage %", "# covered", "# uncovered"]
+    ht = HTMLTable(html_file, len(cols), divs=["summary"])
+
+    ht.start_table()
+    ht.header(cols)
+
+    # Overall coverage
+    row_info = []
+    row_info.append("<a href=\"{}\">{}</a>".format(coverage.SPEC_FILE, "overall"))
+    row_info.append("{:.2f}%".format(100 * suite.covered_frac))
+    covered = int(round(suite.total * suite.covered_frac))
+    uncovered = suite.total - covered
+    row_info.append("{}".format(covered))
+    row_info.append("{}".format(uncovered))
+    ht.print_row(row_info)
+
+    # Nonspecific-only coverage
+    row_info = []
+    row_info.append("<a href=\"{}\">{}</a>".format(coverage.NONSPEC_FILE, "nonspecific only"))
+    row_info.append("{:.2f}%".format(100 * suite.covered_nonspecific_frac))
+    covered = int(round(suite.total_nonspecific * suite.covered_nonspecific_frac))
+    uncovered = suite.total_nonspecific - covered
+    row_info.append("{}".format(covered))
+    row_info.append("{}".format(uncovered))
+    ht.print_row(row_info)
+
+    ht.end_table()
 
 def report_all_runs(suite, active_test_list):
 

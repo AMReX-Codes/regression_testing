@@ -294,10 +294,16 @@ class Suite(object):
         self.wallclockFile = "wallclock_history"
 
         self.useCmake = 0
-
         self.use_ctools = 1
 
+        self.reportCoverage = args.with_coverage
+
         # set automatically
+        self.covered_frac = None
+        self.total = None
+        self.covered_nonspecific_frac = None
+        self.total_nonspecific = None
+
         self.source_dir = ""
         self.source_build_dir ="" # Cmake build dir
         self.source_cmake_opts =""
