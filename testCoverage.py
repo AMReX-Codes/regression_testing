@@ -133,9 +133,9 @@ def main(cwd=None):
     # Return to original directory
     if cwd is not None: os.chdir(old_dir)
 
-    total_specific = len(covered) + len(no_cover)
-    total_no_specific = len(covered_no_specific) + len(no_cover_no_specific)
-    return covered_Frac, total_specific, covered_no_specificFrac, total_no_specific
+    total = len(covered) + len(no_cover)
+    total_nonspecific = len(covered_no_specific) + len(no_cover_no_specific)
+    return covered_Frac, total, covered_no_specificFrac, total_nonspecific
 
 def get_start_line(data_file):
     # This routine finds the line number where the list of runtime
@@ -273,24 +273,13 @@ def build_master(covered_temp, no_cover_temp, covered, no_cover, ignore,
 
 def remove_specific_params(covered, no_cover, ignore):
     # Determines the parameters that are specific to some of the
-    # tests in the suit.
+    # tests in the suite.
 
 
-    covered_temp = covered
-    no_cover_temp = no_cover
+    ignore = set(ignore)
 
-    for i in range(0, len(ignore)):
-
-        if ignore[i] in no_cover:
-            no_cover_temp.remove(ignore[i])
-        else:
-            pass
-
-
-        if ignore[i] in covered:
-            covered_temp.remove(ignore[i])
-        else:
-            pass
+    covered_temp = [param for param in covered if param not in ignore]
+    no_cover_temp = [param for param in no_cover if param not in ignore]
 
     return covered_temp, no_cover_temp
 

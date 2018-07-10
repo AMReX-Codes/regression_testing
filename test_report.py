@@ -971,7 +971,7 @@ def report_coverage(html_file, suite):
     ht.start_table()
     ht.header(cols)
 
-    # Specific coverage
+    # Overall coverage
     row_info = []
     row_info.append("<a href=\"{}\">{}</a>".format(coverage.SPEC_FILE, "overall"))
     row_info.append("{:.2f}%".format(100 * suite.covered_frac))
@@ -981,12 +981,12 @@ def report_coverage(html_file, suite):
     row_info.append("{}".format(uncovered))
     ht.print_row(row_info)
 
-    # Nonspecific coverage
+    # Nonspecific-only coverage
     row_info = []
     row_info.append("<a href=\"{}\">{}</a>".format(coverage.NONSPEC_FILE, "nonspecific only"))
     row_info.append("{:.2f}%".format(100 * suite.covered_nonspecific_frac))
-    covered = int(round(suite.total * suite.covered_nonspecific_frac))
-    uncovered = suite.total - covered
+    covered = int(round(suite.total_nonspecific * suite.covered_nonspecific_frac))
+    uncovered = suite.total_nonspecific - covered
     row_info.append("{}".format(covered))
     row_info.append("{}".format(uncovered))
     ht.print_row(row_info)
