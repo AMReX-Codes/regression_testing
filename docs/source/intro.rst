@@ -76,24 +76,16 @@ Using example-tests.ini as a template:
 
 #. In section [main]:
 
-   a. Set testTopDir to the absolute path to the parent directory of the test
-      suite, under which the benchmark and test output directories will be
-      nested, and set webTopDir to point to the desired root directory for
+   a. Set ``testTopDir`` to the absolute path to the parent directory of the
+      test suite, under which the benchmark and test output directories will be
+      nested, and set ``webTopDir`` to point to the desired root directory for
       generated webpages.
 
-   #. Configure the build settings if necessary. The sourceTree variable
+   #. Configure the build settings if necessary. The ``sourceTree`` variable
       determines the build system (C_Src => C++, F_Src => F90, AMReX =>
-      standalone AMReX tests), while COMP and FCOMP determine the compilers.
-      The numMakeJobs and add_to_c_make_command parameters allow for some
-      additional control over the make command.
-
-   #. For email notification when tests fail, set sendEmailWhenFail to 1 and
-      edit the emailTo and emailBody settings.The suite also supports automated
-      posts to Slack channels with information on test runs (when they begin and
-      end, and how many tests failed). To enable this functionality, set
-      slack_post to 1, fill in the username and channel fields, and set up a
-      webhook in a suite-readable plaintext file (see the Slack documentation).
-      Set either parameter to 0 to disable the notifications.
+      standalone AMReX tests), while ``COMP`` and ``FCOMP`` determine the
+      compilers. The ``numMakeJobs`` and ``add_to_c_make_command`` parameters
+      allow for some additional control over the make command.
 
 #. Setting up the repositories:
 
@@ -105,8 +97,9 @@ Using example-tests.ini as a template:
    confusion and potential merge conflicts.
 
    a. The AMReX repository has a special section in the INI file (aptly
-      designated [AMReX]). The dir parameter should be set to the absolute path
-      to the repository, and the branch parameter to the branch to pull.
+      designated [AMReX]). The ``dir`` parameter here should be set to the
+      absolute path to the repository, and the ``branch`` parameter to the
+      remote git branch to pull.
 
    #. The [source] section corresponds to the repository containing the main
       application code. The parameters should be set as they were for AMReX.
@@ -115,11 +108,11 @@ Using example-tests.ini as a template:
       problems should be listed in subsequent sections of the form
       [extra-<repository_name>].
 
-      These sections each have two additional parameters: comp_string, which
+      These sections each have two additional parameters: ``comp_string``, which
       contains any environment variables needed by the make system (e.g.
-      comp_string = MICROPHYSICS_HOME=<value>), and build, which indicates that
-      the repository contains build directories for test problems if set to 1.
-      The build parameter is optional and defaults to 1.
+      ``comp_string = REPOSITORY_HOME=repository/path``), and ``build``, which
+      indicates that the repository contains build directories for test problems
+      if set to 1. The ``build`` parameter is optional and is off by default.
 
 #. Problem setups:
 
@@ -128,15 +121,42 @@ Using example-tests.ini as a template:
    later in the guide - this list only touches on the main parameters necessary
    for the tests to function.
 
-   a. If the problem build directory for the problem is not contained in the
-      main repository (corresponding to [source]), it is necessary to set the
-      extra_build_dir parameter to the section title associated with the correct
-      host repository. Otherwise this may be left blank.
+   a. If the problem build directory is not contained in the main repository
+      (corresponding to [source]), it is necessary to set the
+      ``extra_build_dir`` parameter to the section title associated with the
+      correct host repository. Otherwise this may be left blank.
 
-   #. Set the value of buildDir to the `relative path` from the repository's root
-      directory to the problem build directory. For example, if the repository is
-      Castro and the build directory is .../Castro/Exec/Sod_stellar, buildDir
-      should be set to Exec/Sod_stellar.
+   #. Set the value of ``buildDir`` to the relative path from the repository's
+      root directory to the problem build directory. For example, if the
+      repository is Castro and the build directory is
+      path/to/Castro/Exec/Sod_stellar, ``buildDir`` should be set to
+      Exec/Sod_stellar.
 
-   #. Specify the input file to be supplied to the executable using the inputFile
-      parameter, and specify a probin file (with probinFile) if necessary.
+   #. Specify the input file to be supplied to the executable using the
+      ``inputFile`` parameter, and specify a probin file (with ``probinFile``)
+      if necessary.
+
+   #. Specify any parallelization options for the test problem. The parameters
+      ``useMPI``, ``useOMP`` and ``acc`` control whether the test uses MPI,
+      OpenMP, and OpenACC respectively. MPI tests also require the number of
+      processors ``numprocs``, and OpenMP tests the number of threads
+      ``numthreads``.
+
+   #. Use the ``addToCompileString`` parameter for general variable definitions
+      that should be supplied to the make command. The definitions should be
+      space delimited arguments, of the form VARIABLE_NAME=<value> (e.g.
+      ``addToCompileString = NET_INPUTS="path/to/network/inputs"``).
+
+   #. Additional runtime parameters to be supplied to the executable may be
+      specified with the ``runtime_params`` variable. The given string
+      will be appended to the command line arguments upon execution.
+
+#. Generate benchmarks and run the test:
+
+   Once the configuration file is complete, generate benchmarks and run the test
+   suite from the repository's main directory using the following commands:
+
+   .. code-block:: bash
+
+      $ ./regtest.py --make_benchmarks "helpful comment" configuration_file
+      $ ./regtest.py configuration_file
