@@ -500,6 +500,10 @@ def test_suite(argv):
         # if ( suite.useCmake ): bdir = suite.source_build_dir
 
         os.chdir(bdir)
+        # Create directory for executables
+        binDir = 'Bin'
+        if not os.path.exists(binDir):
+            os.mkdir(binDir)
 
         if test.reClean == 1:
             # for one reason or another, multiple tests use different
@@ -519,19 +523,40 @@ def test_suite(argv):
 
         coutfile="{}/{}.make.out".format(output_dir, test.name)
 
+        # First check if a previous test was compiled with the same options
         if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
-            if ( suite.useCmake ) :
-                comp_string, rc = suite.build_test_cmake(test=test, outfile=coutfile)
-            else:
-                comp_string, rc = suite.build_c(test=test, outfile=coutfile)
-
-            executable = test_util.get_recent_filename(bdir, "", ".ex")
-
+            comp_string = suite.get_comp_string_c(test=test, outfile=coutfile)
         elif suite.sourceTree == "F_Src" or test.testSrcTree == "F_Src":
-            comp_string, rc = suite.build_f(test=test, outfile=coutfile)
-            executable = test_util.get_recent_filename(bdir, "main", ".exe")
+            comp_string = suite.get_comp_string_f(test=test, outfile=coutfile)
+        found_previous_test = False
+        # Loop over the existing tests
+        for previous_test in test_list:
+            # Check if the compile command was the same
+            if previous_test.comp_string == comp_string:
+                found_previous_test = True
+                break
+        if found_previous_test:
+            # Avoid recompiling in this case
+            suite.log.log("found pre-built executable for this test")
+            rc = 0
+            executable = previous_test.executable
+        else:
+            # Recompile
+            if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
+                if ( suite.useCmake ) :
+                    comp_string, rc = suite.build_test_cmake(test=test, outfile=coutfile)
+                else:
+                    comp_string, rc = suite.build_c(test=test, outfile=coutfile)
+                executable = test_util.get_recent_filename(bdir, "", ".ex")
+
+            elif suite.sourceTree == "F_Src" or test.testSrcTree == "F_Src":
+                comp_string, rc = suite.build_f(test=test, outfile=coutfile)
+                executable = test_util.get_recent_filename(bdir, "main", ".exe")
+            # Copy executable to bin directory
+            shutil.copy( executable, binDir )
 
         test.comp_string = comp_string
+        test.executable = executable
 
         # make return code is 0 if build was successful
         if rc == 0: test.compile_successful = True
@@ -539,7 +564,9 @@ def test_suite(argv):
         test.build_time = time.time() - test.build_time
 
         # copy the make.out into the web directory
-        shutil.copy("{}/{}.make.out".format(output_dir, test.name), suite.full_web_dir)
+        outfile = "{}/{}.make.out".format(output_dir, test.name)
+        if os.path.exists(outfile):
+            shutil.copy(outfile, suite.full_web_dir)
 
         if not test.compile_successful:
             error_msg = "ERROR: compilation failed"
@@ -559,13 +586,13 @@ def test_suite(argv):
 
         needed_files = []
         if executable is not None:
-            needed_files.append((executable, "move"))
-            
+            needed_files.append((os.path.join(binDir,executable), "copy"))
+
         if test.run_as_script:
             needed_files.append((test.run_as_script, "copy"))
 
         if test.inputFile:
-            
+
             needed_files.append((test.inputFile, "copy"))
             # strip out any sub-directory from the build dir
             test.inputFile = os.path.basename(test.inputFile)
@@ -653,7 +680,7 @@ def test_suite(argv):
 
         if args.with_valgrind:
             base_cmd = "valgrind " + args.valgrind_options + " " + base_cmd
-            
+
         if test.run_as_script:
             base_cmd = "./{} {}".format(test.run_as_script, test.script_args)
 
@@ -742,7 +769,7 @@ def test_suite(argv):
 
             # get the number of levels for reporting
             if not test.run_as_script:
-                
+
                 prog = "{} -l {}".format(suite.tools["fboxinfo"], output_file)
                 stdout0, stderr0, rc = test_util.run(prog)
                 test.nlevels = stdout0.rstrip('\n')
@@ -778,32 +805,32 @@ def test_suite(argv):
                     if not compare_file == "":
 
                         suite.log.log("benchmark file: {}".format(bench_file))
-                        
+
                         if test.run_as_script:
-                            
+
                             command = "diff {} {}".format(bench_file, output_file)
-                            
+
                         else:
-                            
+
                             command = "{} -n 0 {} {}".format(suite.tools["fcompare"],
                                     bench_file, output_file)
 
                         sout, serr, ierr = test_util.run(command,
                                                          outfile=test.comparison_outfile,
                                                          store_command=True)
-                                                         
+
                         if test.run_as_script:
-                            
+
                             test.compare_successful = not sout
-                            
+
                         # Comparison within tolerance - reliant on fvarnames and fcompare
                         elif test.tolerance is not None:
-                            
+
                             vars = get_variable_names(suite, bench_file)
                             test.compare_successful = process_comparison_results(sout, vars, test)
-                            
+
                         else:
-                            
+
                             test.compare_successful = ierr == 0
 
                         if test.compareParticles:
@@ -852,26 +879,26 @@ def test_suite(argv):
             elif test.doComparison:   # make_benchmarks
 
                 if not compare_file == "":
-                    
+
                     if not output_file == compare_file:
                         source_file = output_file
                     else:
                         source_file = compare_file
-                        
+
                     suite.log.log("storing output of {} as the new benchmark...".format(test.name))
                     suite.log.indent()
                     suite.log.warn("new benchmark file: {}".format(compare_file))
                     suite.log.outdent()
-                    
+
                     if test.run_as_script:
-                        
+
                         bench_path = os.path.join(bench_dir, compare_file)
                         try: os.remove(bench_path)
                         except: pass
                         shutil.copy(source_file, bench_path)
-                    
+
                     else:
-                        
+
                         try: shutil.rmtree("{}/{}".format(bench_dir, compare_file))
                         except: pass
                         shutil.copytree(source_file, "{}/{}".format(bench_dir, compare_file))
@@ -1056,7 +1083,7 @@ def test_suite(argv):
                 pass
 
             if test.inputFile:
-                
+
                 shutil.copy(test.inputFile, "{}/{}.{}".format(
                     suite.full_web_dir, test.name, test.inputFile) )
 
@@ -1101,12 +1128,12 @@ def test_suite(argv):
         #----------------------------------------------------------------------
         suite.log.log("archiving the output...")
         for pfile in os.listdir(output_dir):
-            
+
             if (os.path.isdir(pfile) and
                 re.match("{}.*_(plt|chk)[0-9]+".format(test.name), pfile)):
 
                 if suite.purge_output == 1 and not pfile == output_file:
-                    
+
                     # delete the plt/chk file
                     try: shutil.rmtree(pfile)
                     except:
