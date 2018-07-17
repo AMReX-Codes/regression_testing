@@ -119,7 +119,7 @@ class Test(object):
         self.particleTypes = ""
 
         self._check_performance = 0
-        self._performance_threshold = 1.5
+        self._performance_threshold = 1.2
         self._runs_to_average = 5
         self.past_average = None
 
