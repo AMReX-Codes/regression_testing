@@ -20,6 +20,7 @@ A simple regression testing toolkit for AMReX-based applications.
    :caption: Contents:
 
    intro
+   analysis
 
 Indices and tables
 ==================
