@@ -39,5 +39,21 @@ parameters. Quotes on the parameters are optional.
 Parameter Coverage
 ==================
 
+Parameter coverage reports may also be automatically generated for applications
+that output job_info files conforming to the MAESTRO and Castro format.
+
 Skipping Comparison
 ===================
+
+As these routines were designed primarily for regression testing, a comparison
+to pre-generated benchmarks is made for each test problem after execution. In
+the event that this behavior is not desired (perhaps all analysis is done via
+a Python script, as described in `Custom Analysis Routines`_), comparison to
+benchmarks may be disabled for an individual test problem by adding the line
+``doComparison = 0`` to the problem's section in the configuration file.
+Comparison to benchmarks may also be disabled globally by supplying the
+--skip_comparison flag to the main module upon execution of the test suite:
+
+.. code-block:: bash
+
+   $ ./regtest.py --skip_comparison configuration_file
