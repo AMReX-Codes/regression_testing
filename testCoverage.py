@@ -98,7 +98,7 @@ def main(cwd=None):
 
         start_line = get_start_line(file_paths[i])
 
-        covered_temp,  no_cover_temp, All = list_parameters(file_paths[i],
+        covered_temp, no_cover_temp, All = list_parameters(file_paths[i],
                                                             start_line, All)
 
         if i == 0: no_cover = no_cover_temp   # Initializing no_cover
@@ -107,6 +107,12 @@ def main(cwd=None):
         covered, no_cover, ignore, ignore_master, all_params = build_master(
             covered_temp, no_cover_temp, covered,
             no_cover, ignore, ignore_master, all_params)
+
+    print('castro.diffuse_temp' in All)
+    print('castro.diffuse_enth' in All)
+    print('castro.diffuse_spec' in All)
+    print('castro.diffuse_vel' in All)
+    print('castro.diffuse_cutoff_density' in All)
 
     All = remove_duplicates(All)
     # build_master needs to be executed one more time than the number of cycles
@@ -147,7 +153,7 @@ def get_start_line(data_file):
     # Used to keep track of the line to determine start_line
     counter = 0
 
-    # Finds the Runtime Section and claculates the start_line
+    # Finds the Runtime Section and calculates the start_line
     with open(data_file, mode='r') as data_file:
         for line in data_file:
             if "Parameter" in line:
@@ -158,10 +164,10 @@ def get_start_line(data_file):
             else:
                 counter = counter + 1
 
-         # Checks to see if the start_line has been found, else it will stop
+        # Checks to see if the start_line has been found, else it will stop
         if start_line <= 0:
             print(data_file)
-            sys.exit("Start_Line was not identified")
+            raise RuntimeError("Start_Line was not identified")
         else:
             data_file.close()
             return start_line;
@@ -305,7 +311,7 @@ def get_files():
         # Gets absolute path to the directories
         abs_dirs.append(os.path.join(data, dirs[i]))
 
-        # Gets the job_info files from .tgz files
+    # Gets the job_info files from .tgz files
     for i in range(0, len(abs_dirs)):
         for file in os.listdir(abs_dirs[i]):
             # Finds the tar files and extracts only job_info file
