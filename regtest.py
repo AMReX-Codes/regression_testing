@@ -259,7 +259,7 @@ def determine_coverage(suite):
     try:
         results = coverage.main(suite.full_test_dir)
     except:
-        suite.log.warn("error generating parameter coverage reports, check formatting.")
+        suite.log.warn("error generating parameter coverage reports, check formatting")
         return
 
     if not any([res is None for res in results]):
@@ -269,8 +269,11 @@ def determine_coverage(suite):
         suite.covered_nonspecific_frac = results[2]
         suite.total_nonspecific = results[3]
 
-        shutil.copy(suite.full_test_dir + coverage.SPEC_FILE, suite.full_web_dir)
-        shutil.copy(suite.full_test_dir + coverage.NONSPEC_FILE, suite.full_web_dir)
+        spec_file = os.path.join(suite.full_test_dir, coverage.SPEC_FILE)
+        nonspec_file = os.path.join(suite.full_test_dir, coverage.NONSPEC_FILE)
+
+        shutil.copy(spec_file, suite.full_web_dir)
+        shutil.copy(nonspec_file, suite.full_web_dir)
 
 def test_suite(argv):
     """
