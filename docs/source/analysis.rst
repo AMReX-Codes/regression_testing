@@ -39,8 +39,31 @@ parameters. Quotes on the parameters are optional.
 Parameter Coverage
 ==================
 
-Parameter coverage reports may also be automatically generated for applications
-that output job_info files conforming to the MAESTRO and Castro format.
+Parameter coverage reports may also be automatically generated for Castro and
+MAESTRO applications, or others that produce job_info files of the same format.
+The required format consists of a clearly defined section header containing the
+"Parameter" keyword, at least one line of separation (may be anything), and then
+a list of parameters starting at the next "=" sign. Covered parameters should be
+marked with a [\*], and the parameter section should be the last one in the
+file.
+
+If this feature is enabled, the suite will output files titled coverage.out
+and coverage_nonspecific.out to the suite run directory under @suiteName@-tests.
+The former lists all parameters left uncovered by the test suite, including
+those specific to individual test problems, and gives counts of the covered
+and uncovered parameters along with the overall coverage percentage. The
+latter contains the same information, but omitting test-specific parameters.
+These two files are also copied to the corresponding web directory, and
+linked to from a table on the test run's index page. The table displays the
+coverage percentage and parameter counts from the outfiles.
+
+To enable parameter coverage, add ``reportCoverage = 1`` to the [main] section
+of the configuration file. The --with_coverage flag may also be supplied to
+the executable, having the same effect:
+
+.. code-block:: bash
+
+   $ ./regtest.py --with_coverage configuration_file
 
 Skipping Comparison
 ===================
