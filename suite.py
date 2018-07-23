@@ -200,7 +200,7 @@ class Test(object):
     def record_runtime(self, suite):
 
         test = self.passed and not self.compileTest
-        suite = not suite.args.do_temp_run and not suite.make_benchmarks
+        suite = not suite.args.do_temp_run and not suite.args.make_benchmarks
         return test and suite
 
     def set_compile_test(self, value):
