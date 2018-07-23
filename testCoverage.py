@@ -95,6 +95,11 @@ def main(cwd=None):
     All = []
 
     for i in range(0, len(file_paths)):
+<<<<<<< HEAD
+=======
+
+        start_line = get_start_line(file_paths[i])
+>>>>>>> d565755d30fe45087ad7dfd225282544d0192536
 
         covered_temp, no_cover_temp, All = list_parameters(file_paths[i],
                                                            All)
