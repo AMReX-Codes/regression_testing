@@ -186,6 +186,17 @@ class Test(object):
     #           Static members and properties             #
     #######################################################
 
+    @property
+    def passed(self):
+        """ Whether the test passed or not """
+
+        compile = self.compile_successful
+        if self.compileTest or not compile: return compile
+
+        compare = not self.doComparison or self.compare_successful
+        analysis = self.analysisRoutine == "" or self.analysis_successful
+        return compare and analysis
+
     def set_compile_test(self, value):
         """ Sets whether this test is compile-only """
 
@@ -361,6 +372,12 @@ class Suite(object):
         # if the test was run on a branch other than the default, then
         # an asterisk will appear next to the date in the main page
         self.default_branch = "master"
+
+    @property
+    def timing_default(self):
+        """ Determines the format of the wallclock history JSON file """
+
+        return {"runtimes": [], "dates": []}
 
     def check_test_dir(self, dir_name):
         """ given a string representing a directory, check if it points to
@@ -564,7 +581,7 @@ class Suite(object):
         valid_dirs, all_tests = self.get_run_history(check_activity=False)
 
         # store the timings in a dictionary
-        timings = {test: {"dates": [], "runtimes": []} for test in all_tests}
+        timings = dict()
 
         for dir in valid_dirs:
 
@@ -594,8 +611,10 @@ class Suite(object):
 
                 try: time = extract_time(file)
                 except RuntimeError: continue
-                timings[test]["runtimes"].append(time)
-                timings[test]["dates"].append(dir.rstrip("/"))
+
+                test_dict = timings.setdefault(test, self.timing_default)
+                test_dict["runtimes"].append(time)
+                test_dict["dates"].append(dir.rstrip("/"))
 
                 file.close()
 
@@ -617,8 +636,11 @@ class Suite(object):
         # make the plots
         for t in all_tests:
 
-            days = list(map(convert_date, timings[t]["dates"]))
-            times = timings[t]["runtimes"]
+            try: test_dict = timings[t]
+            except KeyError: continue
+
+            days = list(map(convert_date, test_dict["dates"]))
+            times = test_dict["runtimes"]
 
             if len(times) == 0: continue
 

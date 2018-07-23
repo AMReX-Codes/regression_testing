@@ -686,8 +686,6 @@ def test_suite(argv):
 
         # Check for performance drop
         if test.check_performance: test_performance(test, suite, runtimes)
-        runtimes[test.name]["runtimes"].insert(0, test.wall_time)
-        runtimes[test.name]["dates"].insert(0, suite.test_dir.rstrip("/"))
 
         #----------------------------------------------------------------------
         # do the comparison
@@ -975,6 +973,14 @@ def test_suite(argv):
                 if test.doVis or test.analysisRoutine != "":
                     suite.log.warn("no output file.  Skipping visualization")
 
+        #----------------------------------------------------------------------
+        # if the test ran and passed, add its runtime to the dictionary
+        #----------------------------------------------------------------------
+
+        if not args.do_temp_run and test.passed and not test.compileTest:
+            test_dict = runtimes.setdefault(test.name, suite.timing_default)
+            test_dict["runtimes"].insert(0, test.wall_time)
+            test_dict["dates"].insert(0, suite.test_dir.rstrip("/"))
 
         #----------------------------------------------------------------------
         # move the output files into the web directory
