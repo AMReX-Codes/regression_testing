@@ -977,7 +977,7 @@ def test_suite(argv):
         # if the test ran and passed, add its runtime to the dictionary
         #----------------------------------------------------------------------
 
-        if not args.do_temp_run and test.passed and not test.compileTest:
+        if test.record_runtime(suite):
             test_dict = runtimes.setdefault(test.name, suite.timing_default)
             test_dict["runtimes"].insert(0, test.wall_time)
             test_dict["dates"].insert(0, suite.test_dir.rstrip("/"))

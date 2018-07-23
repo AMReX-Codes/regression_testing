@@ -197,6 +197,12 @@ class Test(object):
         analysis = self.analysisRoutine == "" or self.analysis_successful
         return compare and analysis
 
+    def record_runtime(self, suite):
+
+        test = self.passed and not self.compileTest
+        suite = not suite.args.do_temp_run and not suite.make_benchmarks
+        return test and suite
+
     def set_compile_test(self, value):
         """ Sets whether this test is compile-only """
 
