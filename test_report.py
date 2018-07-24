@@ -18,6 +18,10 @@ a.passed:link {color: black; text-decoration: none;}
 a.passed:visited {color: black; text-decoration: none;}
 a.passed:hover {color: #ee00ee; text-decoration: underline;}
 
+a.passed-slowly:link {color: black; text-decoration: none;}
+a.passed-slowly:visited {color: black; text-decoration: none;}
+a.passed-slowly:hover {color: #ee00ee; text-decoration: underline;}
+
 h3.failed {text-decoration: none; display: inline;
            color: yellow; background-color: red; padding: 2px;}
 
@@ -54,6 +58,7 @@ td {border-width: 0px;
     vertical-align: middle;}
 
 td.passed {background-color: lime; opacity: 0.8;}
+td.passed-slowly {background-color: yellow; opacity: 0.8;}
 td.failed {background-color: red; color: yellow; opacity: 0.8;}
 td.compfailed {background-color: purple; color: yellow; opacity: 0.8;}
 td.crashed {background-color: black; color: yellow; opacity: 0.8;}
@@ -112,6 +117,7 @@ div.verticaltext {text-align: center;
 #summary td.highlight {color: red;}
 
 #summary td.passed {background-color: lime; }
+#summary td.passed-slowly {background-color: yellow; }
 #summary td.failed {background-color: red; color: yellow;}
 #summary td.benchmade {background-color: orange;}
 #summary td.compfailed {background-color: purple; color: yellow;}
@@ -184,6 +190,7 @@ r"""
   <td align=center class="compfailed"><h3>Compilation Failed</h3></td>
   <td align=center class="crashed"><h3>Crashed</h3></td>
   <td align=center class="passed"><h3>Passed</h3></td>
+  <td align=center class="passed-slowly"><h3>Performance Drop</h3></td>
 </CENTER>
 </TABLE>
 """
@@ -350,14 +357,19 @@ def report_single_test(suite, test, tests, failure_msg=None):
             if len(test.backtrace) > 0: compare_successful = False
 
         # write out the status file for this problem, with either
-        # PASSED, COMPILE FAILED, or FAILED
+        # PASSED, PASSED SLOWLY, COMPILE FAILED, or FAILED
         status_file = "{}.status".format(test.name)
         with open(status_file, 'w') as sf:
             if (compile_successful and
                 (test.compileTest or ((not test.compileTest) and
                                           compare_successful and
                                           analysis_successful))):
-                sf.write("PASSED\n")
+                string = "PASSED\n"
+                if test.check_performance:
+                    meets_threshold, _, _ = test.measure_performance()
+                    if not (meets_threshold is None or meets_threshold):
+                        string = "PASSED SLOWLY\n"
+                sf.write(string)
                 suite.log.success("{} PASSED".format(test.name))
             elif not compile_successful:
                 sf.write("COMPILE FAILED\n")
@@ -813,7 +825,7 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
                 for line in sf:
                     if line.find("PASSED") >= 0:
                         status = "passed"
-                        td_class = "passed"
+                        td_class = "passed-slowly" if "SLOWLY" in line else "passed"
                         num_passed += 1
                     elif line.find("COMPILE FAILED") >= 0:
                         status = "compile fail"
@@ -1079,8 +1091,8 @@ def report_all_runs(suite, active_test_list):
 
                     for line in sf:
                         if line.find("PASSED") >= 0:
-                            status = "passed"
-                            emoji = ":)"
+                            if "SLOWLY" not in line: status, emoji = "passed", ":)"
+                            else: status, emoji = "passed-slowly", ":]"
                         elif line.find("COMPILE FAILED") >= 0:
                             status = "compfailed"
                             emoji = ":("

@@ -228,31 +228,32 @@ def test_performance(test, suite, runtimes):
         does not compare favorably to past logged times """
 
     if test.name not in runtimes: return
-    old_times = list(filter(lambda x: x > 0.0, runtimes[test.name]))
+    runtimes = runtimes[test.name]["runtimes"]
 
-    if len(old_times) < 1:
+    if len(runtimes) < 1:
         suite.log.log("no completed runs found")
         return
 
-    num_times = len(old_times)
+    num_times = len(runtimes)
     suite.log.log("{} completed run(s) found".format(num_times))
     suite.log.log("checking performance ...")
 
     # Slice out correct number of times
     run_diff = num_times - test.runs_to_average
     if run_diff > 0:
-        old_times = old_times[:-run_diff]
+        runtimes = runtimes[:-run_diff]
         num_times = test.runs_to_average
     else:
         test.runs_to_average = num_times
 
-    test.past_average = sum(old_times) / len(old_times)
+    test.past_average = sum(runtimes) / num_times
 
     # Test against threshold
     meets_threshold, percentage, compare_str = test.measure_performance()
     if meets_threshold is not None and not meets_threshold:
-        suite.log.warn("test ran {:.1f}% {} than running average of the past {} runs".format(
-            percentage, compare_str, num_times))
+        warn_msg = "test ran {:.1f}% {} than running average of the past {} runs"
+        warn_msg = warn_msg.format(percentage, compare_str, num_times)
+        suite.log.warn(warn_msg)
 
 def test_suite(argv):
     """
@@ -444,10 +445,7 @@ def test_suite(argv):
     #--------------------------------------------------------------------------
     # Get execution times from previous runs
     #--------------------------------------------------------------------------
-    runtimes = suite.get_wallclock_history(active_test_list, use_numpy=False)
-    for test in set(runtimes.keys()).union(set(active_test_list)):
-        if test in runtimes: runtimes[test].append(0.0)
-        else: runtimes[test] = [0.0]
+    runtimes = suite.get_wallclock_history()
 
     #--------------------------------------------------------------------------
     # main loop over tests
@@ -688,8 +686,6 @@ def test_suite(argv):
 
         # Check for performance drop
         if test.check_performance: test_performance(test, suite, runtimes)
-        # Assumes 0.0 has already been appended
-        runtimes[test.name][-1] = test.wall_time
 
         #----------------------------------------------------------------------
         # do the comparison
@@ -824,9 +820,6 @@ def test_suite(argv):
 
                     with open("{}.status".format(test.name), 'w') as cf:
                         cf.write("benchmarks updated.  New file:  {}\n".format(compare_file) )
-
-                    # Just get this test run
-                    runtimes[test.name] = runtimes[test.name][-1:]
 
                 else:
                     with open("{}.status".format(test.name), 'w') as cf:
@@ -980,6 +973,14 @@ def test_suite(argv):
                 if test.doVis or test.analysisRoutine != "":
                     suite.log.warn("no output file.  Skipping visualization")
 
+        #----------------------------------------------------------------------
+        # if the test ran and passed, add its runtime to the dictionary
+        #----------------------------------------------------------------------
+
+        if test.record_runtime(suite):
+            test_dict = runtimes.setdefault(test.name, suite.timing_default)
+            test_dict["runtimes"].insert(0, test.wall_time)
+            test_dict["dates"].insert(0, suite.test_dir.rstrip("/"))
 
         #----------------------------------------------------------------------
         # move the output files into the web directory

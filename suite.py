@@ -3,6 +3,7 @@ from __future__ import print_function
 import datetime
 import json
 import os
+import glob
 import shutil
 import sys
 import test_util
@@ -185,6 +186,23 @@ class Test(object):
     #           Static members and properties             #
     #######################################################
 
+    @property
+    def passed(self):
+        """ Whether the test passed or not """
+
+        compile = self.compile_successful
+        if self.compileTest or not compile: return compile
+
+        compare = not self.doComparison or self.compare_successful
+        analysis = self.analysisRoutine == "" or self.analysis_successful
+        return compare and analysis
+
+    def record_runtime(self, suite):
+
+        test = self.passed and not self.compileTest
+        suite = not suite.args.do_temp_run and not suite.args.make_benchmarks
+        return test and suite
+
     def set_compile_test(self, value):
         """ Sets whether this test is compile-only """
 
@@ -361,6 +379,12 @@ class Suite(object):
         # an asterisk will appear next to the date in the main page
         self.default_branch = "master"
 
+    @property
+    def timing_default(self):
+        """ Determines the format of the wallclock history JSON file """
+
+        return {"runtimes": [], "dates": []}
+
     def check_test_dir(self, dir_name):
         """ given a string representing a directory, check if it points to
             a valid directory.  If so, return the directory name """
@@ -515,7 +539,7 @@ class Suite(object):
         for d in valid_dirs:
 
             for f in os.listdir(self.webTopDir + d):
-                if f.endswith(".status") and not f.startswith("20"):
+                if f.endswith(".status") and not (f.startswith("20") or f == "branch.status"):
                     index = f.rfind(".status")
                     test_name = f[0:index]
 
@@ -527,12 +551,26 @@ class Suite(object):
 
         return valid_dirs, all_tests
 
-    def get_wallclock_history(self, valid_dirs=None, all_tests=None, use_numpy=None):
+    def get_wallclock_history(self):
         """ returns the wallclock time history for all the valid tests as a dictionary
             of NumPy arrays. Set filter_times to False to return 0.0 as a placeholder
             when there was no available execution time. """
 
-        if use_numpy is None: use_numpy = np in globals()
+        def extract_time(file):
+            """ Helper function for getting runtimes """
+
+            for line in file:
+
+                if "Execution time" in line:
+                    # this is of the form: <li>Execution time: 412.930 s
+                    return float(line.split(":")[1].strip().split(" ")[0])
+
+                elif "(seconds)" in line:
+                    # this is the older form -- split on "="
+                    # form: <p><b>Execution Time</b> (seconds) = 399.414828
+                    return float(line.split("=")[1])
+
+            raise RuntimeError()
 
         json_file = self.get_wallclock_file()
 
@@ -540,47 +578,51 @@ class Suite(object):
 
             try:
                 timings = json.load(open(json_file, 'r'))
-                if use_numpy: return {k: np.array(v) for k, v in timings.items()}
+                # Check for proper format
+                item = next(iter(timings.values()))
+                if not isinstance(item, dict): raise JSONDecodeError()
                 return timings
             except (IOError, OSError, JSONDecodeError): pass
 
-        if valid_dirs is None or all_tests is None:
-            valid_dirs, all_tests = self.get_run_history(check_activity=False)
+        valid_dirs, all_tests = self.get_run_history(check_activity=False)
 
-        # store the timings in NumPy arrays in a dictionary
-        timings = {}
-        N = len(valid_dirs)
-        for t in all_tests:
-            if use_numpy: timings[t] = np.zeros(N, dtype=np.float64)
-            else: timings[t] = [0.0] * N
+        # store the timings in a dictionary
+        timings = dict()
 
-        # now get the timings from the web output
-        for n, d in enumerate(valid_dirs):
-            for t in all_tests:
-                ofile = "{}/{}/{}.html".format(self.webTopDir, d, t)
-                try: f = open(ofile)
-                except:
-                    timings[t][n] = 0.0
-                    continue
+        for dir in valid_dirs:
 
-                found = False
-                for line in f:
-                    if "Execution time" in line:
-                        found = True
-                        # this is of the form: <li>Execution time: 412.930 s
-                        timings[t][n] = float(line.split(":")[1].strip().split(" ")[0])
-                        break
+            # Get status files
+            dir_path = os.path.join(self.webTopDir, dir)
+            sfiles = glob.glob("{}/*.status".format(dir_path))
+            sfiles = list(filter(os.path.isfile, sfiles))
 
-                    elif "(seconds)" in line:
-                        found = True
-                        # this is the older form -- split on "="
-                        # form: <p><b>Execution Time</b> (seconds) = 399.414828
-                        timings[t][n] = float(line.split("=")[1])
-                        break
+            # Tests that should be counted
+            passed = set()
 
-                f.close()
-                if not found:
-                    timings[t][n] = 0.0
+            for i, file in enumerate(map(open, sfiles)):
+
+                contents = file.read()
+
+                if "PASSED" in contents:
+                    filename = os.path.basename(sfiles[i])
+                    passed.add(filename.split(".")[0])
+
+                file.close()
+
+            for test in filter(lambda x: x in passed, all_tests):
+
+                file = "{}/{}.html".format(dir_path, test)
+                try: file = open(file)
+                except: continue
+
+                try: time = extract_time(file)
+                except RuntimeError: continue
+
+                test_dict = timings.setdefault(test, self.timing_default)
+                test_dict["runtimes"].append(time)
+                test_dict["dates"].append(dir.rstrip("/"))
+
+                file.close()
 
         return timings
 
@@ -589,26 +631,22 @@ class Suite(object):
 
         if active_test_list is not None:
             valid_dirs, all_tests = self.get_run_history(active_test_list)
-        timings = self.get_wallclock_history(valid_dirs=valid_dirs, all_tests=all_tests)
+        timings = self.get_wallclock_history()
+
+        def convert_date(date):
+            """ Convert to a matplotlib readable date"""
+
+            if len(date) > 10: date = date[:date.rfind("-")]
+            return dates.datestr2num(date)
 
         # make the plots
         for t in all_tests:
-            _d = valid_dirs[:]
-            _t = list(timings[t])
 
-            days = []
-            times = []
-            for n, ttime in enumerate(_t):
-                if not ttime == 0.0:
-                    # sometimes the date is of the form YYYY-MM-DD-NNN, where NNN
-                    # is the run -- remove that
-                    date = _d[n]
-                    if len(date) > 10:
-                        date = date[:date.rfind("-")]
+            try: test_dict = timings[t]
+            except KeyError: continue
 
-                    days.append(dates.datestr2num(date))
-                    times.append(ttime)
-
+            days = list(map(convert_date, test_dict["dates"]))
+            times = test_dict["runtimes"]
 
             if len(times) == 0: continue
 
@@ -627,7 +665,7 @@ class Suite(object):
             plt.ylabel("time (seconds)")
             plt.title(t)
 
-            if max(times)/min(times) > 10.0:
+            if max(times) / min(times) > 10.0:
                 ax.set_yscale("log")
 
             fig = plt.gcf()
