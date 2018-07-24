@@ -95,11 +95,9 @@ def main(cwd=None):
     All = []
 
     for i in range(0, len(file_paths)):
-
-        start_line = get_start_line(file_paths[i])
-
-        covered_temp,  no_cover_temp, All = list_parameters(file_paths[i],
-                                                            start_line, All)
+        
+        covered_temp, no_cover_temp, All = list_parameters(file_paths[i],
+                                                           All)
 
         if i == 0: no_cover = no_cover_temp   # Initializing no_cover
         if i == 0: covered = covered_temp     # Initializing covered
@@ -137,37 +135,29 @@ def main(cwd=None):
     total_nonspecific = len(covered_no_specific) + len(no_cover_no_specific)
     return covered_Frac, total, covered_no_specificFrac, total_nonspecific
 
-def get_start_line(data_file):
+def get_start_line(lines, fname):
     # This routine finds the line number where the list of runtime
     # parameters begins
 
-
     # The line where the Runtime Parameter Information begins
-    start_line = 0
-    # Used to keep track of the line to determine start_line
-    counter = 0
+    start_line = None
 
-    # Finds the Runtime Section and claculates the start_line
-    with open(data_file, mode='r') as data_file:
-        for line in data_file:
-            if "Parameter" in line:
-                # Start line of parameter lists when the first line of
-                # the file is line 1
-                start_line = counter + 3
-                break
-            else:
-                counter = counter + 1
+    # Finds the parameter and calculates the start_line
+    for i, line in enumerate(lines):
 
-         # Checks to see if the start_line has been found, else it will stop
-        if start_line <= 0:
-            print(data_file)
-            sys.exit("Start_Line was not identified")
-        else:
-            data_file.close()
-            return start_line;
+        if "Parameter" in line:
+            start_line = i + 2
+            break
 
+    if start_line is None:
+        raise RuntimeError("Unable to locate start line in {}".format(fname))
 
-def list_parameters(data_file, start_line, All):
+    while "=" not in lines[start_line]:
+        start_line += 1
+
+    return start_line
+
+def list_parameters(data_file, All):
     # This routine finds the parameters that have been covered by the test suite
     # and those that haven't been covered by the test suite and outputs two
     # lists, one for each type of parameter, covered and no_cover
@@ -176,26 +166,28 @@ def list_parameters(data_file, start_line, All):
     covered = []      # List to store the names of the covered parameters
     no_cover = []     # List to store the names of the non-covered parameters
 
-    with open(data_file, mode='r') as data_file:
-        for i, line in enumerate(data_file):
-            if i <= start_line:
-                # Ignores lines that are before the Runtime Parameter Information
-                pass
-            else:
-               if r'[*]' in line:
-                   # Singles out the covered parameters and writes their names
-                   parameter = re.split(r' +', line.replace("[*]"," "))
-                   if parameter:
-                       temp = parameter[1]
-                       covered.append(temp)
-               else:
-                   # Takes the rest of the parameters (not covered) and writes their names
-                   parameter_no_check = re.split(r' +', line)
-                   if parameter_no_check and parameter_no_check[1] != "Restart":
-                       no_cover.append(parameter_no_check[1])
+    with open(data_file, mode='r') as file:
 
-    data_file.close()
-    All = covered+no_cover+All
+        lines = list(file)
+        start_line = get_start_line(lines, data_file)
+
+        for line in lines[start_line:]:
+
+            if r'[*]' in line:
+
+                # Singles out the covered parameters and writes their names
+                parameter = re.split(r' +', line.replace("[*]", "").strip())
+                if not parameter: continue
+
+                covered.append(parameter[0])
+                continue
+
+            # Takes the rest of the parameters (not covered) and writes their names
+            parameter = re.split(r' +', line.strip())
+            if parameter and parameter[0] != "Restart":
+                no_cover.append(parameter[0])
+
+    All = covered + no_cover + All
     return covered, no_cover, All
 
 
@@ -295,22 +287,17 @@ def get_files():
     data = os.getcwd()
 
     # Determines tests in the most recent test
-    dirs = []
-    dirs = [ d for d in os.listdir(data) if os.path.isdir(d) ]
+    dirs = filter(lambda d: os.path.isdir(d), os.listdir(data))
+    dirs = [os.path.join(data, d) for d in dirs]
 
-    abs_dirs = []
     file_paths = []
 
-    for i in range(0, len(dirs)):
-        # Gets absolute path to the directories
-        abs_dirs.append(os.path.join(data, dirs[i]))
-
-        # Gets the job_info files from .tgz files
-    for i in range(0, len(abs_dirs)):
-        for file in os.listdir(abs_dirs[i]):
+    # Gets the job_info files from .tgz files
+    for dir in dirs:
+        for file in os.listdir(dir):
             # Finds the tar files and extracts only job_info file
             if file.endswith(".tgz"):
-                tmp = os.path.join(abs_dirs[i], file)
+                tmp = os.path.join(dir, file)
                 file_name = os.path.join(data,
                                          os.path.splitext(file)[0])
                 # Extracts the job_info file
@@ -318,7 +305,7 @@ def get_files():
                                           +"/job_info")
                 file_name = file_name+"/job_info"
 
-                file_here = os.path.join(abs_dirs[i], file_name)
+                file_here = os.path.join(dir, file_name)
                 file_paths.append(file_here)
 
     # List of directories with file_name (e.g. job_info)

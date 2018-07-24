@@ -255,6 +255,27 @@ def test_performance(test, suite, runtimes):
         warn_msg = warn_msg.format(percentage, compare_str, num_times)
         suite.log.warn(warn_msg)
 
+def determine_coverage(suite):
+
+    try:
+        results = coverage.main(suite.full_test_dir)
+    except:
+        suite.log.warn("error generating parameter coverage reports, check formatting")
+        return
+
+    if not any([res is None for res in results]):
+
+        suite.covered_frac = results[0]
+        suite.total = results[1]
+        suite.covered_nonspecific_frac = results[2]
+        suite.total_nonspecific = results[3]
+
+        spec_file = os.path.join(suite.full_test_dir, coverage.SPEC_FILE)
+        nonspec_file = os.path.join(suite.full_test_dir, coverage.NONSPEC_FILE)
+
+        shutil.copy(spec_file, suite.full_web_dir)
+        shutil.copy(nonspec_file, suite.full_web_dir)
+
 def test_suite(argv):
     """
     the main test suite driver
@@ -1091,19 +1112,7 @@ def test_suite(argv):
     #--------------------------------------------------------------------------
     # parameter coverage
     #--------------------------------------------------------------------------
-    if suite.reportCoverage:
-
-        results = coverage.main(suite.full_test_dir)
-
-        if not any([res is None for res in results]):
-
-            suite.covered_frac = results[0]
-            suite.total = results[1]
-            suite.covered_nonspecific_frac = results[2]
-            suite.total_nonspecific = results[3]
-
-            shutil.copy(suite.full_test_dir + coverage.SPEC_FILE, suite.full_web_dir)
-            shutil.copy(suite.full_test_dir + coverage.NONSPEC_FILE, suite.full_web_dir)
+    if suite.reportCoverage: determine_coverage(suite)
 
     #--------------------------------------------------------------------------
     # write the report for this instance of the test suite
