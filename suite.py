@@ -582,7 +582,7 @@ class Suite(object):
                 item = next(iter(timings.values()))
                 if not isinstance(item, dict): raise JSONDecodeError()
                 return timings
-            except (IOError, OSError, JSONDecodeError): pass
+            except (IOError, OSError, JSONDecodeError, StopIteration): pass
 
         valid_dirs, all_tests = self.get_run_history(check_activity=False)
 
