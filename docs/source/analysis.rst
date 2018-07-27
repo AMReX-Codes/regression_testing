@@ -5,6 +5,30 @@ Analysis Features
 Custom Analysis Routines
 ========================
 
+Each test problem may optionally be equipped with a user-defined analysis
+routine, which takes in the output data file and up to one other argument,
+and exits with a nonzero return code on a failure. The suite requires the
+relative path to the executable from the root directory of the build repository,
+specified via the ``analysisRoutine`` parameter in the configuration file. Two
+additional parameters may be supplied - ``analysisMainArgs`` and
+``analysisOutputImage``. The former must be the name of a member variable of the
+Suite class (in suite.py), which will be accessed and provided to the routine as
+the first argument. The latter is the name of the routine's output file, which
+will be copied to the web directory and linked to from the test problem webpage
+if set in the configuration file.
+   
+With a routine named ``analysis.py``, analysisMainArgs set to ``source_dir``,
+and a data file named ``plt0091``, the routine would be executed from its parent
+directory with the following shell command:
+
+.. code-block:: bash
+
+   $ ./analysis.py <suite.source_dir> plt0091
+   
+An example script may be found here_.
+
+.. _here: https://github.com/AMReX-Astro/Castro/blob/master/Exec/hydro_tests/Sod_stellar/testsuite_analysis/test1-helm.py
+
 Monitoring Performance
 ======================
 
