@@ -18,6 +18,8 @@ The "main" block specifies the global test suite parameters:
 
   testTopDir     = < full path to test output directory >
   webTopDir      = < full path to test web output directory >
+  wallclockFile  = < name of json file for storing past runtimes, to which .json will be appended;
+                     set to wallclock_history by default >
 
   useCmake       = < 0: GNU Make handles the build (default)
                      1: CMake handles the build >
@@ -139,13 +141,23 @@ Each test is given its own block, with the general form:
                   assumed to be prefixed with the test name when output by
                   the code at runtime, e.g. test_plt00100 >
 
+  doComparison = < 1: compare to benchmark file, 0: skip comparison >
+  tolerance = < floating point number representing the largest relative error
+                permitted between the run output and the benchmark, default
+                is 0.0 >
   outputFile = < explicit output file to compare with -- exactly as it will
-                 be written.  Not prefix of the test name will be done >
+                 be written.  No prefix of the test name will be done >
 
   diffDir = < directory/file to do a plain text diff on (recursive, if dir) >
 
   diffOpts = < options to use with the diff command for the diffDir comparison >
 
+  check_performance = < 1: compare run time of test to average of past runs >
+  performance_threshold = < ratio of run time / running average above which a
+                            a performance warning will be issued, default is
+                            1.2 >
+  runs_to_average = < number of past runs to include when computing the average,
+                      default is 5 >
 
 Getting started:
 
