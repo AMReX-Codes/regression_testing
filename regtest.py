@@ -558,6 +558,9 @@ def test_suite(argv):
         needed_files = []
         if executable is not None:
             needed_files.append((executable, "move"))
+            
+        if test.run_as_script:
+            needed_files.append((test.run_as_script, "copy"))
 
         needed_files.append((test.inputFile, "copy"))
         # strip out any sub-directory from the build dir

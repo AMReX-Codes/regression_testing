@@ -47,6 +47,9 @@ class Test(object):
         self.linkFiles = []
 
         self.dim = -1
+        
+        self.run_as_script = ""
+        self.script_args = ""
 
         self.restartTest = 0
         self.restartFileNum = -1
