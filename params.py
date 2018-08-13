@@ -263,7 +263,9 @@ def load_params(args):
                 invalid = 1
 
         else:
-            if mytest.buildDir == "" or mytest.inputFile == "" or mytest.dim == -1:
+            
+            input_file_invalid = mytest.inputFile == "" and not mytest.run_as_script
+            if mytest.buildDir == "" or input_file_invalid or mytest.dim == -1:
                 warn_msg = ["required params for test {} not set".format(sec),
                             "buildDir = {}".format(mytest.buildDir),
                             "inputFile = {}".format(mytest.inputFile)]

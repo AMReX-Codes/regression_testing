@@ -344,7 +344,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
             compare_successful = test.compare_successful
 
             if test.doComparison:
-                compare_file = "{}.compare.out".format(test.name)
+                compare_file = test.comparison_outfile
                 try: cf = open(compare_file, 'r')
                 except IOError:
                     suite.log.warn("WARNING: no comparison file found")
@@ -354,7 +354,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
                     cf.close()
 
             # last check: did we produce any backtrace files?
-            if len(test.backtrace) > 0: compare_successful = False
+            if test.crashed: compare_successful = False
 
         # write out the status file for this problem, with either
         # PASSED, PASSED SLOWLY, COMPILE FAILED, or FAILED
@@ -374,7 +374,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
             elif not compile_successful:
                 sf.write("COMPILE FAILED\n")
                 suite.log.testfail("{} COMPILE FAILED".format(test.name))
-            elif len(test.backtrace) > 0:
+            elif test.crashed:
                 sf.write("CRASHED\n")
                 suite.log.testfail("{} CRASHED (backtraces produced)".format(test.name))
             else:
@@ -479,7 +479,8 @@ def report_single_test(suite, test, tests, failure_msg=None):
         ll.item("Files:")
         ll.indent()
 
-        ll.item("input file: <a href=\"{}.{}\">{}</a>".format(test.name, test.inputFile, test.inputFile))
+        if test.inputFile:
+            ll.item("input file: <a href=\"{}.{}\">{}</a>".format(test.name, test.inputFile, test.inputFile))
 
         if suite.sourceTree == "C_Src" and test.probinFile != "":
             ll.item("probin file: <a href=\"{}.{}\">{}</a>".format(test.name, test.probinFile, test.probinFile))
@@ -542,7 +543,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
 
 
         # were there backtrace files?
-        if len(test.backtrace) > 0:
+        if test.crashed:
             ll.item("Backtraces:")
             ll.indent()
             for bt in test.backtrace:
@@ -977,6 +978,9 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
 
 def report_coverage(html_file, suite):
 
+    vars = (suite.covered_frac, suite.total, suite.covered_nonspecific_frac, suite.total_nonspecific)
+    if not all(vars): return
+    
     cols = ["coverage type", "coverage %", "# covered", "# uncovered"]
     ht = HTMLTable(html_file, len(cols), divs=["summary"])
 

@@ -122,14 +122,14 @@ def copy_benchmarks(old_full_test_dir, full_web_dir, test_list, bench_dir, log):
         os.chdir(wd)
 
         if t.compareFile == "" and t.outputFile == "":
-            p = t.get_last_plotfile(output_dir=wd)
+            p = t.get_compare_file(output_dir=wd)
         elif not t.outputFile == "":
-            if not os.path.isdir(t.outputFile):
+            if not os.path.exists(t.outputFile):
                 p = test_util.get_recent_filename(wd, t.outputFile, ".tgz")
             else:
                 p = t.outputFile
         else:
-            if not os.path.isdir(t.compareFile):
+            if not os.path.exists(t.compareFile):
                 p = test_util.get_recent_filename(wd, t.compareFile, ".tgz")
             else:
                 p = t.compareFile
@@ -562,9 +562,11 @@ def test_suite(argv):
         if test.run_as_script:
             needed_files.append((test.run_as_script, "copy"))
 
-        needed_files.append((test.inputFile, "copy"))
-        # strip out any sub-directory from the build dir
-        test.inputFile = os.path.basename(test.inputFile)
+        if test.inputFile:
+            
+            needed_files.append((test.inputFile, "copy"))
+            # strip out any sub-directory from the build dir
+            test.inputFile = os.path.basename(test.inputFile)
 
         if test.probinFile != "":
             needed_files.append((test.probinFile, "copy"))
@@ -649,6 +651,9 @@ def test_suite(argv):
 
         if args.with_valgrind:
             base_cmd = "valgrind " + args.valgrind_options + " " + base_cmd
+            
+        if test.run_as_script:
+            base_cmd = "./{} {}".format(test.run_as_script, test.script_args)
 
         if test.customRunCmd is not None:
             base_cmd = test.customRunCmd
@@ -662,7 +667,7 @@ def test_suite(argv):
         if test.restartTest:
             skip_restart = False
 
-            last_file = test.get_last_plotfile(output_dir=output_dir)
+            last_file = test.get_compare_file(output_dir=output_dir)
 
             if last_file == "":
                 error_msg = "ERROR: test did not produce output.  Restart test not possible"
@@ -675,9 +680,9 @@ def test_suite(argv):
             if skip_restart:
                 # copy what we can
                 test.wall_time = time.time() - test.wall_time
-                shutil.copy("{}.run.out".format(test.name), suite.full_web_dir)
-                if os.path.isfile("{}.err.out".format(test.name)):
-                    shutil.copy("{}.err.out".format(test.name), suite.full_web_dir)
+                shutil.copy(test.outfile, suite.full_web_dir)
+                if os.path.isfile(test.errfile):
+                    shutil.copy(test.errfile, suite.full_web_dir)
                     test.has_stderr = True
                 suite.copy_backtrace(test)
                 report.report_single_test(suite, test, test_list, failure_msg=error_msg)
@@ -719,12 +724,12 @@ def test_suite(argv):
 
             if test.outputFile == "":
                 if test.compareFile == "":
-                    compare_file = test.get_last_plotfile(output_dir=output_dir)
+                    compare_file = test.get_compare_file(output_dir=output_dir)
                 else:
                     # we specified the name of the file we want to
                     # compare to -- make sure it exists
                     compare_file = test.compareFile
-                    if not os.path.isdir(compare_file):
+                    if not os.path.exists(compare_file):
                         compare_file = ""
 
                 output_file = compare_file
@@ -734,11 +739,13 @@ def test_suite(argv):
 
 
             # get the number of levels for reporting
-            prog = "{} -l {}".format(suite.tools["fboxinfo"], output_file)
-            stdout0, stderr0, rc = test_util.run(prog)
-            test.nlevels = stdout0.rstrip('\n')
-            if not type(params.convert_type(test.nlevels)) is int:
-                test.nlevels = ""
+            if not test.run_as_script:
+                
+                prog = "{} -l {}".format(suite.tools["fboxinfo"], output_file)
+                stdout0, stderr0, rc = test_util.run(prog)
+                test.nlevels = stdout0.rstrip('\n')
+                if not type(params.convert_type(test.nlevels)) is int:
+                    test.nlevels = ""
 
             if args.make_benchmarks is None and test.doComparison:
 
@@ -755,12 +762,13 @@ def test_suite(argv):
 
                 # see if it exists
                 # note, with AMReX, the plotfiles are actually directories
+                # switched to exists to handle the run_as_script case
 
-                if not os.path.isdir(bench_file):
+                if not os.path.exists(bench_file):
                     suite.log.warn("no corresponding benchmark found")
                     bench_file = ""
 
-                    with open("{}.compare.out".format(test.name), 'w') as cf:
+                    with open(test.comparison_outfile, 'w') as cf:
                         cf.write("WARNING: no corresponding benchmark found\n")
                         cf.write("         unable to do a comparison\n")
 
@@ -768,18 +776,32 @@ def test_suite(argv):
                     if not compare_file == "":
 
                         suite.log.log("benchmark file: {}".format(bench_file))
-
-                        command = "{} -n 0 {} {}".format(
-                                suite.tools["fcompare"], bench_file, output_file)
+                        
+                        if test.run_as_script:
+                            
+                            command = "diff {} {}".format(bench_file, output_file)
+                            
+                        else:
+                            
+                            command = "{} -n 0 {} {}".format(suite.tools["fcompare"],
+                                    bench_file, output_file)
 
                         sout, serr, ierr = test_util.run(command,
-                                                         outfile="{}.compare.out".format(test.name), store_command=True)
-
+                                                         outfile=test.comparison_outfile,
+                                                         store_command=True)
+                                                         
+                        if test.run_as_script:
+                            
+                            test.compare_successful = not sout
+                            
                         # Comparison within tolerance - reliant on fvarnames and fcompare
-                        if test.tolerance is not None:
+                        elif test.tolerance is not None:
+                            
                             vars = get_variable_names(suite, bench_file)
                             test.compare_successful = process_comparison_results(sout, vars, test)
+                            
                         else:
+                            
                             test.compare_successful = ierr == 0
 
                         if test.compareParticles:
@@ -788,14 +810,14 @@ def test_suite(argv):
                                     suite.tools["particle_compare"], bench_file, output_file, ptype)
 
                                 sout, serr, ierr = test_util.run(command,
-                                                                 outfile="{}.compare.out".format(test.name), store_command=True)
+                                                                 outfile=test.comparison_outfile, store_command=True)
 
                                 test.compare_successful = test.compare_successful and not ierr
 
                     else:
                         suite.log.warn("unable to do a comparison")
 
-                        with open("{}.compare.out".format(test.name), 'w') as cf:
+                        with open(test.comparison_outfile, 'w') as cf:
                             cf.write("WARNING: run did not produce any output\n")
                             cf.write("         unable to do a comparison\n")
 
@@ -813,12 +835,12 @@ def test_suite(argv):
                     command = "diff {} -r {} {}".format(
                         test.diffOpts, diff_dir_bench, test.diffDir)
 
-                    outfile = "{}.compare.out".format(test.name)
+                    outfile = test.comparison_outfile
                     sout, serr, diff_status = test_util.run(command, outfile=outfile, store_command=True)
 
                     if diff_status == 0:
                         diff_successful = True
-                        with open("{}.compare.out".format(test.name), 'a') as cf:
+                        with open(test.comparison_outfile, 'a') as cf:
                             cf.write("\ndiff was SUCCESSFUL\n")
                     else:
                         diff_successful = False
@@ -827,20 +849,30 @@ def test_suite(argv):
 
             elif test.doComparison:   # make_benchmarks
 
-                suite.log.log("storing output of {} as the new benchmark...".format(test.name))
-                suite.log.indent()
-                suite.log.warn("new benchmark file: {}".format(compare_file))
-                suite.log.outdent()
-
                 if not compare_file == "":
+                    
                     if not output_file == compare_file:
                         source_file = output_file
                     else:
                         source_file = compare_file
-
-                    try: shutil.rmtree("{}/{}".format(bench_dir, compare_file))
-                    except: pass
-                    shutil.copytree(source_file, "{}/{}".format(bench_dir, compare_file))
+                        
+                    suite.log.log("storing output of {} as the new benchmark...".format(test.name))
+                    suite.log.indent()
+                    suite.log.warn("new benchmark file: {}".format(compare_file))
+                    suite.log.outdent()
+                    
+                    if test.run_as_script:
+                        
+                        bench_path = os.path.join(bench_dir, compare_file)
+                        try: os.remove(bench_path)
+                        except: pass
+                        shutil.copy(source_file, bench_path)
+                    
+                    else:
+                        
+                        try: shutil.rmtree("{}/{}".format(bench_dir, compare_file))
+                        except: pass
+                        shutil.copytree(source_file, "{}/{}".format(bench_dir, compare_file))
 
                     with open("{}.status".format(test.name), 'w') as cf:
                         cf.write("benchmarks updated.  New file:  {}\n".format(compare_file) )
@@ -850,9 +882,9 @@ def test_suite(argv):
                         cf.write("benchmarks failed")
 
                     # copy what we can
-                    shutil.copy("{}.run.out".format(test.name), suite.full_web_dir)
-                    if os.path.isfile("{}.err.out".format(test.name)):
-                        shutil.copy("{}.err.out".format(test.name), suite.full_web_dir)
+                    shutil.copy(test.outfile, suite.full_web_dir)
+                    if os.path.isfile(test.errfile):
+                        shutil.copy(test.errfile, suite.full_web_dir)
                         test.has_stderr = True
                     suite.copy_backtrace(test)
                     error_msg = "ERROR: runtime failure during benchmark creation"
@@ -880,7 +912,7 @@ def test_suite(argv):
 
                 suite.log.log("looking for selfTest success string: {} ...".format(test.stSuccessString))
 
-                try: of = open("{}.run.out".format(test.name), 'r')
+                try: of = open(test.outfile, 'r')
                 except IOError:
                     suite.log.warn("no output file found")
                     out_lines = ['']
@@ -896,7 +928,7 @@ def test_suite(argv):
 
                     of.close()
 
-                with open("{}.compare.out".format(test.name), 'w') as cf:
+                with open(test.comparison_outfile, 'w') as cf:
                     if test.compare_successful:
                         cf.write("SELF TEST SUCCESSFUL\n")
                     else:
@@ -1010,19 +1042,21 @@ def test_suite(argv):
         # move the output files into the web directory
         #----------------------------------------------------------------------
         if args.make_benchmarks is None:
-            shutil.copy("{}.run.out".format(test.name), suite.full_web_dir)
-            if os.path.isfile("{}.err.out".format(test.name)):
-                shutil.copy("{}.err.out".format(test.name), suite.full_web_dir)
+            shutil.copy(test.outfile, suite.full_web_dir)
+            if os.path.isfile(test.errfile):
+                shutil.copy(test.errfile, suite.full_web_dir)
                 test.has_stderr = True
             if test.doComparison:
-                shutil.copy("{}.compare.out".format(test.name), suite.full_web_dir)
+                shutil.copy(test.comparison_outfile, suite.full_web_dir)
             try:
                 shutil.copy("{}.analysis.out".format(test.name), suite.full_web_dir)
             except:
                 pass
 
-            shutil.copy(test.inputFile, "{}/{}.{}".format(
-                suite.full_web_dir, test.name, test.inputFile) )
+            if test.inputFile:
+                
+                shutil.copy(test.inputFile, "{}/{}.{}".format(
+                    suite.full_web_dir, test.name, test.inputFile) )
 
             if test.has_jobinfo:
                 shutil.copy(job_info_file, "{}/{}.job_info".format(
@@ -1065,16 +1099,16 @@ def test_suite(argv):
         #----------------------------------------------------------------------
         suite.log.log("archiving the output...")
         for pfile in os.listdir(output_dir):
+            
             if (os.path.isdir(pfile) and
-                (pfile.startswith("{}_plt".format(test.name)) or
-                 pfile.startswith("{}_chk".format(test.name)) ) ):
+                re.match("{}.*_(plt|chk)[0-9]+".format(test.name), pfile)):
 
                 if suite.purge_output == 1 and not pfile == output_file:
+                    
                     # delete the plt/chk file
-                    if os.path.isdir(pfile):
-                        try: shutil.rmtree(pfile)
-                        except:
-                            suite.log.warn("unable to remove {}".format(pfile))
+                    try: shutil.rmtree(pfile)
+                    except:
+                        suite.log.warn("unable to remove {}".format(pfile))
 
                 else:
                     # tar it up
