@@ -38,7 +38,11 @@ def load_params(args):
 
     test_list = []
 
-    cp = configparser.ConfigParser()    # note, need strict=False for Python3
+    try:
+        cp = configparser.ConfigParser(strict=False)
+    except:
+        cp = configparser.ConfigParser()
+
     cp.optionxform = str
 
     log = test_util.Log(output_file=args.log_file)
@@ -61,7 +65,7 @@ def load_params(args):
         # get the value of the current option
         value = convert_type(cp.get("main", opt))
 
-        if opt in valid_options:
+        if opt in valid_options or "_" + opt in valid_options:
 
             if opt == "sourceTree":
                 if not value in ["C_Src", "F_Src", "AMReX", "amrex"]:
@@ -71,7 +75,7 @@ def load_params(args):
 
             elif opt == "testTopDir": mysuite.testTopDir = mysuite.check_test_dir(value)
             elif opt == "webTopDir": mysuite.webTopDir = os.path.normpath(value) + "/"
-
+            elif opt == "reportCoverage": mysuite.reportCoverage = mysuite.reportCoverage or value
             elif opt == "emailTo": mysuite.emailTo = value.split(",")
 
             else:
@@ -141,12 +145,12 @@ def load_params(args):
         if not s is None:
             mysuite.repos[r].comp_string = \
                 s.replace("@self@", mysuite.repos[r].dir).replace("@source@", mysuite.repos["source"].dir)
-            
+
     # the suite needs to know any ext_src_comp_string
     for r in mysuite.repos.keys():
         if not mysuite.repos[r].build == 1:
             if not mysuite.repos[r].comp_string is None:
-                mysuite.extra_src_comp_string += "{} ".format(mysuite.repos[r].comp_string)
+                mysuite.extra_src_comp_string += " {} ".format(mysuite.repos[r].comp_string)
 
     # checks
     if args.send_no_email:
@@ -218,7 +222,7 @@ def load_params(args):
             # get the value of the current option
             value = convert_type(cp.get(sec, opt))
 
-            if opt in valid_options:
+            if opt in valid_options or "_" + opt in valid_options:
 
                 if opt in ["aux1File", "aux2File", "aux3File"]:
                     mytest.auxFiles.append(value)
@@ -228,7 +232,7 @@ def load_params(args):
 
                 elif opt == "keyword":
                     mytest.keywords = [k.strip() for k in value.split(",")]
-                    
+
                 else:
                     # generic setting of the object attribute
                     setattr(mytest, opt, value)

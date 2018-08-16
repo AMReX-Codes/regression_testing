@@ -1,3 +1,6 @@
+"""This module is used to handle all of the git operations for the
+test suite"""
+
 import os
 import shutil
 import test_util
@@ -40,7 +43,7 @@ class Repo(object):
             stdout, stderr, rc = test_util.run("git checkout {}".format(self.branch_wanted),
                                                stdin=True)
 
-            if not rc == 0:
+            if rc != 0:
                 self.suite.log.fail("ERROR: git checkout was unsuccessful")
 
         else:
@@ -58,12 +61,13 @@ class Repo(object):
             stdout, stderr, rc = test_util.run("git checkout {}".format(self.hash_wanted),
                                                outfile="git.{}.out".format(self.name))
 
-        if not rc == 0:
+        if rc != 0:
             self.suite.log.fail("ERROR: git update was unsuccessful")
 
         shutil.copy("git.{}.out".format(self.name), self.suite.full_web_dir)
 
     def save_head(self):
+        """Save the current head of the repo"""
 
         os.chdir(self.dir)
 
@@ -97,5 +101,5 @@ class Repo(object):
                                            stdin=True,
                                            outfile="git.{}.out".format(self.name))
 
-        if not rc == 0:
+        if rc != 0:
             self.suite.log.fail("ERROR: git checkout was unsuccessful")

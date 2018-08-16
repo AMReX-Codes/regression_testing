@@ -1,5 +1,6 @@
 import os
 
+import testCoverage as coverage
 
 CSS_CONTENTS = \
 r"""
@@ -16,6 +17,10 @@ h3.passed {text-decoration: none; display: inline;
 a.passed:link {color: black; text-decoration: none;}
 a.passed:visited {color: black; text-decoration: none;}
 a.passed:hover {color: #ee00ee; text-decoration: underline;}
+
+a.passed-slowly:link {color: black; text-decoration: none;}
+a.passed-slowly:visited {color: black; text-decoration: none;}
+a.passed-slowly:hover {color: #ee00ee; text-decoration: underline;}
 
 h3.failed {text-decoration: none; display: inline;
            color: yellow; background-color: red; padding: 2px;}
@@ -40,6 +45,8 @@ a.benchmade:visited {color: black; text-decoration: none;}
 a.benchmade:hover {color: #00ffff; text-decoration: underline;}
 
 span.nobreak {white-space: nowrap;}
+span.mild-success {color: green;}
+span.mild-failure {color: red;}
 
 a.main:link {color: yellow; text-decoration: none;}
 a.main:visited {color: yellow; text-decoration: none;}
@@ -51,6 +58,7 @@ td {border-width: 0px;
     vertical-align: middle;}
 
 td.passed {background-color: lime; opacity: 0.8;}
+td.passed-slowly {background-color: yellow; opacity: 0.8;}
 td.failed {background-color: red; color: yellow; opacity: 0.8;}
 td.compfailed {background-color: purple; color: yellow; opacity: 0.8;}
 td.crashed {background-color: black; color: yellow; opacity: 0.8;}
@@ -109,6 +117,7 @@ div.verticaltext {text-align: center;
 #summary td.highlight {color: red;}
 
 #summary td.passed {background-color: lime; }
+#summary td.passed-slowly {background-color: yellow; }
 #summary td.failed {background-color: red; color: yellow;}
 #summary td.benchmade {background-color: orange;}
 #summary td.compfailed {background-color: purple; color: yellow;}
@@ -181,6 +190,7 @@ r"""
   <td align=center class="compfailed"><h3>Compilation Failed</h3></td>
   <td align=center class="crashed"><h3>Crashed</h3></td>
   <td align=center class="passed"><h3>Passed</h3></td>
+  <td align=center class="passed-slowly"><h3>Performance Drop</h3></td>
 </CENTER>
 </TABLE>
 """
@@ -347,14 +357,19 @@ def report_single_test(suite, test, tests, failure_msg=None):
             if len(test.backtrace) > 0: compare_successful = False
 
         # write out the status file for this problem, with either
-        # PASSED, COMPILE FAILED, or FAILED
+        # PASSED, PASSED SLOWLY, COMPILE FAILED, or FAILED
         status_file = "{}.status".format(test.name)
         with open(status_file, 'w') as sf:
             if (compile_successful and
-                (test.compileTest or ((not test.compileTest) and 
-                                          compare_successful and 
+                (test.compileTest or ((not test.compileTest) and
+                                          compare_successful and
                                           analysis_successful))):
-                sf.write("PASSED\n")
+                string = "PASSED\n"
+                if test.check_performance:
+                    meets_threshold, _, _ = test.measure_performance()
+                    if not (meets_threshold is None or meets_threshold):
+                        string = "PASSED SLOWLY\n"
+                sf.write(string)
                 suite.log.success("{} PASSED".format(test.name))
             elif not compile_successful:
                 sf.write("COMPILE FAILED\n")
@@ -442,7 +457,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
             ll.item("Debug test")
 
         if test.acc:
-            ll.item("OpenACC test")            
+            ll.item("OpenACC test")
 
         if test.useMPI or test.useOMP:
             ll.item("Parallel run")
@@ -490,6 +505,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
     else:
         ll.item("<h3 class=\"failed\">Failed</h3>")
 
+    ll.item("Compilation time: {:.3f} s".format(test.build_time))
     ll.item("Compilation command:<br><tt>{}</tt>".format(test.comp_string))
     ll.item("<a href=\"{}.make.out\">make output</a>".format(test.name))
 
@@ -502,6 +518,20 @@ def report_single_test(suite, test, tests, failure_msg=None):
         ll.item("Execution:")
         ll.indent()
         ll.item("Execution time: {:.3f} s".format(test.wall_time))
+
+        if test.check_performance:
+
+            meets_threshold, percentage, compare_str = test.measure_performance()
+
+            if meets_threshold is not None:
+
+                if meets_threshold: style = "mild-success"
+                else: style = "mild-failure"
+
+                ll.item("{} run average: {:.3f} s".format(test.runs_to_average, test.past_average))
+                ll.item("Relative performance: <span class=\"{}\">{:.1f}% {}</span>".format(
+                    style, percentage, compare_str))
+
         ll.item("Execution command:<br><tt>{}</tt>".format(test.run_command))
         ll.item("<a href=\"{}.run.out\">execution output</a>".format(test.name))
         if test.has_stderr:
@@ -541,7 +571,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
 
             ll.item("<a href=\"{}.analysis.out\">execution output</a>".format(test.name))
             ll.outdent()
-                            
+
     ll.write_list()
 
     if (not test.compileTest) and test.doComparison and failure_msg is None:
@@ -554,7 +584,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
         grid_error = False
         variables_error = False
         no_bench_error = False
-        
+
         pcomp_line = get_particle_compare_command(diff_lines)
 
         for line in diff_lines:
@@ -572,7 +602,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
             if "no corresponding benchmark found" in line:
                 no_bench_error = True
                 break
-            
+
             if not in_diff_region:
                 if line.find("fcompare") > 1:
                     hf.write("<tt>"+line+"</tt>\n")
@@ -688,6 +718,10 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
     # switch to the web directory and open the report file
     os.chdir(suite.full_web_dir)
 
+    try:
+        build_time = sum([q.build_time for q in test_list])
+    except:
+        build_time = -1
 
     try:
         wall_time = sum([q.wall_time for q in test_list])
@@ -725,6 +759,9 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
 
     hf.write("<p><b>test input parameter file:</b> <A HREF=\"%s\">%s</A>\n" %
              (test_file, test_file) )
+
+    if build_time > 0:
+        hf.write("<p><b>combined build time for all tests:</b> {} s\n".format(build_time))
 
     if wall_time > 0:
         hf.write("<p><b>wall clock time for all tests:</b> {} s\n".format(wall_time))
@@ -765,7 +802,7 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
 
         cols = ["test name", "dim", "compare plotfile",
                 "# levels", "MPI procs", "OMP threads", "OpenACC", "debug",
-                "compile", "restart"] + special_cols + ["wall time", "result"]
+                "compile", "restart"] + special_cols + ["build time", "wall time", "result"]
         ht = HTMLTable(hf, columns=len(cols), divs=["summary"])
         ht.start_table()
         ht.header(cols)
@@ -782,13 +819,13 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
 
             # check if it passed or failed
             status_file = "%s.status" % (test.name)
-            
+
             status = None
             with open(status_file, 'r') as sf:
                 for line in sf:
                     if line.find("PASSED") >= 0:
                         status = "passed"
-                        td_class = "passed"
+                        td_class = "passed-slowly" if "SLOWLY" in line else "passed"
                         num_passed += 1
                     elif line.find("COMPILE FAILED") >= 0:
                         status = "compile fail"
@@ -838,7 +875,7 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
                 row_info.append("&check;")
             else:
                 row_info.append("")
-                
+
             # compile ?
             if test.compileTest:
                 row_info.append("&check;")
@@ -865,6 +902,8 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
                 row_info.append("<div class='small'>{}</div>".format(
                     test.job_info_field3))
 
+            # build time
+            row_info.append("{:.3f}&nbsp;s".format(test.build_time))
 
             # wallclock time
             row_info.append("{:.3f}&nbsp;s".format(test.wall_time))
@@ -904,6 +943,9 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
 
     ht.end_table()
 
+    # Test coverage
+    if suite.reportCoverage: report_coverage(hf, suite)
+
     # close
     hf.write("</div></body>\n")
     hf.write("</html>\n")
@@ -933,6 +975,35 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
 
     return num_failed
 
+def report_coverage(html_file, suite):
+
+    cols = ["coverage type", "coverage %", "# covered", "# uncovered"]
+    ht = HTMLTable(html_file, len(cols), divs=["summary"])
+
+    ht.start_table()
+    ht.header(cols)
+
+    # Overall coverage
+    row_info = []
+    row_info.append("<a href=\"{}\">{}</a>".format(coverage.SPEC_FILE, "overall"))
+    row_info.append("{:.2f}%".format(100 * suite.covered_frac))
+    covered = int(round(suite.total * suite.covered_frac))
+    uncovered = suite.total - covered
+    row_info.append("{}".format(covered))
+    row_info.append("{}".format(uncovered))
+    ht.print_row(row_info)
+
+    # Nonspecific-only coverage
+    row_info = []
+    row_info.append("<a href=\"{}\">{}</a>".format(coverage.NONSPEC_FILE, "nonspecific only"))
+    row_info.append("{:.2f}%".format(100 * suite.covered_nonspecific_frac))
+    covered = int(round(suite.total_nonspecific * suite.covered_nonspecific_frac))
+    uncovered = suite.total_nonspecific - covered
+    row_info.append("{}".format(covered))
+    row_info.append("{}".format(uncovered))
+    ht.print_row(row_info)
+
+    ht.end_table()
 
 def report_all_runs(suite, active_test_list):
 
@@ -944,7 +1015,7 @@ def report_all_runs(suite, active_test_list):
 
     valid_dirs, all_tests = suite.get_run_history(active_test_list)
 
-    if suite.do_timings_plots: suite.make_timing_plots(active_test_list)
+    if suite.do_timings_plots: suite.make_timing_plots(valid_dirs=valid_dirs, all_tests=all_tests)
 
     #--------------------------------------------------------------------------
     # generate the HTML
@@ -1020,14 +1091,14 @@ def report_all_runs(suite, active_test_list):
 
                     for line in sf:
                         if line.find("PASSED") >= 0:
-                            status = "passed"
-                            emoji = ":)"
+                            if "SLOWLY" not in line: status, emoji = "passed", ":)"
+                            else: status, emoji = "passed-slowly", ":]"
                         elif line.find("COMPILE FAILED") >= 0:
                             status = "compfailed"
                             emoji = ":("
                         elif line.find("CRASHED") >= 0:
                             status = "crashed"
-                            emoji = "xx"                            
+                            emoji = "xx"
                         elif line.find("FAILED") >= 0:
                             status = "failed"
                             emoji = "!&nbsp;"

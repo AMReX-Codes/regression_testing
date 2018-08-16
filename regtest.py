@@ -22,11 +22,13 @@ import string
 import sys
 import tarfile
 import time
+import re
+import json
 
 import params
 import test_util
 import test_report as report
-
+import testCoverage as coverage
 
 def find_build_dirs(tests):
     """ given the list of test objects, find the set of UNIQUE build
@@ -183,6 +185,96 @@ def copy_benchmarks(old_full_test_dir, full_web_dir, test_list, bench_dir, log):
 
         os.chdir(td)
 
+def get_variable_names(suite, plotfile):
+    """ uses fvarnames to extract the names of variables
+        stored in a plotfile """
+
+    # Run fvarnames
+    command = "{} {}".format(suite.tools["fvarnames"], plotfile)
+    sout, serr, ierr = test_util.run(command)
+
+    if ierr != 0:
+        return serr
+
+    # Split on whitespace
+    vars = re.split("\s+", sout)[2:-1:2]
+
+    return set(vars)
+
+def process_comparison_results(stdout, vars, test):
+    """ checks the output of fcompare (passed in as stdout)
+        to determine whether all relative errors fall within
+        the test's tolerance """
+
+    # Alternative solution - just split on whitespace
+    # and iterate through resulting list, attempting
+    # to convert the next two items to floats. Assume
+    # the current item is a variable if successful.
+
+    # Split on whitespace
+    regex = "\s+"
+    words = re.split(regex, stdout)
+
+    indices = filter(lambda i: words[i] in vars, range(len(words)))
+
+    for i in indices:
+        var, abs_err, rel_err = words[i: i + 3]
+        if abs(test.tolerance) <= abs(float(rel_err)): return False
+
+    return True
+
+def test_performance(test, suite, runtimes):
+    """ outputs a warning if the execution time of the test this run
+        does not compare favorably to past logged times """
+
+    if test.name not in runtimes: return
+    runtimes = runtimes[test.name]["runtimes"]
+
+    if len(runtimes) < 1:
+        suite.log.log("no completed runs found")
+        return
+
+    num_times = len(runtimes)
+    suite.log.log("{} completed run(s) found".format(num_times))
+    suite.log.log("checking performance ...")
+
+    # Slice out correct number of times
+    run_diff = num_times - test.runs_to_average
+    if run_diff > 0:
+        runtimes = runtimes[:-run_diff]
+        num_times = test.runs_to_average
+    else:
+        test.runs_to_average = num_times
+
+    test.past_average = sum(runtimes) / num_times
+
+    # Test against threshold
+    meets_threshold, percentage, compare_str = test.measure_performance()
+    if meets_threshold is not None and not meets_threshold:
+        warn_msg = "test ran {:.1f}% {} than running average of the past {} runs"
+        warn_msg = warn_msg.format(percentage, compare_str, num_times)
+        suite.log.warn(warn_msg)
+
+def determine_coverage(suite):
+
+    try:
+        results = coverage.main(suite.full_test_dir)
+    except:
+        suite.log.warn("error generating parameter coverage reports, check formatting")
+        return
+
+    if not any([res is None for res in results]):
+
+        suite.covered_frac = results[0]
+        suite.total = results[1]
+        suite.covered_nonspecific_frac = results[2]
+        suite.total_nonspecific = results[3]
+
+        spec_file = os.path.join(suite.full_test_dir, coverage.SPEC_FILE)
+        nonspec_file = os.path.join(suite.full_test_dir, coverage.NONSPEC_FILE)
+
+        shutil.copy(spec_file, suite.full_web_dir)
+        shutil.copy(nonspec_file, suite.full_web_dir)
 
 def test_suite(argv):
     """
@@ -205,7 +297,7 @@ def test_suite(argv):
     for obj in test_list:
         suite.log.log(obj.name)
     suite.log.outdent()
-    
+
     if not args.complete_report_from_crash == "":
 
         # make sure the web directory from the crash run exists
@@ -372,6 +464,11 @@ def test_suite(argv):
 
 
     #--------------------------------------------------------------------------
+    # Get execution times from previous runs
+    #--------------------------------------------------------------------------
+    runtimes = suite.get_wallclock_history()
+
+    #--------------------------------------------------------------------------
     # main loop over tests
     #--------------------------------------------------------------------------
     for test in test_list:
@@ -413,6 +510,9 @@ def test_suite(argv):
             else:
                 suite.make_realclean()
 
+        # Register start time
+        test.build_time = time.time()
+
         suite.log.log("building...")
 
         coutfile="{}/{}.make.out".format(output_dir, test.name)
@@ -433,6 +533,8 @@ def test_suite(argv):
 
         # make return code is 0 if build was successful
         if rc == 0: test.compile_successful = True
+        # Compute compile time
+        test.build_time = time.time() - test.build_time
 
         # copy the make.out into the web directory
         shutil.copy("{}/{}.make.out".format(output_dir, test.name), suite.full_web_dir)
@@ -603,6 +705,8 @@ def test_suite(argv):
 
         test.wall_time = time.time() - test.wall_time
 
+        # Check for performance drop
+        if test.check_performance: test_performance(test, suite, runtimes)
 
         #----------------------------------------------------------------------
         # do the comparison
@@ -664,12 +768,16 @@ def test_suite(argv):
 
                         command = "{} -n 0 {} {}".format(
                                 suite.tools["fcompare"], bench_file, output_file)
-                            
+
                         sout, serr, ierr = test_util.run(command,
                                                          outfile="{}.compare.out".format(test.name), store_command=True)
 
-                        if ierr == 0:
-                            test.compare_successful = True
+                        # Comparison within tolerance - reliant on fvarnames and fcompare
+                        if test.tolerance is not None:
+                            vars = get_variable_names(suite, bench_file)
+                            test.compare_successful = process_comparison_results(sout, vars, test)
+                        else:
+                            test.compare_successful = ierr == 0
 
                         if test.compareParticles:
                             for ptype in test.particleTypes.strip().split():
@@ -810,7 +918,7 @@ def test_suite(argv):
                     else:
                         job_file_lines = jif.readlines()
                         jif.close()
-                        
+
                         if suite.summary_job_info_field1 is not "":
                             for l in job_file_lines:
                                 if l.startswith(suite.summary_job_info_field1.strip()) and l.find(":") >= 0:
@@ -886,6 +994,14 @@ def test_suite(argv):
                 if test.doVis or test.analysisRoutine != "":
                     suite.log.warn("no output file.  Skipping visualization")
 
+        #----------------------------------------------------------------------
+        # if the test ran and passed, add its runtime to the dictionary
+        #----------------------------------------------------------------------
+
+        if test.record_runtime(suite):
+            test_dict = runtimes.setdefault(test.name, suite.timing_default)
+            test_dict["runtimes"].insert(0, test.wall_time)
+            test_dict["dates"].insert(0, suite.test_dir.rstrip("/"))
 
         #----------------------------------------------------------------------
         # move the output files into the web directory
@@ -987,6 +1103,16 @@ def test_suite(argv):
         suite.cmake_clean("AMReX", suite.amrex_dir)
         suite.cmake_clean(suite.suiteName, suite.source_dir)
 
+    #--------------------------------------------------------------------------
+    # jsonify and save runtimes
+    #--------------------------------------------------------------------------
+    file_path = suite.get_wallclock_file()
+    with open(file_path, 'w') as json_file: json.dump(runtimes, json_file)
+
+    #--------------------------------------------------------------------------
+    # parameter coverage
+    #--------------------------------------------------------------------------
+    if suite.reportCoverage: determine_coverage(suite)
 
     #--------------------------------------------------------------------------
     # write the report for this instance of the test suite

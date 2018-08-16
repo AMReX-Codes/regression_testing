@@ -18,8 +18,10 @@ The "main" block specifies the global test suite parameters:
 
   testTopDir     = < full path to test output directory >
   webTopDir      = < full path to test web output directory >
+  wallclockFile  = < name of json file for storing past runtimes, to which .json will be appended;
+                     set to wallclock_history by default >
 
-  useCmake       = < 0: GNU Make handles the build (default) 
+  useCmake       = < 0: GNU Make handles the build (default)
                      1: CMake handles the build >
 
   sourceTree = < C_Src, F_Src, or AMReX -- what type is it? >
@@ -139,13 +141,23 @@ Each test is given its own block, with the general form:
                   assumed to be prefixed with the test name when output by
                   the code at runtime, e.g. test_plt00100 >
 
+  doComparison = < 1: compare to benchmark file, 0: skip comparison >
+  tolerance = < floating point number representing the largest relative error
+                permitted between the run output and the benchmark, default
+                is 0.0 >
   outputFile = < explicit output file to compare with -- exactly as it will
-                 be written.  Not prefix of the test name will be done >
+                 be written.  No prefix of the test name will be done >
 
   diffDir = < directory/file to do a plain text diff on (recursive, if dir) >
 
   diffOpts = < options to use with the diff command for the diffDir comparison >
 
+  check_performance = < 1: compare run time of test to average of past runs >
+  performance_threshold = < ratio of run time / running average above which a
+                            a performance warning will be issued, default is
+                            1.2 >
+  runs_to_average = < number of past runs to include when computing the average,
+                      default is 5 >
 
 Getting started:
 
@@ -233,7 +245,7 @@ class Log(object):
         print("{}{}".format(self.indent_str, nstr))
         if self.have_log:
             self.of.write("{}{}\n".format(self.indent_str, string))
-        
+
     def warn(self, warn_msg):
         """
         output a warning.  It is always prefix with 'WARNING:'
@@ -250,18 +262,18 @@ class Log(object):
         print(nstr)
         if self.have_log:
             self.of.write("{}\n".format(omsg))
-        
+
     def success(self, string):
         nstr = self.success_color + string + self.end_color
         print("{}{}".format(self.indent_str, nstr))
         if self.have_log:
             self.of.write("{}{}\n".format(self.indent_str, string))
-        
+
     def log(self, string):
         print("{}{}".format(self.indent_str, string))
         if self.have_log:
             self.of.write("{}{}\n".format(self.indent_str, string))
-        
+
     def skip(self):
         print("")
         if self.have_log:
@@ -272,7 +284,7 @@ class Log(object):
         print("{}{}".format(self.indent_str, nstr))
         if self.have_log:
             self.of.write("{}{}\n".format(self.indent_str, string))
-        
+
     def close_log(self):
         if self.have_log:
             self.of.close()
@@ -303,6 +315,17 @@ def get_args(arg_string=None):
                         help="do not send emails when tests fail")
     parser.add_argument("--with_valgrind", action="store_true",
                         help="run with valgrind")
+    parser.add_argument("--compile_only", action="store_true",
+                        help="test only that the code compiles, without running anything")
+    parser.add_argument("--skip_comparison", action="store_true",
+                        help="run analysis for each test without comparison to benchmarks")
+    parser.add_argument("--with_coverage", action="store_true",
+                        help="report parameter coverage for this test run")
+    parser.add_argument("--tolerance", type=float, default=None, metavar="value",
+                        help="largest relative error permitted during comparison")
+    parser.add_argument("--check_performance", nargs=2, metavar=("performance_threshold", "runs_to_average"),
+                        help="measure the performance of each test run against the last runs_to_average runs, "
+                            + "supplying a warning on a ratio greater than performance_threshold")
     parser.add_argument("--valgrind_options", type=str, default="--leak-check=yes --log-file=vallog.%p",
                         help="valgrind options", metavar="'valgrind options'")
     parser.add_argument("--amrex_git_hash", type=str, default=None, metavar="hash",
@@ -340,7 +363,7 @@ def run(string, stdin=False, outfile=None, store_command=False, env=None,
     sin = None
     if stdin: sin = subprocess.PIPE
 
-    p0 = subprocess.Popen(prog, stdin=sin, stdout=subprocess.PIPE, 
+    p0 = subprocess.Popen(prog, stdin=sin, stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE, env=env, cwd=cwd)
 
     stdout0, stderr0 = p0.communicate()
@@ -348,6 +371,10 @@ def run(string, stdin=False, outfile=None, store_command=False, env=None,
     rc = p0.returncode
     p0.stdout.close()
     p0.stderr.close()
+
+    if sys.version_info >= (3, 0):
+        stdout0 = stdout0.decode('utf-8')
+        stderr0 = stderr0.decode('utf-8')
 
     if outfile is not None:
         try: cf = open(outfile, outfile_mode)
