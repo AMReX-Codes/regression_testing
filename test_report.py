@@ -593,7 +593,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
                     in_diff_region = True
                     continue
 
-                if line.strip().startswith("level"):
+                if line.strip().startswith("level "):
                     ht.print_single_row(line.strip())
                     continue
 
