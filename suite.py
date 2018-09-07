@@ -47,6 +47,10 @@ class Test(object):
         self.linkFiles = []
 
         self.dim = -1
+        
+        self.run_as_script = ""
+        self.script_args = ""
+        self.return_code = None
 
         self.restartTest = 0
         self.restartFileNum = -1
@@ -87,6 +91,7 @@ class Test(object):
         self.diffOpts = ""
 
         self.addToCompileString = ""
+        self.ignoreGlobalMakeAdditions = 0
 
         self.runtime_params = ""
 
@@ -137,7 +142,7 @@ class Test(object):
         return [ft for ft in os.listdir(self.output_dir)
                 if os.path.isfile(ft) and ft.startswith("Backtrace.")]
 
-    def get_last_plotfile(self, output_dir=None):
+    def get_compare_file(self, output_dir=None):
         """ Find the last plotfile written.  Note: we give an error if the
             last plotfile is 0.  If output_dir is specified, then we use
             that instead of the default
@@ -145,6 +150,18 @@ class Test(object):
 
         if output_dir is None:
             output_dir = self.output_dir   # not yet implemented
+            
+        if self.run_as_script:
+            
+            outfile = self.outfile
+            filepath = os.path.join(output_dir, outfile)
+            
+            if not os.path.isfile(filepath) or self.crashed:
+                
+                self.log.warn("test did not produce any output")
+                return ""
+                
+            else: return outfile
 
         plts = [d for d in os.listdir(output_dir) if \
                 (os.path.isdir(d) and
@@ -196,6 +213,30 @@ class Test(object):
         compare = not self.doComparison or self.compare_successful
         analysis = self.analysisRoutine == "" or self.analysis_successful
         return compare and analysis
+    
+    @property
+    def crashed(self):
+        """ Whether the test crashed or not """
+        
+        return len(self.backtrace) > 0 or (self.run_as_script and self.return_code != 0)
+    
+    @property
+    def outfile(self):
+        """ The basename of this run's output file """
+        
+        return "{}.run.out".format(self.name)
+        
+    @property
+    def errfile(self):
+        """ The basename of this run's error file """
+        
+        return "{}.err.out".format(self.name)
+        
+    @property
+    def comparison_outfile(self):
+        """ The basename of this run's comparison output file """
+        
+        return "{}.compare.out".format(self.name)
 
     def record_runtime(self, suite):
 
@@ -734,6 +775,8 @@ class Suite(object):
         """ build an executable with the Fortran AMReX build system """
 
         build_opts = ""
+        f_make_additions = self.add_to_f_make_command
+        
         if test is not None:
             build_opts += "NDEBUG={} ".format(f_flag(test.debug, test_not=True))
             build_opts += "ACC={} ".format(f_flag(test.acc))
@@ -745,12 +788,15 @@ class Suite(object):
 
             if not test.addToCompileString == "":
                 build_opts += test.addToCompileString + " "
+                
+            if test.ignoreGlobalMakeAdditions:
+                f_make_additions = ""
 
         all_opts = "{} {} {}".format(self.extra_src_comp_string, build_opts, opts)
 
         comp_string = "{} -j{} AMREX_HOME={} COMP={} {} {} {}".format(
             self.MAKE, self.numMakeJobs, self.amrex_dir,
-            self.FCOMP, self.add_to_f_make_command, all_opts, target)
+            self.FCOMP, f_make_additions, all_opts, target)
 
         self.log.log(comp_string)
         stdout, stderr, rc = test_util.run(comp_string, outfile=outfile)
@@ -765,6 +811,7 @@ class Suite(object):
     def build_c(self, test=None, opts="", outfile=None):
 
         build_opts = ""
+        c_make_additions = self.add_to_c_make_command
 
         if test is not None:
             build_opts += "DEBUG={} ".format(c_flag(test.debug))
@@ -782,12 +829,15 @@ class Suite(object):
 
             if not test.addToCompileString == "":
                 build_opts += test.addToCompileString + " "
+                
+            if test.ignoreGlobalMakeAdditions:
+                c_make_additions = ""
 
         all_opts = "{} {} {}".format(self.extra_src_comp_string, build_opts, opts)
 
         comp_string = "{} -j{} AMREX_HOME={} {} COMP={} {}".format(
             self.MAKE, self.numMakeJobs, self.amrex_dir,
-            all_opts, self.COMP, self.add_to_c_make_command)
+            all_opts, self.COMP, c_make_additions)
 
         self.log.log(comp_string)
         stdout, stderr, rc = test_util.run(comp_string, outfile=outfile)
@@ -803,7 +853,7 @@ class Suite(object):
         if test.useOMP:
             test_env = dict(os.environ, OMP_NUM_THREADS="{}".format(test.numthreads))
 
-        if test.useMPI:
+        if test.useMPI and not test.run_as_script:
             test_run_command = self.MPIcommand
             test_run_command = test_run_command.replace("@host@", self.MPIhost)
             test_run_command = test_run_command.replace("@nprocs@", "{}".format(test.numprocs))
@@ -811,12 +861,17 @@ class Suite(object):
         else:
             test_run_command = base_command
 
+        outfile = test.outfile
+        
+        if test.run_as_script: errfile = None
+        else: errfile = test.errfile
+        
         self.log.log(test_run_command)
         sout, serr, ierr = test_util.run(test_run_command, stdin=True,
-                                         outfile="{}.run.out".format(test.name),
-                                         errfile="{}.err.out".format(test.name),
+                                         outfile=outfile, errfile=errfile,
                                          env=test_env)
         test.run_command = test_run_command
+        test.return_code = ierr
 
     def copy_backtrace(self, test):
         """

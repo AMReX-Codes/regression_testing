@@ -5,6 +5,7 @@ except ImportError:
 import getpass
 import os
 import socket
+import re
 
 import repo
 import suite
@@ -214,8 +215,8 @@ def load_params(args):
         # set the test object data by looking at all the options in
         # the current section of the parameter file
         valid_options = list(mytest.__dict__.keys())
-        valid_options += ["aux1File", "aux2File", "aux3File"]
-        valid_options += ["link1File", "link2File", "link3File"]
+        aux_pat = re.compile("aux\d+File")
+        link_pat = re.compile("link\d+File")
 
         for opt in cp.options(sec):
 
@@ -224,20 +225,23 @@ def load_params(args):
 
             if opt in valid_options or "_" + opt in valid_options:
 
-                if opt in ["aux1File", "aux2File", "aux3File"]:
-                    mytest.auxFiles.append(value)
-
-                elif opt in ["link1File", "link2File", "link3File"]:
-                    mytest.linkFiles.append(value)
-
-                elif opt == "keyword":
+                if opt == "keyword":
                     mytest.keywords = [k.strip() for k in value.split(",")]
 
                 else:
                     # generic setting of the object attribute
                     setattr(mytest, opt, value)
+            
+            elif aux_pat.match(opt):
+                
+                mytest.auxFiles.append(value)
+                
+            elif link_pat.match(opt):
+                
+                mytest.linkFiles.append(value)
 
             else:
+                
                 mysuite.log.warn("unrecognized parameter {} for test {}".format(opt, sec))
 
 
@@ -259,7 +263,9 @@ def load_params(args):
                 invalid = 1
 
         else:
-            if mytest.buildDir == "" or mytest.inputFile == "" or mytest.dim == -1:
+            
+            input_file_invalid = mytest.inputFile == "" and not mytest.run_as_script
+            if mytest.buildDir == "" or input_file_invalid or mytest.dim == -1:
                 warn_msg = ["required params for test {} not set".format(sec),
                             "buildDir = {}".format(mytest.buildDir),
                             "inputFile = {}".format(mytest.inputFile)]
