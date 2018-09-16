@@ -507,6 +507,8 @@ def test_suite(argv):
             suite.log.log("re-making clean...")
             if not test.extra_build_dir == "":
                 suite.make_realclean(repo=test.extra_build_dir)
+            elif suite.sourceTree in ["AMReX", "amrex"]:
+                suite.make_realclean(repo="AMReX")
             else:
                 suite.make_realclean()
 
