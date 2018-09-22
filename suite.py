@@ -13,17 +13,24 @@ except ImportError: JSONDecodeError = ValueError
 
 DO_TIMINGS_PLOTS = True
 
-try: import numpy as np
-except: DO_TIMINGS_PLOTS = False
-
-try: import matplotlib
-except: DO_TIMINGS_PLOTS = False
-else:
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-
-try: import matplotlib.dates as dates
-except: DO_TIMINGS_PLOTS = False
+try:
+    
+    import bokeh
+    from bokeh.plotting import figure, save, ColumnDataSource
+    from bokeh.resources import CDN
+    from bokeh.models import HoverTool
+    from datetime import datetime as dt
+    
+except:
+    
+    try: import matplotlib
+    except: DO_TIMINGS_PLOTS = False
+    else:
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+    
+    try: import matplotlib.dates as dates
+    except: DO_TIMINGS_PLOTS = False
 
 class Test(object):
 
@@ -676,12 +683,28 @@ class Suite(object):
         if active_test_list is not None:
             valid_dirs, all_tests = self.get_run_history(active_test_list)
         timings = self.get_wallclock_history()
+        
+        try: bokeh
+        except NameError:
+            
+            convf = dates.datestr2num
+            using_mpl = True
+            self.plot_ext = "png"
+            
+        else:
+            
+            convf = lambda s: dt.strptime(s, '%Y-%m-%d')
+            using_mpl = False
+            self.plot_ext = "html"
+            hover_tool = HoverTool(
+                    tooltips=[("index", "$index"), ("date", "@date{%F}"), ("runtime", "@runtime{0.00}")],
+                    formatters={"date": "datetime"})
 
         def convert_date(date):
             """ Convert to a matplotlib readable date"""
 
             if len(date) > 10: date = date[:date.rfind("-")]
-            return dates.datestr2num(date)
+            return convf(date)
 
         # make the plots
         for t in all_tests:
@@ -694,28 +717,47 @@ class Suite(object):
 
             if len(times) == 0: continue
 
-            plt.clf()
-            plt.plot_date(days, times, "o", xdate=True)
+            if using_mpl:
+                
+                plt.clf()
+                plt.plot_date(days, times, "o", xdate=True)
 
-            years = dates.YearLocator()   # every year
-            months = dates.MonthLocator()
-            years_fmt = dates.DateFormatter('%Y')
+                years = dates.YearLocator()   # every year
+                months = dates.MonthLocator()
+                years_fmt = dates.DateFormatter('%Y')
 
-            ax = plt.gca()
-            ax.xaxis.set_major_locator(years)
-            ax.xaxis.set_major_formatter(years_fmt)
-            ax.xaxis.set_minor_locator(months)
+                ax = plt.gca()
+                ax.xaxis.set_major_locator(years)
+                ax.xaxis.set_major_formatter(years_fmt)
+                ax.xaxis.set_minor_locator(months)
 
-            plt.ylabel("time (seconds)")
-            plt.title(t)
+                plt.ylabel("time (seconds)")
+                plt.title(t)
 
-            if max(times) / min(times) > 10.0:
-                ax.set_yscale("log")
+                if max(times) / min(times) > 10.0:
+                    ax.set_yscale("log")
 
-            fig = plt.gcf()
-            fig.autofmt_xdate()
+                fig = plt.gcf()
+                fig.autofmt_xdate()
 
-            plt.savefig("{}/{}-timings.png".format(self.webTopDir, t))
+                plt.savefig("{}/{}-timings.{}".format(self.webTopDir, t, self.plot_ext))
+                
+            else:
+                
+                source = ColumnDataSource(dict(date=days, runtime=times))
+                
+                settings = dict(x_axis_type="datetime")
+                if max(times) / min(times) > 10.0: settings["y_axis_type"] = "log"
+                plot = figure(**settings)
+                plot.add_tools(hover_tool)
+                
+                plot.circle("date", "runtime", source=source)
+                plot.xaxis.axis_label = "Date"
+                plot.yaxis.axis_label = "Runtime (s)"
+                
+                save(plot, resources=CDN,
+                        filename="{}/{}-timings.{}".format(self.webTopDir, t, self.plot_ext),
+                        title="{} Runtime History".format(t))
 
     def get_last_run(self):
         """ return the name of the directory corresponding to the previous

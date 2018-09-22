@@ -1049,7 +1049,7 @@ def report_all_runs(suite, active_test_list):
     if suite.do_timings_plots:
         hf.write("<tr><td class='date'>plots</td>")
         for t in all_tests:
-            plot_file = "{}-timings.png".format(t)
+            plot_file = "{}-timings.{}".format(t, suite.plot_ext)
             if os.path.isfile(plot_file):
                 hf.write("<TD ALIGN=CENTER title=\"{} timings plot\"><H3><a href=\"{}\"><i class=\"fa fa-line-chart\"></i></a></H3></TD>\n".format(t, plot_file))
             else:
