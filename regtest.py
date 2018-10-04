@@ -1124,36 +1124,9 @@ def test_suite(argv):
 
 
         #----------------------------------------------------------------------
-        # archive (or delete) the output
+        # Print execution time
         #----------------------------------------------------------------------
-        suite.log.log("archiving the output...")
-        for pfile in os.listdir(output_dir):
-
-            if (os.path.isdir(pfile) and
-                re.match("{}.*_(plt|chk)[0-9]+".format(test.name), pfile)):
-
-                if suite.purge_output == 1 and not pfile == output_file:
-
-                    # delete the plt/chk file
-                    try: shutil.rmtree(pfile)
-                    except:
-                        suite.log.warn("unable to remove {}".format(pfile))
-
-                else:
-                    # tar it up
-                    try:
-                        tar = tarfile.open("{}.tgz".format(pfile), "w:gz")
-                        tar.add("{}".format(pfile))
-                        tar.close()
-
-                    except:
-                        suite.log.warn("unable to tar output file {}".format(pfile))
-
-                    else:
-                        try: shutil.rmtree(pfile)
-                        except OSError:
-                            suite.log.warn("unable to remove {}".format(pfile))
-
+        suite.log.log("execution time: %.1fs" %test.wall_time)
 
         #----------------------------------------------------------------------
         # write the report for this test
