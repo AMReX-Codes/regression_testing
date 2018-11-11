@@ -1182,8 +1182,9 @@ def test_suite(argv):
 
     suite.log.outdent()
 
-    # For temporary run, return now without creating suote report.
+    # For temporary run, return now without creating suite report.
     if args.do_temp_run:
+        suite.delete_tempdirs()
         return num_failed
 
 
@@ -1206,6 +1207,9 @@ def test_suite(argv):
     suite.log.skip()
     suite.log.bold("creating suite report...")
     report.report_all_runs(suite, active_test_list)
+    
+    # delete any temporary directories
+    suite.delete_tempdirs()
 
     def email_developers():
         msg = email.message_from_string(suite.emailBody)

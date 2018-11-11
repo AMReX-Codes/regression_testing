@@ -7,6 +7,7 @@ import glob
 import shutil
 import sys
 import test_util
+import tempfile as tf
 
 try: from json.decoder import JSONDecodeError
 except ImportError: JSONDecodeError = ValueError
@@ -357,6 +358,7 @@ class Suite(object):
         self.sourceTree = ""
         self.testTopDir = ""
         self.webTopDir = ""
+        self._noWebDir = False
         self.wallclockFile = "wallclock_history"
 
         self.useCmake = 0
@@ -409,7 +411,6 @@ class Suite(object):
         self.slack_channel = ""
         self.slack_username = ""
 
-
         self.plot_file_name = "amr.plot_file"
 
         self.globalAddToExecString = ""
@@ -446,6 +447,37 @@ class Suite(object):
             self.log.fail("ERROR: {} is not a valid directory".format(dir_name))
 
         return dir_name
+        
+    def init_web_dir(self, dir_name):
+        """
+        Sets the suite web directory to dir_name if dir_name is neither null
+        nor whitespace, and initializes it to a temporary directory under the
+        test directory otherwise.
+        """
+        
+        if not (dir_name and dir_name.strip()):
+            
+            self.webTopDir = tf.mkdtemp(dir=self.testTopDir) + '/'
+            self._noWebDir = True
+            
+        else:
+            
+            self.webTopDir = os.path.normpath(dir_name) + '/'
+            
+        if not os.path.isdir(self.webTopDir):
+            
+            self.log.fail("ERROR: Unable to initialize web directory to"
+                    + " {} - invalid path.".format(self.webTopDir))
+                    
+    def delete_tempdirs(self):
+        """
+        Removes any temporary directories that were created during the
+        current test run.
+        """
+        
+        if self._noWebDir:
+            
+            shutil.rmtree(self.webTopDir)
 
     def get_tests_to_run(self, test_list_old):
         """ perform various tests based on the runtime options to determine
