@@ -696,15 +696,22 @@ class Suite(object):
             convf = lambda s: dt.strptime(s, '%Y-%m-%d')
             using_mpl = False
             self.plot_ext = "html"
-            hover_tool = HoverTool(
-                    tooltips=[("index", "$index"), ("date", "@date{%F}"), ("runtime", "@runtime{0.00}")],
-                    formatters={"date": "datetime"})
 
         def convert_date(date):
             """ Convert to a matplotlib readable date"""
 
             if len(date) > 10: date = date[:date.rfind("-")]
             return convf(date)
+            
+        def hover_tool():
+            """
+            Encapsulates hover tool creation to prevent errors when generating
+            multiple documents.
+            """
+            
+            return HoverTool(
+                tooltips=[("date", "@date{%F}"), ("runtime", "@runtime{0.00}")],
+                formatters={"date": "datetime"})
 
         # make the plots
         for t in all_tests:
@@ -749,7 +756,7 @@ class Suite(object):
                 settings = dict(x_axis_type="datetime")
                 if max(times) / min(times) > 10.0: settings["y_axis_type"] = "log"
                 plot = figure(**settings)
-                plot.add_tools(hover_tool)
+                plot.add_tools(hover_tool())
                 
                 plot.circle("date", "runtime", source=source)
                 plot.xaxis.axis_label = "Date"
