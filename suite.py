@@ -998,6 +998,8 @@ class Suite(object):
 
         ftools = ["fcompare", "fboxinfo", "fsnapshot"]
         if any([t for t in test_list if t.tolerance is not None]): ftools.append("fvarnames")
+        # Hack to prevent tools from building
+        ftools = []
 
         for t in ftools:
             self.log.log("building {}...".format(t))
