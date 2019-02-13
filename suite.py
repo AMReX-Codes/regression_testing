@@ -990,7 +990,7 @@ class Suite(object):
 
         for t in ftools:
             self.log.log("building {}...".format(t))
-            comp_string, rc = self.build_c(target="programs={}".format(t), opts="DEBUG=FALSE USE_MPI=FALSE USE_OMP=FALSE")
+            comp_string, rc = self.build_c(target="programs={}".format(t), opts="DEBUG=FALSE USE_MPI=FALSE USE_OMP=FALSE ")
             if not rc == 0:
                 self.log.fail("unable to continue, tools not able to be built")
 
@@ -1013,7 +1013,7 @@ class Suite(object):
 
         for t in ctools:
             self.log.log("building {}...".format(t))
-            comp_string, rc = self.build_c(opts="NDEBUG=t MPI= ")
+            comp_string, rc = self.build_c(opts="DEBUG=FALSE USE_MPI=FALSE ")
             if not rc == 0:
                 self.log.fail("unable to continue, tools not able to be built")
 
