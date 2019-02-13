@@ -987,8 +987,8 @@ def test_suite(argv):
                             suite.log.log("Visualization not supported for dim = {}".format(test.dim))
                         else:
                             suite.log.log("doing the visualization...")
-                            tool = suite.tools["fsnapshot{}d".format(test.dim)]
-                            test_util.run('{} --palette {}/Palette -cname "{}" -p "{}"'.format(
+                            tool = suite.tools["fsnapshot"]
+                            test_util.run('{} --palette {}/Palette --variable "{}" "{}"'.format(
                                 tool, suite.f_compare_tool_dir, test.visVar, output_file))
 
                             # convert the .ppm files into .png files
