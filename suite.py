@@ -892,7 +892,7 @@ class Suite(object):
         return comp_string, rc
 
 
-    def build_c(self, test=None, opts="", outfile=None):
+    def build_c(self, test=None, opts="", target="", outfile=None):
 
         build_opts = ""
         c_make_additions = self.add_to_c_make_command
@@ -919,9 +919,9 @@ class Suite(object):
 
         all_opts = "{} {} {}".format(self.extra_src_comp_string, build_opts, opts)
 
-        comp_string = "{} -j{} AMREX_HOME={} {} COMP={} {}".format(
+        comp_string = "{} -j{} AMREX_HOME={} {} COMP={} {} {}".format(
             self.MAKE, self.numMakeJobs, self.amrex_dir,
-            all_opts, self.COMP, c_make_additions)
+            all_opts, self.COMP, c_make_additions, target)
 
         self.log.log(comp_string)
         stdout, stderr, rc = test_util.run(comp_string, outfile=outfile)
@@ -978,25 +978,23 @@ class Suite(object):
 
         self.tools = {}
 
-        self.f_compare_tool_dir = "{}/Tools/Postprocessing/F_Src/".format(
+        self.f_compare_tool_dir = "{}/Tools/Plotfile/".format(
             os.path.normpath(self.amrex_dir))
 
         os.chdir(self.f_compare_tool_dir)
 
         self.make_realclean(repo="AMReX")
 
-        ftools = ["fcompare", "fboxinfo"]
-        if any([t for t in test_list if t.dim == 2]): ftools.append("fsnapshot2d")
-        if any([t for t in test_list if t.dim == 3]): ftools.append("fsnapshot3d")
+        ftools = ["fcompare", "fboxinfo", "fsnapshot"]
         if any([t for t in test_list if t.tolerance is not None]): ftools.append("fvarnames")
 
         for t in ftools:
             self.log.log("building {}...".format(t))
-            comp_string, rc = self.build_f(target="programs={}".format(t), opts="NDEBUG=t MPI= ")
+            comp_string, rc = self.build_c(target="programs={}".format(t), opts="DEBUG=FALSE USE_MPI=FALSE USE_OMP=FALSE ")
             if not rc == 0:
                 self.log.fail("unable to continue, tools not able to be built")
 
-            exe = test_util.get_recent_filename(self.f_compare_tool_dir, t, ".exe")
+            exe = test_util.get_recent_filename(self.f_compare_tool_dir, t, ".ex")
             self.tools[t] = "{}/{}".format(self.f_compare_tool_dir, exe)
 
         self.c_compare_tool_dir = "{}/Tools/Postprocessing/C_Src/".format(
@@ -1015,7 +1013,7 @@ class Suite(object):
 
         for t in ctools:
             self.log.log("building {}...".format(t))
-            comp_string, rc = self.build_c(opts="NDEBUG=t MPI= ")
+            comp_string, rc = self.build_c(opts="DEBUG=FALSE USE_MPI=FALSE ")
             if not rc == 0:
                 self.log.fail("unable to continue, tools not able to be built")
 
