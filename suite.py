@@ -892,10 +892,11 @@ class Suite(object):
         return comp_string, rc
 
 
-    def build_c(self, test=None, opts="", target="", outfile=None):
+    def build_c(self, test=None, opts="", target="", outfile=None, c_make_additions=None):
 
         build_opts = ""
-        c_make_additions = self.add_to_c_make_command
+        if c_make_additions is None:
+            c_make_additions = self.add_to_c_make_command
 
         if test is not None:
             build_opts += "DEBUG={} ".format(c_flag(test.debug))
@@ -990,7 +991,9 @@ class Suite(object):
 
         for t in ftools:
             self.log.log("building {}...".format(t))
-            comp_string, rc = self.build_c(target="programs={}".format(t), opts="DEBUG=FALSE USE_MPI=FALSE USE_OMP=FALSE ")
+            comp_string, rc = self.build_c(target="programs={}".format(t),
+                                           opts="DEBUG=FALSE USE_MPI=FALSE USE_OMP=FALSE ",
+                                           c_make_additions="")
             if not rc == 0:
                 self.log.fail("unable to continue, tools not able to be built")
 
