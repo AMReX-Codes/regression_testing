@@ -463,11 +463,6 @@ class Suite(object):
         else:
             
             self.webTopDir = os.path.normpath(dir_name) + '/'
-            
-        if not os.path.isdir(self.webTopDir):
-            
-            self.log.fail("ERROR: Unable to initialize web directory to"
-                    + " {} - invalid path.".format(self.webTopDir))
                     
     def delete_tempdirs(self):
         """
