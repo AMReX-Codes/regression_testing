@@ -186,10 +186,7 @@ def load_params(args):
         mysuite.log.fail("ERROR: required suite-wide directory not specified\n" + \
                          "(sourceTree, amrexDir, sourceDir, testTopDir)")
 
-    # Make sure the web dir is valid (or use the default is none specified)
-    if mysuite.webTopDir == "":
-        mysuite.webTopDir = "{}/{}-web/".format(mysuite.testTopDir, mysuite.suiteName)
-
+    # Make sure the web dir is valid
     if not os.path.isdir(mysuite.webTopDir):
         try: os.mkdir(mysuite.webTopDir)
         except:
