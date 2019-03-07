@@ -638,31 +638,32 @@ def report_single_test(suite, test, tests, failure_msg=None):
 
                 fields = [q.strip() for q in line.split("  ") if not q == ""]
 
-                if fields[0].startswith("variable"):
-                    ht.header(fields)
-                    continue
+                if fields:
+                    if fields[0].startswith("variable"):
+                        ht.header(fields)
+                        continue
 
-                if len(fields) == 2:
-                    if "NaN present" in line:
-                        ht.print_row([fields[0], (fields[1], "colspan='2'")])
+                    if len(fields) == 2:
+                        if "NaN present" in line:
+                            ht.print_row([fields[0], (fields[1], "colspan='2'")])
+                            continue
+                        elif "variable not present" in line:
+                            ht.print_row([fields[0], (fields[1], "colspan='2'")])
+                            continue
+                        else:
+                            ht.header([" "] + fields)
+                            continue
+
+                    if len(fields) == 1:
                         continue
-                    elif "variable not present" in line:
-                        ht.print_row([fields[0], (fields[1], "colspan='2'")])
-                        continue
+
                     else:
-                        ht.header([" "] + fields)
-                        continue
-
-                if len(fields) == 1:
-                    continue
-
-                else:
-                    abs_err = float(fields[1])
-                    rel_err = float(fields[2])
-                    if abs(rel_err) > 1.e-6:
-                        ht.print_row([fields[0], abs_err, rel_err], highlight=True)
-                    else:
-                        ht.print_row([fields[0], abs_err, rel_err])
+                        abs_err = float(fields[1])
+                        rel_err = float(fields[2])
+                        if abs(rel_err) > 1.e-6:
+                            ht.print_row([fields[0], abs_err, rel_err], highlight=True)
+                        else:
+                            ht.print_row([fields[0], abs_err, rel_err])
 
             else:
                 # diff region
