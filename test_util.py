@@ -297,53 +297,65 @@ def get_args(arg_string=None):
     parser = argparse.ArgumentParser(description=usage,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument("-d", type=int, default=-1,
-                        help="restrict tests to a particular dimensionality")
-    parser.add_argument("--make_benchmarks", type=str, default=None, metavar="comment",
-                        help="make new benchmarks? (must provide a comment)")
-    parser.add_argument("--copy_benchmarks", type=str, default=None, metavar="comment",
-                        help="copy the last plotfiles from the failed tests of the most recent run as the new benchmarks.  No git pull is done and no new runs are performed (must provide a comment)")
-    parser.add_argument("--no_update", type=str, default="None", metavar="name",
-                        help="which codes to exclude from the git update? (None, All, or a comma-separated list of codes)")
-    parser.add_argument("--single_test", type=str, default="", metavar="test-name",
-                        help="name of a single test to run")
-    parser.add_argument("--tests", type=str, default="", metavar="'test1 test2 test3'",
-                        help="a space-separated list of tests to run")
-    parser.add_argument("--do_temp_run", action="store_true",
-                        help="is this a temporary run? (output not stored or logged)")
-    parser.add_argument("--send_no_email", action="store_true",
-                        help="do not send emails when tests fail")
-    parser.add_argument("--with_valgrind", action="store_true",
-                        help="run with valgrind")
-    parser.add_argument("--compile_only", action="store_true",
-                        help="test only that the code compiles, without running anything")
-    parser.add_argument("--skip_comparison", action="store_true",
-                        help="run analysis for each test without comparison to benchmarks")
-    parser.add_argument("--with_coverage", action="store_true",
-                        help="report parameter coverage for this test run")
-    parser.add_argument("--tolerance", type=float, default=None, metavar="value",
-                        help="largest relative error permitted during comparison")
-    parser.add_argument("--check_performance", nargs=2, metavar=("performance_threshold", "runs_to_average"),
-                        help="measure the performance of each test run against the last runs_to_average runs, "
-                            + "supplying a warning on a ratio greater than performance_threshold")
-    parser.add_argument("--valgrind_options", type=str, default="--leak-check=yes --log-file=vallog.%p",
-                        help="valgrind options", metavar="'valgrind options'")
-    parser.add_argument("--amrex_git_hash", type=str, default=None, metavar="hash",
-                        help="git hash of a version of AMReX.  If provided, this version will be used to run tests.")
-    parser.add_argument("--source_git_hash", type=str, default=None, metavar="hash",
-                        help="git hash of a version of the main source code.  For AMReX tests, this will be ignored.")
-    parser.add_argument("--extra_src_git_hash", type=str, default=None, metavar="hash",
-                        help="git hash of a version of the extra source code.  For AMReX tests, this will be ignored.")
-    parser.add_argument("--note", type=str, default="",
-                        help="a note on the resulting test webpages")
-    parser.add_argument("--complete_report_from_crash", type=str, default="", metavar="testdir",
-                        help="complete the generation of the report from a crashed test suite run named testdir")
-    parser.add_argument("--redo_failed", action="store_true",
-                        help="only run the tests that failed last time")
-    parser.add_argument("--log_file", type=str, default=None, metavar="logfile",
-                        help="log file to write output to (in addition to stdout")
-    parser.add_argument("--keyword", type=str, default=None,
-                        help="run tests only with this keyword specified in their definitions")
+    tests_group = parser.add_argument_group("test selection", "options that determine which tests to run")
+    tests_group.add_argument("--single_test", type=str, default="", metavar="test-name",
+                             help="name of a single test to run")
+    tests_group.add_argument("--tests", type=str, default="", metavar="'test1 test2 test3'",
+                             help="a space-separated list of tests to run")
+    tests_group.add_argument("-d", type=int, default=-1,
+                             help="restrict tests to a particular dimensionality")
+    tests_group.add_argument("--redo_failed", action="store_true",
+                             help="only run the tests that failed last time")
+    tests_group.add_argument("--keyword", type=str, default=None,
+                             help="run tests only with this keyword specified in their definitions")
+
+    git_group = parser.add_argument_group("git options", "options that control how we interact the git repos")
+    git_group.add_argument("--no_update", type=str, default="None", metavar="name",
+                           help="which codes to exclude from the git update? (None, All, or a comma-separated list of codes)")
+    git_group.add_argument("--amrex_git_hash", type=str, default=None, metavar="hash",
+                           help="git hash of a version of AMReX.  If provided, this version will be used to run tests.")
+    git_group.add_argument("--source_git_hash", type=str, default=None, metavar="hash",
+                           help="git hash of a version of the main source code.  For AMReX tests, this will be ignored.")
+    git_group.add_argument("--extra_src_git_hash", type=str, default=None, metavar="hash",
+                           help="git hash of a version of the extra source code.  For AMReX tests, this will be ignored.")
+
+    bench_group = parser.add_argument_group("benchmark options", "options that control benchmark creation")
+    bench_group.add_argument("--make_benchmarks", type=str, default=None, metavar="comment",
+                             help="make new benchmarks? (must provide a comment)")
+    bench_group.add_argument("--copy_benchmarks", type=str, default=None, metavar="comment",
+                             help="copy the last plotfiles from the failed tests of the most recent run as the new benchmarks.  No git pull is done and no new runs are performed (must provide a comment)")
+
+    run_group = parser.add_argument_group("test running options", "options that control how the tests are run")
+    run_group.add_argument("--compile_only", action="store_true",
+                           help="test only that the code compiles, without running anything")
+    run_group.add_argument("--with_valgrind", action="store_true",
+                           help="run with valgrind")
+    run_group.add_argument("--valgrind_options", type=str, default="--leak-check=yes --log-file=vallog.%p",
+                           help="valgrind options", metavar="'valgrind options'")
+
+    suite_options = parser.add_argument_group("suite options", "options that control the test suite operation")
+    suite_options.add_argument("--do_temp_run", action="store_true",
+                               help="is this a temporary run? (output not stored or logged)")
+    suite_options.add_argument("--send_no_email", action="store_true",
+                               help="do not send emails when tests fail")
+    suite_options.add_argument("--with_coverage", action="store_true",
+                               help="report parameter coverage for this test run")
+    suite_options.add_argument("--check_performance", nargs=2, metavar=("performance_threshold", "runs_to_average"),
+                               help="measure the performance of each test run against the last runs_to_average runs, "
+                               + "supplying a warning on a ratio greater than performance_threshold")
+    suite_options.add_argument("--note", type=str, default="",
+                               help="a note on the resulting test webpages")
+    suite_options.add_argument("--complete_report_from_crash", type=str, default="", metavar="testdir",
+                               help="complete the generation of the report from a crashed test suite run named testdir")
+    suite_options.add_argument("--log_file", type=str, default=None, metavar="logfile",
+                               help="log file to write output to (in addition to stdout")
+
+    comp_options = parser.add_argument_group("comparison options", "options that control how the comparisons are done")
+    comp_options.add_argument("--skip_comparison", action="store_true",
+                              help="run analysis for each test without comparison to benchmarks")
+    comp_options.add_argument("--tolerance", type=float, default=None, metavar="value",
+                              help="largest relative error permitted during comparison")
+
     parser.add_argument("input_file", metavar="input-file", type=str, nargs=1,
                         help="the input file (INI format) containing the suite and test parameters")
 
