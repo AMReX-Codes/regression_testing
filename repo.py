@@ -35,13 +35,22 @@ class Repo(object):
         os.chdir(self.dir)
 
         # find out current branch so that we can go back later if we need.
-        stdout0, stderr0, rc = test_util.run("git rev-parse --abbrev-ref HEAD")
+        stdout0, _, _ = test_util.run("git rev-parse --abbrev-ref HEAD")
         self.branch_orig = stdout0.rstrip('\n')
 
+        # just in case the branch we want is not in the local repo
+        # yet, start out with a git fetch
+        self.suite.log.log("git fetch in {}".format(self.dir))
+        _, _, rc = test_util.run("git fetch", stdin=True)
+
+        if rc != 0:
+            self.suite.log.fail("ERROR: git fetch was unsuccessful")
+
+        # if we need a special branch, check it out now
         if self.branch_orig != self.branch_wanted:
             self.suite.log.log("git checkout {} in {}".format(self.branch_wanted, self.dir))
-            stdout, stderr, rc = test_util.run("git checkout {}".format(self.branch_wanted),
-                                               stdin=True)
+            _, _, rc = test_util.run("git checkout {}".format(self.branch_wanted),
+                                     stdin=True)
 
             if rc != 0:
                 self.suite.log.fail("ERROR: git checkout was unsuccessful")
@@ -49,17 +58,18 @@ class Repo(object):
         else:
             self.branch_wanted = self.branch_orig
 
+        # get up to date on our branch or hash
         if self.hash_wanted == "" or self.hash_wanted is None:
             self.suite.log.log("'git pull' in {}".format(self.dir))
 
             # we need to be tricky here to make sure that the stdin is
             # presented to the user to get the password.
-            stdout, stderr, rc = test_util.run("git pull", stdin=True,
-                                               outfile="git.{}.out".format(self.name))
+            _, _, rc = test_util.run("git pull", stdin=True,
+                                     outfile="git.{}.out".format(self.name))
 
         else:
-            stdout, stderr, rc = test_util.run("git checkout {}".format(self.hash_wanted),
-                                               outfile="git.{}.out".format(self.name))
+            _, _, rc = test_util.run("git checkout {}".format(self.hash_wanted),
+                                     outfile="git.{}.out".format(self.name))
 
         if rc != 0:
             self.suite.log.fail("ERROR: git update was unsuccessful")
@@ -73,8 +83,8 @@ class Repo(object):
 
         self.suite.log.log("saving git HEAD for {}/".format(self.name))
 
-        stdout, stderr, rc = test_util.run("git rev-parse HEAD",
-                                           outfile="git.{}.HEAD".format(self.name) )
+        stdout, _, _ = test_util.run("git rev-parse HEAD",
+                                     outfile="git.{}.HEAD".format(self.name))
 
         self.hash_current = stdout
         shutil.copy("git.{}.HEAD".format(self.name), self.suite.full_web_dir)
@@ -97,9 +107,8 @@ class Repo(object):
         os.chdir(self.dir)
         self.suite.log.log("git checkout {} in {}".format(self.branch_orig, self.dir))
 
-        stdout, stderr, rc = test_util.run("git checkout {}".format(self.branch_orig),
-                                           stdin=True,
-                                           outfile="git.{}.out".format(self.name))
+        _, _, rc = test_util.run("git checkout {}".format(self.branch_orig),
+                                 stdin=True, outfile="git.{}.out".format(self.name))
 
         if rc != 0:
             self.suite.log.fail("ERROR: git checkout was unsuccessful")
