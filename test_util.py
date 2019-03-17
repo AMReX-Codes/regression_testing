@@ -8,7 +8,7 @@ import sys
 import email
 import smtplib
 
-usage = """
+USAGE = """
 The test suite and its tests are defined through an input file in an INI
 configuration file format.
 
@@ -173,6 +173,7 @@ created benchmarks.  If differences arise in the comparisons due to
 
 
 class Log(object):
+    """a simple logging class to show information to the terminal"""
     def __init__(self, output_file=None):
 
         # http://stackoverflow.com/questions/287871/print-in-terminal-with-colors-using-python
@@ -201,6 +202,7 @@ class Log(object):
         self.suite = None
 
     def indent(self):
+        """indent the log output by one stop"""
         self.current_indent += 1
         self.indent_str = self.current_indent*"   "
 
@@ -210,18 +212,20 @@ class Log(object):
             self.of.flush()
 
     def outdent(self):
+        """undo one level of indent"""
         self.current_indent -= 1
         self.current_indent = max(0, self.current_indent)
         self.indent_str = self.current_indent*"   "
 
     def fail(self, string):
+        """output a failure message to the log"""
         nstr = self.fail_color + string + self.end_color
         print("{}{}".format(self.indent_str, nstr))
         if self.have_log:
             self.of.write("{}{}\n".format(self.indent_str, string))
 
         def email_developers():
-            emailto   = ",".join(self.suite.emailTo)
+            emailto = ",".join(self.suite.emailTo)
             emailfrom = self.suite.emailFrom
             subject = "Regression testing suite failed to run for {}".format(
                 self.suite.suiteName)
@@ -241,6 +245,7 @@ class Log(object):
         sys.exit()
 
     def testfail(self, string):
+        """output a test failure to the log"""
         nstr = self.fail_color + string + self.end_color
         print("{}{}".format(self.indent_str, nstr))
         if self.have_log:
@@ -264,28 +269,33 @@ class Log(object):
             self.of.write("{}\n".format(omsg))
 
     def success(self, string):
+        """output a success message to the log"""
         nstr = self.success_color + string + self.end_color
         print("{}{}".format(self.indent_str, nstr))
         if self.have_log:
             self.of.write("{}{}\n".format(self.indent_str, string))
 
     def log(self, string):
+        """output some text to the log"""
         print("{}{}".format(self.indent_str, string))
         if self.have_log:
             self.of.write("{}{}\n".format(self.indent_str, string))
 
     def skip(self):
+        """introduce a newline in the log"""
         print("")
         if self.have_log:
             self.of.write("\n")
 
     def bold(self, string):
+        """emphasize a log message"""
         nstr = self.bold_color + string + self.end_color
         print("{}{}".format(self.indent_str, nstr))
         if self.have_log:
             self.of.write("{}{}\n".format(self.indent_str, string))
 
     def close_log(self):
+        """close the log"""
         if self.have_log:
             self.of.close()
 
@@ -294,10 +304,11 @@ def get_args(arg_string=None):
     """ parse the commandline arguments.  If arg_string is present, we
         parse from there, otherwise we use the default (sys.argv) """
 
-    parser = argparse.ArgumentParser(description=usage,
+    parser = argparse.ArgumentParser(description=USAGE,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    tests_group = parser.add_argument_group("test selection", "options that determine which tests to run")
+    tests_group = parser.add_argument_group("test selection",
+                                            "options that determine which tests to run")
     tests_group.add_argument("--single_test", type=str, default="", metavar="test-name",
                              help="name of a single test to run")
     tests_group.add_argument("--tests", type=str, default="", metavar="'test1 test2 test3'",
@@ -309,23 +320,22 @@ def get_args(arg_string=None):
     tests_group.add_argument("--keyword", type=str, default=None,
                              help="run tests only with this keyword specified in their definitions")
 
-    git_group = parser.add_argument_group("git options", "options that control how we interact the git repos")
+    git_group = parser.add_argument_group("git options",
+                                          "options that control how we interact the git repos")
     git_group.add_argument("--no_update", type=str, default="None", metavar="name",
-                           help="which codes to exclude from the git update? (None, All, or a comma-separated list of codes)")
-    git_group.add_argument("--amrex_git_hash", type=str, default=None, metavar="hash",
-                           help="git hash of a version of AMReX.  If provided, this version will be used to run tests.")
-    git_group.add_argument("--source_git_hash", type=str, default=None, metavar="hash",
-                           help="git hash of a version of the main source code.  For AMReX tests, this will be ignored.")
-    git_group.add_argument("--extra_src_git_hash", type=str, default=None, metavar="hash",
-                           help="git hash of a version of the extra source code.  For AMReX tests, this will be ignored.")
+                           help="which codes to exclude from the git update?" +
+                           " (None, All, or a comma-separated list of codes)")
 
-    bench_group = parser.add_argument_group("benchmark options", "options that control benchmark creation")
+    bench_group = parser.add_argument_group("benchmark options",
+                                            "options that control benchmark creation")
     bench_group.add_argument("--make_benchmarks", type=str, default=None, metavar="comment",
                              help="make new benchmarks? (must provide a comment)")
     bench_group.add_argument("--copy_benchmarks", type=str, default=None, metavar="comment",
-                             help="copy the last plotfiles from the failed tests of the most recent run as the new benchmarks.  No git pull is done and no new runs are performed (must provide a comment)")
+                             help="use plotfiles from failed tests of the last run as new benchmarks." +
+                             " No git pull is done and no new runs are performed (must provide a comment)")
 
-    run_group = parser.add_argument_group("test running options", "options that control how the tests are run")
+    run_group = parser.add_argument_group("test running options",
+                                          "options that control how the tests are run")
     run_group.add_argument("--compile_only", action="store_true",
                            help="test only that the code compiles, without running anything")
     run_group.add_argument("--with_valgrind", action="store_true",
@@ -333,24 +343,27 @@ def get_args(arg_string=None):
     run_group.add_argument("--valgrind_options", type=str, default="--leak-check=yes --log-file=vallog.%p",
                            help="valgrind options", metavar="'valgrind options'")
 
-    suite_options = parser.add_argument_group("suite options", "options that control the test suite operation")
+    suite_options = parser.add_argument_group("suite options",
+                                              "options that control the test suite operation")
     suite_options.add_argument("--do_temp_run", action="store_true",
                                help="is this a temporary run? (output not stored or logged)")
     suite_options.add_argument("--send_no_email", action="store_true",
                                help="do not send emails when tests fail")
     suite_options.add_argument("--with_coverage", action="store_true",
                                help="report parameter coverage for this test run")
-    suite_options.add_argument("--check_performance", nargs=2, metavar=("performance_threshold", "runs_to_average"),
+    suite_options.add_argument("--check_performance", nargs=2,
+                               metavar=("performance_threshold", "runs_to_average"),
                                help="measure the performance of each test run against the last runs_to_average runs, "
                                + "supplying a warning on a ratio greater than performance_threshold")
     suite_options.add_argument("--note", type=str, default="",
                                help="a note on the resulting test webpages")
     suite_options.add_argument("--complete_report_from_crash", type=str, default="", metavar="testdir",
-                               help="complete the generation of the report from a crashed test suite run named testdir")
+                               help="complete report generation from a crashed test suite run named testdir")
     suite_options.add_argument("--log_file", type=str, default=None, metavar="logfile",
                                help="log file to write output to (in addition to stdout")
 
-    comp_options = parser.add_argument_group("comparison options", "options that control how the comparisons are done")
+    comp_options = parser.add_argument_group("comparison options",
+                                             "options that control how the comparisons are done")
     comp_options.add_argument("--skip_comparison", action="store_true",
                               help="run analysis for each test without comparison to benchmarks")
     comp_options.add_argument("--tolerance", type=float, default=None, metavar="value",
@@ -430,5 +443,7 @@ def get_recent_filename(fdir, base, extension):
 
     files.sort(key=lambda x: os.path.getmtime(x))
 
-    try: return files.pop()
-    except: return None
+    try:
+        return files.pop()
+    except:
+        return None
