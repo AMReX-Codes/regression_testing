@@ -28,7 +28,7 @@ import json
 import params
 import test_util
 import test_report as report
-import testCoverage as coverage
+import test_coverage as coverage
 
 def find_build_dirs(tests):
     """ given the list of test objects, find the set of UNIQUE build

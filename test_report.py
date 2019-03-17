@@ -1,6 +1,6 @@
 import os
 
-import testCoverage as coverage
+import test_coverage as coverage
 
 CSS_CONTENTS = \
 r"""
