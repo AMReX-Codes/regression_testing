@@ -7,8 +7,7 @@ There are several major sections to this source: the runtime parameter
 routines, the test suite routines, and the report generation routines.
 They are separated as such in this file.
 
-This test framework understands source based out of the F_Src and
-C_Src AMReX frameworks.
+This test framework understands source based out of the AMReX framework.
 
 """
 
@@ -520,16 +519,12 @@ def test_suite(argv):
         coutfile="{}/{}.make.out".format(output_dir, test.name)
 
         if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
-            if ( suite.useCmake ) :
+            if suite.useCmake:
                 comp_string, rc = suite.build_test_cmake(test=test, outfile=coutfile)
             else:
                 comp_string, rc = suite.build_c(test=test, outfile=coutfile)
 
             executable = test_util.get_recent_filename(bdir, "", ".ex")
-
-        elif suite.sourceTree == "F_Src" or test.testSrcTree == "F_Src":
-            comp_string, rc = suite.build_f(test=test, outfile=coutfile)
-            executable = test_util.get_recent_filename(bdir, "main", ".exe")
 
         test.comp_string = comp_string
 
@@ -560,12 +555,12 @@ def test_suite(argv):
         needed_files = []
         if executable is not None:
             needed_files.append((executable, "move"))
-            
+
         if test.run_as_script:
             needed_files.append((test.run_as_script, "copy"))
 
         if test.inputFile:
-            
+
             needed_files.append((test.inputFile, "copy"))
             # strip out any sub-directory from the build dir
             test.inputFile = os.path.basename(test.inputFile)
@@ -641,19 +636,9 @@ def test_suite(argv):
 
             base_cmd += " {} {}".format(suite.globalAddToExecString, test.runtime_params)
 
-        elif suite.sourceTree == "F_Src" or test.testSrcTree == "F_Src":
-
-            base_cmd = "./{} {} --plot_base_name {}_plt --check_base_name {}_chk ".format(
-                executable, test.inputFile, test.name, test.name)
-
-            # keep around the checkpoint files only for the restart runs
-            if not test.restartTest: base_cmd += " --chk_int 0 "
-
-            base_cmd += "{} {}".format(suite.globalAddToExecString, test.runtime_params)
-
         if args.with_valgrind:
             base_cmd = "valgrind " + args.valgrind_options + " " + base_cmd
-            
+
         if test.run_as_script:
             base_cmd = "./{} {}".format(test.run_as_script, test.script_args)
 
@@ -702,14 +687,8 @@ def test_suite(argv):
             suite.log.log("restarting from {} ... ".format(restart_file))
 
             if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
-
                 base_cmd = "./{} {} {}={}_plt amr.check_file={}_chk amr.checkpoint_files_output=0 amr.restart={}".format(
                     executable, test.inputFile, suite.plot_file_name, test.name, test.name, restart_file)
-
-            elif suite.sourceTree == "F_Src" or test.testSrcTree == "F_Src":
-
-                base_cmd = "./{} {} --plot_base_name {}_plt --check_base_name {}_chk --chk_int 0 --restart {} {}".format(
-                    executable, test.inputFile, test.name, test.name, test.restartFileNum, suite.globalAddToExecString)
 
             suite.run_test(test, base_cmd)
 
@@ -742,7 +721,7 @@ def test_suite(argv):
 
             # get the number of levels for reporting
             if not test.run_as_script:
-                
+
                 prog = "{} -l {}".format(suite.tools["fboxinfo"], output_file)
                 stdout0, stderr0, rc = test_util.run(prog)
                 test.nlevels = stdout0.rstrip('\n')
@@ -778,32 +757,32 @@ def test_suite(argv):
                     if not compare_file == "":
 
                         suite.log.log("benchmark file: {}".format(bench_file))
-                        
+
                         if test.run_as_script:
-                            
+
                             command = "diff {} {}".format(bench_file, output_file)
-                            
+
                         else:
-                            
+
                             command = "{} -n 0 {} {}".format(suite.tools["fcompare"],
                                     bench_file, output_file)
 
                         sout, serr, ierr = test_util.run(command,
                                                          outfile=test.comparison_outfile,
                                                          store_command=True)
-                                                         
+
                         if test.run_as_script:
-                            
+
                             test.compare_successful = not sout
-                            
+
                         # Comparison within tolerance - reliant on fvarnames and fcompare
                         elif test.tolerance is not None:
-                            
+
                             vars = get_variable_names(suite, bench_file)
                             test.compare_successful = process_comparison_results(sout, vars, test)
-                            
+
                         else:
-                            
+
                             test.compare_successful = ierr == 0
 
                         if test.compareParticles:
@@ -852,26 +831,26 @@ def test_suite(argv):
             elif test.doComparison:   # make_benchmarks
 
                 if not compare_file == "":
-                    
+
                     if not output_file == compare_file:
                         source_file = output_file
                     else:
                         source_file = compare_file
-                        
+
                     suite.log.log("storing output of {} as the new benchmark...".format(test.name))
                     suite.log.indent()
                     suite.log.warn("new benchmark file: {}".format(compare_file))
                     suite.log.outdent()
-                    
+
                     if test.run_as_script:
-                        
+
                         bench_path = os.path.join(bench_dir, compare_file)
                         try: os.remove(bench_path)
                         except: pass
                         shutil.copy(source_file, bench_path)
-                    
+
                     else:
-                        
+
                         try: shutil.rmtree("{}/{}".format(bench_dir, compare_file))
                         except: pass
                         shutil.copytree(source_file, "{}/{}".format(bench_dir, compare_file))
@@ -1056,7 +1035,7 @@ def test_suite(argv):
                 pass
 
             if test.inputFile:
-                
+
                 shutil.copy(test.inputFile, "{}/{}.{}".format(
                     suite.full_web_dir, test.name, test.inputFile) )
 
@@ -1101,12 +1080,12 @@ def test_suite(argv):
         #----------------------------------------------------------------------
         suite.log.log("archiving the output...")
         for pfile in os.listdir(output_dir):
-            
+
             if (os.path.isdir(pfile) and
                 re.match("{}.*_(plt|chk)[0-9]+".format(test.name), pfile)):
 
                 if suite.purge_output == 1 and not pfile == output_file:
-                    
+
                     # delete the plt/chk file
                     try: shutil.rmtree(pfile)
                     except:
@@ -1207,7 +1186,7 @@ def test_suite(argv):
     suite.log.skip()
     suite.log.bold("creating suite report...")
     report.report_all_runs(suite, active_test_list)
-    
+
     # delete any temporary directories
     suite.delete_tempdirs()
 

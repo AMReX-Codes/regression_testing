@@ -69,7 +69,7 @@ def load_params(args):
         if opt in valid_options or "_" + opt in valid_options:
 
             if opt == "sourceTree":
-                if not value in ["C_Src", "F_Src", "AMReX", "amrex"]:
+                if not value in ["C_Src", "AMReX", "amrex"]:
                     mysuite.log.fail("ERROR: invalid sourceTree")
                 else:
                     mysuite.sourceTree = value
