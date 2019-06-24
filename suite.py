@@ -1032,6 +1032,8 @@ class Suite(object):
 
             os.chdir(self.extra_tool_dir)
 
+            self.make_realclean(repo="AMReX")
+
             extra_tools=[]
             if ("DiffSameDomainRefined1d" in self.extra_tools): extra_tools.append("DiffSameDomainRefined1d")
             if ("DiffSameDomainRefined2d" in self.extra_tools): extra_tools.append("DiffSameDomainRefined2d")
