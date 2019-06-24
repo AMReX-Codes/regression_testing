@@ -1049,9 +1049,10 @@ class Suite(object):
                 if not rc == 0:
                     self.log.fail("unable to continue, tools not able to be built")
 
-                exe = test_util.get_recent_filename(self.extra_tool_dir, t, ".exe")
+                exe = test_util.get_recent_filename(self.extra_tool_dir, t, ".ex")
 
                 self.tools[t] = "{}/{}".format(self.extra_tool_dir, exe)
+                print(self.tools[t])
             
 
         self.log.outdent()
