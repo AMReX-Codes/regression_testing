@@ -175,7 +175,7 @@ class Test(object):
 
         plts = [d for d in os.listdir(output_dir) if \
                 (os.path.isdir(d) and
-                 d.startswith("{}_plt".format(self.name))) or \
+                 d.startswith("{}_plt".format(self.name)) and d[-1].isdigit()) or \
                 (os.path.isfile(d) and
                  d.startswith("{}_plt".format(self.name)) and d.endswith(".tgz"))]
 
