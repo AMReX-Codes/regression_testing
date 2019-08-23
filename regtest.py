@@ -554,7 +554,7 @@ def test_suite(argv):
                 executable = test_util.get_recent_filename(bdir, "main", ".exe")
             # Copy executable to bin directory
             shutil.copy( executable, binDir )
-
+            
         test.comp_string = comp_string
         test.executable = executable
 
@@ -571,6 +571,10 @@ def test_suite(argv):
         if not test.compile_successful:
             error_msg = "ERROR: compilation failed"
             report.report_single_test(suite, test, test_list, failure_msg=error_msg)
+            # Print compilation error message (useful for Travis tests)
+            with open(outfile) as f:
+                print( f.read() )
+
             continue
 
         if test.compileTest:
@@ -1051,7 +1055,10 @@ def test_suite(argv):
                         else:
                             analysis_successful = False
                             suite.log.warn("analysis failed...")
-
+                            # Print analysis error message (useful for Travis tests)
+                            with open(outfile) as f:
+                                print( f.read() )
+                            
                         test.analysis_successful = analysis_successful
 
             else:
