@@ -553,7 +553,8 @@ def test_suite(argv):
                 comp_string, rc = suite.build_f(test=test, outfile=coutfile)
                 executable = test_util.get_recent_filename(bdir, "main", ".exe")
             # Copy executable to bin directory
-            shutil.copy( executable, binDir )
+            if executable is not None:
+                shutil.copy( executable, binDir )
             
         test.comp_string = comp_string
         test.executable = executable
