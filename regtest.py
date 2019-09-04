@@ -793,6 +793,12 @@ def test_suite(argv):
 
                             command = "diff {} {}".format(bench_file, output_file)
 
+                        elif test.tolerance is not None:
+
+                            command = "{} -n 0 -r {} {} {}".format(suite.tools["fcompare"],
+                                                                   test.tolerance,
+                                                                   bench_file, output_file)
+
                         else:
 
                             command = "{} -n 0 {} {}".format(suite.tools["fcompare"],
@@ -805,12 +811,6 @@ def test_suite(argv):
                         if test.run_as_script:
 
                             test.compare_successful = not sout
-
-                        # Comparison within tolerance - reliant on fvarnames and fcompare
-                        elif test.tolerance is not None:
-
-                            tvars = get_variable_names(suite, bench_file)
-                            test.compare_successful = process_comparison_results(sout, tvars, test)
 
                         else:
 
