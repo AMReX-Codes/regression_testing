@@ -387,6 +387,8 @@ class Suite(object):
         self.FCOMP = "gfortran"
         self.COMP = "g++"
 
+        self.extra_tools = ""
+
         self.add_to_f_make_command = ""
         self.add_to_c_make_command = ""
 
@@ -984,6 +986,9 @@ class Suite(object):
         self.make_realclean(repo="AMReX")
 
         ftools = ["fcompare", "fboxinfo", "fsnapshot"]
+        if ("fextract" in self.extra_tools): ftools.append("fextract")
+        if ("fextrema" in self.extra_tools): ftools.append("fextrema")
+        if ("ftime" in self.extra_tools): ftools.append("ftime")
         if any([t for t in test_list if t.tolerance is not None]): ftools.append("fvarnames")
 
         for t in ftools:
@@ -1020,6 +1025,35 @@ class Suite(object):
             exe = test_util.get_recent_filename(self.c_compare_tool_dir, t, ".exe")
 
             self.tools[t] = "{}/{}".format(self.c_compare_tool_dir, exe)
+
+        if ("DiffSameDomainRefined" in self.extra_tools):
+            self.extra_tool_dir = "{}/Tools/C_util/Convergence/".format(
+                os.path.normpath(self.amrex_dir))
+
+            os.chdir(self.extra_tool_dir)
+
+            self.make_realclean(repo="AMReX")
+
+            extra_tools=[]
+            if ("DiffSameDomainRefined1d" in self.extra_tools): extra_tools.append("DiffSameDomainRefined1d")
+            if ("DiffSameDomainRefined2d" in self.extra_tools): extra_tools.append("DiffSameDomainRefined2d")
+            if ("DiffSameDomainRefined3d" in self.extra_tools): extra_tools.append("DiffSameDomainRefined3d")
+
+            for t in extra_tools:
+                if ("1d" in t): ndim=1
+                if ("2d" in t): ndim=2
+                if ("3d" in t): ndim=3
+                self.log.log("building {}...".format(t))
+                comp_string, rc = self.build_c(opts=
+                        "EBASE=DiffSameDomainRefined DIM={} DEBUG=FALSE USE_MPI=FALSE USE_OMP=FALSE ".format(ndim))
+                if not rc == 0:
+                    self.log.fail("unable to continue, tools not able to be built")
+
+                exe = test_util.get_recent_filename(self.extra_tool_dir, t, ".ex")
+
+                self.tools[t] = "{}/{}".format(self.extra_tool_dir, exe)
+                print(self.tools[t])
+            
 
         self.log.outdent()
 

@@ -78,6 +78,7 @@ def load_params(args):
             elif opt == "webTopDir": mysuite.init_web_dir(value)
             elif opt == "reportCoverage": mysuite.reportCoverage = mysuite.reportCoverage or value
             elif opt == "emailTo": mysuite.emailTo = value.split(",")
+            elif opt == "extra_tools": mysuite.extra_tools = value
 
             else:
                 # generic setting of the object attribute
