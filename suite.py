@@ -1138,6 +1138,7 @@ class Suite(object):
         if not rc == 0:
             errstr  = "\n \nERROR! Cmake configuration failed for " + name + " \n"
             errstr += "Check " + coutfile + " for more information."
+            self.log.fail(errstr)
             sys.exit(errstr)
 
         return builddir, installdir
@@ -1187,7 +1188,9 @@ class Suite(object):
 
         # make returns 0 if everything was good
         if not rc == 0:
-            self.log.warn("build failed")
+            errstr  = "Failed to build target " + target
+            errstr += ". Check " + outfile + " for more information."
+            self.log.fail(errstr)
 
         comp_string = cmd
 
@@ -1219,8 +1222,7 @@ class Suite(object):
             shutil.move("{}".format(path_to_exe),
                         "{}/{}/{}.ex".format(self.source_dir,test.buildDir,test.name))
         else:
-          self.log.warn("build failed")
-
+            self.log.fail("Failed to build test " + test.name)
 
         return comp_string, rc
 
