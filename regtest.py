@@ -29,6 +29,19 @@ import test_util
 import test_report as report
 import test_coverage as coverage
 
+safe_flags = ['USE_CUDA', 'USE_ACC', 'USE_MPI', 'USE_OMP', 'DEBUG']
+
+def _check_safety(cs):
+    try:
+        flag = cs.split("=")[0]
+        return flag in safe_flags
+    except:
+        return False
+
+def check_realclean_safety(compile_strings):
+    split_strings = compile_strings.strip().split()
+    return all([_check_safety(cs) for cs in split_strings])
+                        
 def find_build_dirs(tests):
     """ given the list of test objects, find the set of UNIQUE build
         directories.  Note if we have the useExtraBuildDir flag set """
