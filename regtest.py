@@ -71,39 +71,6 @@ def find_build_dirs(tests):
                 
     return build_dirs
                 
-def find_build_dirs(tests):
-    """ given the list of test objects, find the set of UNIQUE build
-        directories.  Note if we have the useExtraBuildDir flag set """
-
-    build_dirs = []
-    reclean = []
-
-    for obj in tests:
-
-        # keep track of the build directory and which source tree it is
-        # in (e.g. the extra build dir)
-
-        # first find the list of unique build directories
-        dir_pair = (obj.buildDir, obj.extra_build_dir)
-        if build_dirs.count(dir_pair) == 0:
-            build_dirs.append(dir_pair)
-
-
-        # re-make all problems that specify an extra compile argument,
-        # just to make sure that any unique build commands are seen.
-        if not obj.addToCompileString == "":
-            reclean.append(dir_pair)
-
-    for bdir, _ in reclean:
-        for obj in tests:
-            if obj.buildDir == bdir:
-                obj.reClean = 1
-
-    return build_dirs
-
-
-
-
 def cmake_setup(suite):
     "Setup for cmake"
 
