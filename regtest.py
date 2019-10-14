@@ -29,7 +29,7 @@ import test_util
 import test_report as report
 import test_coverage as coverage
 
-safe_flags = ['USE_CUDA', 'USE_ACC', 'USE_MPI', 'USE_OMP', 'DEBUG']
+safe_flags = ['USE_CUDA', 'USE_ACC', 'USE_MPI', 'USE_OMP', 'DEBUG', 'USE_GPU']
 
 def _check_safety(cs):
     try:
@@ -41,7 +41,36 @@ def _check_safety(cs):
 def check_realclean_safety(compile_strings):
     split_strings = compile_strings.strip().split()
     return all([_check_safety(cs) for cs in split_strings])
-                        
+
+def find_build_dirs(tests):
+    """ given the list of test objects, find the set of UNIQUE build
+        directories.  Note if we have the useExtraBuildDir flag set """
+
+    build_dirs = []
+    last_safe = False
+
+    for obj in tests:
+        
+        # keep track of the build directory and which source tree it is
+        # in (e.g. the extra build dir)
+        
+        # first find the list of unique build directories
+        dir_pair = (obj.buildDir, obj.extra_build_dir)
+        if build_dirs.count(dir_pair) == 0:
+            build_dirs.append(dir_pair)
+            
+        # re-make all problems that specify an extra compile argument,
+        # and the test that comes after, just to make sure that any
+        # unique build commands are seen.
+        obj.reClean = 1
+        if check_realclean_safety(obj.addToCompileString):
+            if last_safe:
+                obj.reClean = 0
+            else:
+                last_safe = True
+                
+    return build_dirs
+                
 def find_build_dirs(tests):
     """ given the list of test objects, find the set of UNIQUE build
         directories.  Note if we have the useExtraBuildDir flag set """
