@@ -15,21 +15,21 @@ except ImportError: JSONDecodeError = ValueError
 DO_TIMINGS_PLOTS = True
 
 try:
-    
+
     import bokeh
     from bokeh.plotting import figure, save, ColumnDataSource
     from bokeh.resources import CDN
     from bokeh.models import HoverTool
     from datetime import datetime as dt
-    
+
 except:
-    
+
     try: import matplotlib
     except: DO_TIMINGS_PLOTS = False
     else:
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
-    
+
     try: import matplotlib.dates as dates
     except: DO_TIMINGS_PLOTS = False
 
@@ -55,7 +55,7 @@ class Test(object):
         self.linkFiles = []
 
         self.dim = -1
-        
+
         self.run_as_script = ""
         self.script_args = ""
         self.return_code = None
@@ -159,17 +159,17 @@ class Test(object):
 
         if output_dir is None:
             output_dir = self.output_dir   # not yet implemented
-            
+
         if self.run_as_script:
-            
+
             outfile = self.outfile
             filepath = os.path.join(output_dir, outfile)
-            
+
             if not os.path.isfile(filepath) or self.crashed:
-                
+
                 self.log.warn("test did not produce any output")
                 return ""
-                
+
             else: return outfile
 
         plts = [d for d in os.listdir(output_dir) if \
@@ -184,10 +184,6 @@ class Test(object):
 
         plts.sort()
         last_plot = plts.pop()
-
-        if last_plot.endswith("00000"):
-            self.log.warn("only plotfile 0 was output -- skipping comparison")
-            return ""
 
         return last_plot
 
@@ -222,29 +218,29 @@ class Test(object):
         compare = not self.doComparison or self.compare_successful
         analysis = self.analysisRoutine == "" or self.analysis_successful
         return compare and analysis
-    
+
     @property
     def crashed(self):
         """ Whether the test crashed or not """
-        
+
         return len(self.backtrace) > 0 or (self.run_as_script and self.return_code != 0)
-    
+
     @property
     def outfile(self):
         """ The basename of this run's output file """
-        
+
         return "{}.run.out".format(self.name)
-        
+
     @property
     def errfile(self):
         """ The basename of this run's error file """
-        
+
         return "{}.err.out".format(self.name)
-        
+
     @property
     def comparison_outfile(self):
         """ The basename of this run's comparison output file """
-        
+
         return "{}.compare.out".format(self.name)
 
     def record_runtime(self, suite):
@@ -448,36 +444,36 @@ class Suite(object):
             self.log.fail("ERROR: {} is not a valid directory".format(dir_name))
 
         return dir_name
-        
+
     def init_web_dir(self, dir_name):
         """
         Sets the suite web directory to dir_name if dir_name is neither null
         nor whitespace, and initializes it to a temporary directory under the
         test directory otherwise.
         """
-        
+
         if not (dir_name and dir_name.strip()):
-            
+
             self.webTopDir = tf.mkdtemp(dir=self.testTopDir) + '/'
             self._noWebDir = True
-            
+
         else:
-            
+
             self.webTopDir = os.path.normpath(dir_name) + '/'
-            
+
         if not os.path.isdir(self.webTopDir):
-            
+
             self.log.fail("ERROR: Unable to initialize web directory to"
                     + " {} - invalid path.".format(self.webTopDir))
-                    
+
     def delete_tempdirs(self):
         """
         Removes any temporary directories that were created during the
         current test run.
         """
-        
+
         if self._noWebDir:
-            
+
             shutil.rmtree(self.webTopDir)
 
     def get_tests_to_run(self, test_list_old):
@@ -716,16 +712,16 @@ class Suite(object):
         if active_test_list is not None:
             valid_dirs, all_tests = self.get_run_history(active_test_list)
         timings = self.get_wallclock_history()
-        
+
         try: bokeh
         except NameError:
-            
+
             convf = dates.datestr2num
             using_mpl = True
             self.plot_ext = "png"
-            
+
         else:
-            
+
             convf = lambda s: dt.strptime(s, '%Y-%m-%d')
             using_mpl = False
             self.plot_ext = "html"
@@ -735,13 +731,13 @@ class Suite(object):
 
             if len(date) > 10: date = date[:date.rfind("-")]
             return convf(date)
-            
+
         def hover_tool():
             """
             Encapsulates hover tool creation to prevent errors when generating
             multiple documents.
             """
-            
+
             return HoverTool(
                 tooltips=[("date", "@date{%F}"), ("runtime", "@runtime{0.00}")],
                 formatters={"date": "datetime"})
@@ -758,7 +754,7 @@ class Suite(object):
             if len(times) == 0: continue
 
             if using_mpl:
-                
+
                 plt.clf()
                 plt.plot_date(days, times, "o", xdate=True)
 
@@ -781,20 +777,20 @@ class Suite(object):
                 fig.autofmt_xdate()
 
                 plt.savefig("{}/{}-timings.{}".format(self.webTopDir, t, self.plot_ext))
-                
+
             else:
-                
+
                 source = ColumnDataSource(dict(date=days, runtime=times))
-                
+
                 settings = dict(x_axis_type="datetime")
                 if max(times) / min(times) > 10.0: settings["y_axis_type"] = "log"
                 plot = figure(**settings)
                 plot.add_tools(hover_tool())
-                
+
                 plot.circle("date", "runtime", source=source)
                 plot.xaxis.axis_label = "Date"
                 plot.yaxis.axis_label = "Runtime (s)"
-                
+
                 save(plot, resources=CDN,
                         filename="{}/{}-timings.{}".format(self.webTopDir, t, self.plot_ext),
                         title="{} Runtime History".format(t))
@@ -859,7 +855,7 @@ class Suite(object):
     def get_comp_string_f(self, test=None, opts="", target="", outfile=None ):
         build_opts = ""
         f_make_additions = self.add_to_f_make_command
-        
+
         if test is not None:
             build_opts += "NDEBUG={} ".format(f_flag(test.debug, test_not=True))
             build_opts += "ACC={} ".format(f_flag(test.acc))
@@ -871,7 +867,7 @@ class Suite(object):
 
             if not test.addToCompileString == "":
                 build_opts += test.addToCompileString + " "
-                
+
             if test.ignoreGlobalMakeAdditions:
                 f_make_additions = ""
 
@@ -918,7 +914,7 @@ class Suite(object):
 
             if not test.addToCompileString == "":
                 build_opts += test.addToCompileString + " "
-                
+
             if test.ignoreGlobalMakeAdditions:
                 c_make_additions = ""
 
@@ -929,7 +925,7 @@ class Suite(object):
             all_opts, self.COMP, c_make_additions, target)
 
         return comp_string
-    
+
     def build_c(self, test=None, opts="", target="",
                 outfile=None, c_make_additions=None):
         comp_string = self.get_comp_string_c( test, opts, target,
@@ -957,10 +953,10 @@ class Suite(object):
             test_run_command = base_command
 
         outfile = test.outfile
-        
+
         if test.run_as_script: errfile = None
         else: errfile = test.errfile
-        
+
         self.log.log(test_run_command)
         sout, serr, ierr = test_util.run(test_run_command, stdin=True,
                                          outfile=outfile, errfile=errfile,
