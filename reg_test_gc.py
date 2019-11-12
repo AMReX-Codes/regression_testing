@@ -18,7 +18,7 @@ def reg_test_gc(argv):
     """
 
     if len(sys.argv) == 1:
-        print usage
+        print(usage)
         sys.exit(2)
         
     try:
@@ -26,8 +26,8 @@ def reg_test_gc(argv):
                                    ["before="])
 
     except getopt.GetoptError:
-        print "invalid calling sequence"
-        print usage
+        print("invalid calling sequence")
+        print(usage)
         sys.exit(2)
 
     # defaults
@@ -41,25 +41,25 @@ def reg_test_gc(argv):
         testFile = next[0]
 
     except IndexError:
-        print "ERROR: a test file was not specified"
-        print usage
+        print("ERROR: a test file was not specified")
+        print(usage)
         sys.exit(2)
 
     if not gcdate:
-        print "ERROR: date was not specified"
-        print usage
+        print("ERROR: date was not specified")
+        print(usage)
         sys.exit(2)
             
     gcd = valid_date(gcdate)
     if gcd == '':
-        print "ERROR: invalid date", gcdate
-        print usage
+        print("ERROR: invalid date", gcdate)
+        print(usage)
         sys.exit(2)
 
 
     workdir = os.getcwd()
 
-    print "loading ", testFile
+    print("loading ", testFile)
 
     args=test_util.get_args([testFile])
 
@@ -73,7 +73,7 @@ def reg_test_gc(argv):
 
 
     ### clean up the web dir
-    print "\ncleaning ", suite.webTopDir
+    print("\ncleaning ", suite.webTopDir)
 
     os.chdir(suite.webTopDir)
     validDirs = []
@@ -88,7 +88,7 @@ def reg_test_gc(argv):
     latestBMDate = {}
 
     for d in validDirs:
-        bmtests = benchmarkNotFound.keys()
+        bmtests = list(benchmarkNotFound)
         if d >= gcd and bmtests:
             if isBenchmarkDir(d):
                 for t in bmtests:
@@ -111,7 +111,7 @@ def reg_test_gc(argv):
 
     ### clean up the test dir
     testDirs = os.path.join(suite.testTopDir,suite.suiteName+"-tests")
-    print "\ncleaning ", testDirs
+    print("\ncleaning ", testDirs)
 
     os.chdir(testDirs)
     validDirs = []
@@ -132,10 +132,10 @@ def reg_test_gc(argv):
             if not found:
                 rmDir(d)
     
-    print "\ncreating suite report..."
+    print("\ncreating suite report...")
     report.report_all_runs(suite, activeTestList)
 
-    print "\nGarbage cleaning finished."
+    print("\nGarbage cleaning finished.")
 
 
 def valid_date(gcdate):
@@ -154,7 +154,7 @@ def valid_date(gcdate):
     try:
         mi = int(m)
         if mi > 12 or mi < 1:
-            print 'm='+m+'!'
+            print('m='+m+'!')
             return ''
     except ValueError:
         return ''
@@ -173,7 +173,7 @@ def isBenchmarkDir(d):
     f = open(os.path.join(d,d+'.status'), 'r')
     line = f.readline()
     f.close()
-    if string.find(line, 'BENCHMARKS UPDATED') == -1:
+    if str.find(line, 'BENCHMARKS UPDATED') == -1:
         return False
     else:
         return True
@@ -186,14 +186,14 @@ def findBenchmark(d, t):
         return False
     line = f.readline()
     f.close()
-    if string.find(line, 'benchmarks updated') == -1:
+    if str.find(line, 'benchmarks updated') == -1:
         return False
     else:
         return True
 
 
 def rmDir(d):
-    print '  deleting', d
+    print('  deleting', d)
     shutil.rmtree(d)
     
 
