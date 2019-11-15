@@ -85,6 +85,7 @@ class Test(object):
 
         self._doComparison = True
         self._tolerance = None
+        self._particle_tolerance = None
 
         self.analysisRoutine = ""
         self.analysisMainArgs = ""
@@ -292,6 +293,20 @@ class Test(object):
 
         self._tolerance = value
 
+    def get_particle_tolerance(self):
+        """ Returns the global particle tolerance if one was set,
+            and the test-specific one otherwise.
+        """
+
+        if Test.global_particle_tolerance is None:
+            return self._particle_tolerance
+        return Test.global_particle_tolerance
+
+    def set_particle_tolerance(self, value):
+        """ Sets the test-specific particle tolerance to the specified value. """
+
+        self._particle_tolerance = value
+        
     def get_check_performance(self):
         """ Returns whether to check performance for this test. """
 
@@ -330,6 +345,7 @@ class Test(object):
     compile_only = False
     skip_comparison = False
     global_tolerance = None
+    global_particle_tolerance = None
     performance_params = []
 
     # Properties - allow for direct access as an attribute
@@ -337,6 +353,7 @@ class Test(object):
     compileTest = property(get_compile_test, set_compile_test)
     doComparison = property(get_do_comparison, set_do_comparison)
     tolerance = property(get_tolerance, set_tolerance)
+    particle_tolerance = property(get_particle_tolerance, set_particle_tolerance)
     check_performance = property(get_check_performance, set_check_performance)
     performance_threshold = property(get_performance_threshold, set_performance_threshold)
     runs_to_average = property(get_runs_to_average, set_runs_to_average)
@@ -1083,6 +1100,7 @@ class Suite(object):
         Test.compile_only = args.compile_only
         Test.skip_comparison = args.skip_comparison
         Test.global_tolerance = args.tolerance
+        Test.global_particle_tolerance = args.particle_tolerance
         Test.performance_params = args.check_performance
 
     #######################################################

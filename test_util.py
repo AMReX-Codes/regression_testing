@@ -143,8 +143,9 @@ Each test is given its own block, with the general form:
 
   doComparison = < 1: compare to benchmark file, 0: skip comparison >
   tolerance = < floating point number representing the largest relative error
-                permitted between the run output and the benchmark, default
-                is 0.0 >
+                permitted between the run output and the benchmark for mesh data,
+                default is 0.0 >
+  particle_tolerance = < same as the above, for particle comparisons
   outputFile = < explicit output file to compare with -- exactly as it will
                  be written.  No prefix of the test name will be done >
 
@@ -367,8 +368,9 @@ def get_args(arg_string=None):
     comp_options.add_argument("--skip_comparison", action="store_true",
                               help="run analysis for each test without comparison to benchmarks")
     comp_options.add_argument("--tolerance", type=float, default=None, metavar="value",
-                              help="largest relative error permitted during comparison")
-
+                              help="largest relative error permitted during mesh comparison")
+    comp_options.add_argument("--particle_tolerance", type=float, default=None, metavar="value",
+                              help="largest relative error permitted during particle comparison")
     parser.add_argument("input_file", metavar="input-file", type=str, nargs=1,
                         help="the input file (INI format) containing the suite and test parameters")
 
