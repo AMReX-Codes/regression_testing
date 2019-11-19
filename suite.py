@@ -990,7 +990,7 @@ class Suite(object):
             self.log.log("building {}...".format(t))
             comp_string, rc = self.build_c(target="programs={}".format(t),
                                            opts="DEBUG=FALSE USE_MPI=FALSE USE_OMP=FALSE ",
-                                           c_make_additions="")
+                                           c_make_additions="", outfile="{}.make.out".format(t))
             if not rc == 0:
                 self.log.fail("unable to continue, tools not able to be built")
 
@@ -1008,10 +1008,10 @@ class Suite(object):
                 ctools = []
             else:
                 ctools = ["particle_compare"]
+                self.make_realclean(repo="AMReX")
         else:
             ctools = []
 
-        self.make_realclean(repo="AMReX")
 
         for t in ctools:
             self.log.log("building {}...".format(t))
