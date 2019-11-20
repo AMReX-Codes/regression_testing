@@ -804,14 +804,14 @@ def test_suite(argv):
 
                         elif test.tolerance is not None:
 
-                            command = "{} -n 0 -r {} {} {}".format(suite.tools["fcompare"],
-                                                                   test.tolerance,
-                                                                   bench_file, output_file)
+                            command = "{} --abort_if_not_all_found -n 0 -r {} {} {}".format(suite.tools["fcompare"],
+                                                                                            test.tolerance,
+                                                                                            bench_file, output_file)
 
                         else:
 
-                            command = "{} -n 0 {} {}".format(suite.tools["fcompare"],
-                                                             bench_file, output_file)
+                            command = "{} --abort_if_not_all_found -n 0 {} {}".format(suite.tools["fcompare"],
+                                                                                      bench_file, output_file)
 
                         sout, _, ierr = test_util.run(command,
                                                       outfile=test.comparison_outfile,
