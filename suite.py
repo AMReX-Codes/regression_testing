@@ -15,7 +15,6 @@ except ImportError: JSONDecodeError = ValueError
 DO_TIMINGS_PLOTS = True
 
 try:
-
     import bokeh
     from bokeh.plotting import figure, save, ColumnDataSource
     from bokeh.resources import CDN
@@ -23,15 +22,18 @@ try:
     from datetime import datetime as dt
 
 except:
-
-    try: import matplotlib
-    except: DO_TIMINGS_PLOTS = False
+    try:
+        import matplotlib
+    except:
+        DO_TIMINGS_PLOTS = False
     else:
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
 
-    try: import matplotlib.dates as dates
-    except: DO_TIMINGS_PLOTS = False
+    try:
+        import matplotlib.dates as dates
+    except:
+        DO_TIMINGS_PLOTS = False
 
 class Test(object):
 
@@ -173,7 +175,7 @@ class Test(object):
 
         plts = [d for d in os.listdir(output_dir) if \
                 (os.path.isdir(d) and
-                 d.startswith("{}_plt".format(self.name))) or \
+                 d.startswith("{}_plt".format(self.name)) and d[-1].isdigit()) or \
                 (os.path.isfile(d) and
                  d.startswith("{}_plt".format(self.name)) and d.endswith(".tgz"))]
 
@@ -949,7 +951,7 @@ class Suite(object):
             self.log.log("building {}...".format(t))
             comp_string, rc = self.build_c(target="programs={}".format(t),
                                            opts="DEBUG=FALSE USE_MPI=FALSE USE_OMP=FALSE ",
-                                           c_make_additions="")
+                                           c_make_additions="", outfile="{}.make.out".format(t))
             if not rc == 0:
                 self.log.fail("unable to continue, tools not able to be built")
 
@@ -967,12 +969,14 @@ class Suite(object):
                 ctools = []
             else:
                 ctools = ["particle_compare"]
+                self.make_realclean(repo="AMReX")
         else:
             ctools = []
 
+
         for t in ctools:
             self.log.log("building {}...".format(t))
-            comp_string, rc = self.build_c(opts="DEBUG=FALSE USE_MPI=FALSE ")
+            comp_string, rc = self.build_c(opts="DEBUG=FALSE USE_MPI=FALSE EBASE=particle_compare ")
             if not rc == 0:
                 self.log.fail("unable to continue, tools not able to be built")
 

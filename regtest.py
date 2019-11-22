@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 A simple regression test framework for a AMReX-based code
@@ -17,7 +17,6 @@ import email
 import os
 import shutil
 import smtplib
-import string
 import sys
 import tarfile
 import time
@@ -69,10 +68,10 @@ def cmake_setup(suite):
     # build AMReX with CMake
     #--------------------------------------------------------------------------
     # Configure Amrex
-    builddir, installdir = suite.cmake_config( name       = "AMReX",
-                                               path       = suite.amrex_dir,
-                                               configOpts = suite.amrex_cmake_opts,
-                                               install    = 1)
+    builddir, installdir = suite.cmake_config(name="AMReX",
+                                              path=suite.amrex_dir,
+                                              configOpts=suite.amrex_cmake_opts,
+                                              install=1)
 
     suite.amrex_install_dir = installdir
 
@@ -81,14 +80,14 @@ def cmake_setup(suite):
 
 
     # Install
-    rc, comp_string = suite.cmake_build( name   = "AMReX",
-                                         target = 'install',
-                                         path   = builddir,
-                                         env    = env)
+    rc, _ = suite.cmake_build(name="AMReX",
+                              target='install',
+                              path=builddir,
+                              env=env)
 
     # If AMReX build fails, issue a catastrophic error
     if not rc == 0:
-        errstr  = "\n \nERROR! AMReX build failed \n"
+        errstr = "\n \nERROR! AMReX build failed \n"
         errstr += "Check {}AMReX.cmake.log for more information.".format(suite.full_test_dir)
         sys.exit(errstr)
 
@@ -97,11 +96,11 @@ def cmake_setup(suite):
     # Configure main suite with CMake: build will be performed only when
     # needed for tests
     #--------------------------------------------------------------------------
-    builddir, installdir = suite.cmake_config( name       = suite.suiteName,
-                                               path       = suite.source_dir,
-                                               configOpts = suite.source_cmake_opts,
-                                               install    = 0,
-                                               env        = env)
+    builddir, installdir = suite.cmake_config(name=suite.suiteName,
+                                              path=suite.source_dir,
+                                              configOpts=suite.source_cmake_opts,
+                                              install=0,
+                                              env=env)
 
     suite.source_build_dir = builddir
 
@@ -149,8 +148,10 @@ def copy_benchmarks(old_full_test_dir, full_web_dir, test_list, bench_dir, log):
             if not t.outputFile == "":
                 store_file = "{}_{}".format(t.name, p)
 
-            try: shutil.rmtree("{}/{}".format(bench_dir, store_file))
-            except: pass
+            try:
+                shutil.rmtree("{}/{}".format(bench_dir, store_file))
+            except:
+                pass
             shutil.copytree(p, "{}/{}".format(bench_dir, store_file))
 
             with open("{}/{}.status".format(full_web_dir, t.name), 'w') as cf:
@@ -196,11 +197,11 @@ def get_variable_names(suite, plotfile):
         return serr
 
     # Split on whitespace
-    vars = re.split("\s+", sout)[2:-1:2]
+    tvars = re.split(r"\s+", sout)[2:-1:2]
 
-    return set(vars)
+    return set(tvars)
 
-def process_comparison_results(stdout, vars, test):
+def process_comparison_results(stdout, tvars, test):
     """ checks the output of fcompare (passed in as stdout)
         to determine whether all relative errors fall within
         the test's tolerance """
@@ -211,14 +212,15 @@ def process_comparison_results(stdout, vars, test):
     # the current item is a variable if successful.
 
     # Split on whitespace
-    regex = "\s+"
+    regex = r"\s+"
     words = re.split(regex, stdout)
 
-    indices = filter(lambda i: words[i] in vars, range(len(words)))
+    indices = filter(lambda i: words[i] in tvars, range(len(words)))
 
     for i in indices:
-        var, abs_err, rel_err = words[i: i + 3]
-        if abs(test.tolerance) <= abs(float(rel_err)): return False
+        _, _, rel_err = words[i: i + 3]
+        if abs(test.tolerance) <= abs(float(rel_err)):
+            return False
 
     return True
 
@@ -226,7 +228,8 @@ def test_performance(test, suite, runtimes):
     """ outputs a warning if the execution time of the test this run
         does not compare favorably to past logged times """
 
-    if test.name not in runtimes: return
+    if test.name not in runtimes:
+        return
     runtimes = runtimes[test.name]["runtimes"]
 
     if len(runtimes) < 1:
@@ -313,7 +316,7 @@ def test_suite(argv):
         was_benchmark_run = 0
         for sfile in os.listdir(suite.full_web_dir):
             if os.path.isfile(sfile) and sfile.endswith(".status"):
-                index = string.rfind(sfile, ".status")
+                index = sfile.rfind(".status")
                 tests.append(sfile[:index])
 
                 with open(suite.full_web_dir + sfile, "r") as f:
@@ -458,7 +461,7 @@ def test_suite(argv):
     #--------------------------------------------------------------------------
     # Setup Cmake if needed
     #--------------------------------------------------------------------------
-    if ( suite.useCmake ):
+    if suite.useCmake:
         cmake_setup(suite)
 
 
@@ -516,7 +519,7 @@ def test_suite(argv):
 
         suite.log.log("building...")
 
-        coutfile="{}/{}.make.out".format(output_dir, test.name)
+        coutfile = "{}/{}.make.out".format(output_dir, test.name)
 
         if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
             if suite.useCmake:
@@ -529,7 +532,8 @@ def test_suite(argv):
         test.comp_string = comp_string
 
         # make return code is 0 if build was successful
-        if rc == 0: test.compile_successful = True
+        if rc == 0:
+            test.compile_successful = True
         # Compute compile time
         test.build_time = time.time() - test.build_time
 
@@ -583,14 +587,16 @@ def test_suite(argv):
             else:
                 suite.log.fail("invalid action")
 
-            try: act(nfile, output_dir)
+            try:
+                act(nfile, output_dir)
             except IOError:
                 error_msg = "ERROR: unable to {} file {}".format(action, nfile)
                 report.report_single_test(suite, test, test_list, failure_msg=error_msg)
                 skip_to_next_test = 1
                 break
 
-        if skip_to_next_test: continue
+        if skip_to_next_test:
+            continue
 
         skip_to_next_test = 0
         for lfile in test.linkFiles:
@@ -603,14 +609,16 @@ def test_suite(argv):
             else:
                 link_source = os.path.abspath(lfile)
                 link_name = os.path.join(output_dir, os.path.basename(lfile))
-                try: os.symlink(link_source, link_name)
+                try:
+                    os.symlink(link_source, link_name)
                 except IOError:
                     error_msg = "ERROR: unable to symlink link file: {}".format(lfile)
                     report.report_single_test(suite, test, test_list, failure_msg=error_msg)
                     skip_to_next_test = 1
                     break
 
-        if skip_to_next_test: continue
+        if skip_to_next_test:
+            continue
 
 
         #----------------------------------------------------------------------
@@ -695,7 +703,8 @@ def test_suite(argv):
         test.wall_time = time.time() - test.wall_time
 
         # Check for performance drop
-        if test.check_performance: test_performance(test, suite, runtimes)
+        if test.check_performance:
+            test_performance(test, suite, runtimes)
 
         #----------------------------------------------------------------------
         # do the comparison
@@ -723,9 +732,9 @@ def test_suite(argv):
             if not test.run_as_script:
 
                 prog = "{} -l {}".format(suite.tools["fboxinfo"], output_file)
-                stdout0, stderr0, rc = test_util.run(prog)
+                stdout0, _, rc = test_util.run(prog)
                 test.nlevels = stdout0.rstrip('\n')
-                if not type(params.convert_type(test.nlevels)) is int:
+                if not isinstance(params.convert_type(test.nlevels), int):
                     test.nlevels = ""
 
             if args.make_benchmarks is None and test.doComparison:
@@ -765,11 +774,11 @@ def test_suite(argv):
                         else:
 
                             command = "{} -n 0 {} {}".format(suite.tools["fcompare"],
-                                    bench_file, output_file)
+                                                             bench_file, output_file)
 
-                        sout, serr, ierr = test_util.run(command,
-                                                         outfile=test.comparison_outfile,
-                                                         store_command=True)
+                        sout, _, ierr = test_util.run(command,
+                                                      outfile=test.comparison_outfile,
+                                                      store_command=True)
 
                         if test.run_as_script:
 
@@ -778,8 +787,8 @@ def test_suite(argv):
                         # Comparison within tolerance - reliant on fvarnames and fcompare
                         elif test.tolerance is not None:
 
-                            vars = get_variable_names(suite, bench_file)
-                            test.compare_successful = process_comparison_results(sout, vars, test)
+                            tvars = get_variable_names(suite, bench_file)
+                            test.compare_successful = process_comparison_results(sout, tvars, test)
 
                         else:
 
@@ -790,8 +799,8 @@ def test_suite(argv):
                                 command = "{} {} {} {}".format(
                                     suite.tools["particle_compare"], bench_file, output_file, ptype)
 
-                                sout, serr, ierr = test_util.run(command,
-                                                                 outfile=test.comparison_outfile, store_command=True)
+                                sout, _, ierr = test_util.run(command,
+                                                              outfile=test.comparison_outfile, store_command=True)
 
                                 test.compare_successful = test.compare_successful and not ierr
 
@@ -843,20 +852,23 @@ def test_suite(argv):
                     suite.log.outdent()
 
                     if test.run_as_script:
-
                         bench_path = os.path.join(bench_dir, compare_file)
-                        try: os.remove(bench_path)
-                        except: pass
+                        try:
+                            os.remove(bench_path)
+                        except:
+                            pass
                         shutil.copy(source_file, bench_path)
 
                     else:
+                        try:
+                            shutil.rmtree("{}/{}".format(bench_dir, compare_file))
+                        except:
+                            pass
 
-                        try: shutil.rmtree("{}/{}".format(bench_dir, compare_file))
-                        except: pass
                         shutil.copytree(source_file, "{}/{}".format(bench_dir, compare_file))
 
                     with open("{}.status".format(test.name), 'w') as cf:
-                        cf.write("benchmarks updated.  New file:  {}\n".format(compare_file) )
+                        cf.write("benchmarks updated.  New file:  {}\n".format(compare_file))
 
                 else:
                     with open("{}.status".format(test.name), 'w') as cf:
@@ -893,7 +905,8 @@ def test_suite(argv):
 
                 suite.log.log("looking for selfTest success string: {} ...".format(test.stSuccessString))
 
-                try: of = open(test.outfile, 'r')
+                try:
+                    of = open(test.outfile, 'r')
                 except IOError:
                     suite.log.warn("no output file found")
                     out_lines = ['']
@@ -928,7 +941,8 @@ def test_suite(argv):
                     if os.path.isfile(job_info_file):
                         test.has_jobinfo = 1
 
-                    try: jif = open(job_info_file, "r")
+                    try:
+                        jif = open(job_info_file, "r")
                     except:
                         suite.log.warn("unable to open the job_info file")
                     else:
@@ -1037,7 +1051,7 @@ def test_suite(argv):
             if test.inputFile:
 
                 shutil.copy(test.inputFile, "{}/{}.{}".format(
-                    suite.full_web_dir, test.name, test.inputFile) )
+                    suite.full_web_dir, test.name, test.inputFile))
 
             if test.has_jobinfo:
                 shutil.copy(job_info_file, "{}/{}.job_info".format(
@@ -1045,7 +1059,7 @@ def test_suite(argv):
 
             if suite.sourceTree == "C_Src" and test.probinFile != "":
                 shutil.copy(test.probinFile, "{}/{}.{}".format(
-                    suite.full_web_dir, test.name, test.probinFile) )
+                    suite.full_web_dir, test.name, test.probinFile))
 
             for af in test.auxFiles:
 
@@ -1053,16 +1067,18 @@ def test_suite(argv):
                 # when copying
                 shutil.copy(os.path.basename(af),
                             "{}/{}.{}".format(suite.full_web_dir,
-                                              test.name, os.path.basename(af)) )
+                                              test.name, os.path.basename(af)))
 
             if not test.png_file is None:
-                try: shutil.copy(test.png_file, suite.full_web_dir)
+                try:
+                    shutil.copy(test.png_file, suite.full_web_dir)
                 except IOError:
                     # visualization was not successful.  Reset image
                     test.png_file = None
 
             if not test.analysisRoutine == "":
-                try: shutil.copy(test.analysisOutputImage, suite.full_web_dir)
+                try:
+                    shutil.copy(test.analysisOutputImage, suite.full_web_dir)
                 except IOError:
                     # analysis was not successful.  Reset the output image
                     test.analysisOutputImage = ""
@@ -1087,7 +1103,8 @@ def test_suite(argv):
                 if suite.purge_output == 1 and not pfile == output_file:
 
                     # delete the plt/chk file
-                    try: shutil.rmtree(pfile)
+                    try:
+                        shutil.rmtree(pfile)
                     except:
                         suite.log.warn("unable to remove {}".format(pfile))
 
@@ -1102,7 +1119,8 @@ def test_suite(argv):
                         suite.log.warn("unable to tar output file {}".format(pfile))
 
                     else:
-                        try: shutil.rmtree(pfile)
+                        try:
+                            shutil.rmtree(pfile)
                         except OSError:
                             suite.log.warn("unable to remove {}".format(pfile))
 
@@ -1117,7 +1135,7 @@ def test_suite(argv):
     #--------------------------------------------------------------------------
     # Clean Cmake build and install directories if needed
     #--------------------------------------------------------------------------
-    if ( suite.useCmake ):
+    if suite.useCmake:
         suite.cmake_clean("AMReX", suite.amrex_dir)
         suite.cmake_clean(suite.suiteName, suite.source_dir)
 
@@ -1125,12 +1143,14 @@ def test_suite(argv):
     # jsonify and save runtimes
     #--------------------------------------------------------------------------
     file_path = suite.get_wallclock_file()
-    with open(file_path, 'w') as json_file: json.dump(runtimes, json_file)
+    with open(file_path, 'w') as json_file:
+        json.dump(runtimes, json_file)
 
     #--------------------------------------------------------------------------
     # parameter coverage
     #--------------------------------------------------------------------------
-    if suite.reportCoverage: determine_coverage(suite)
+    if suite.reportCoverage:
+        determine_coverage(suite)
 
     #--------------------------------------------------------------------------
     # write the report for this instance of the test suite
@@ -1142,13 +1162,12 @@ def test_suite(argv):
                                              update_time,
                                              test_list, args.input_file[0])
 
-
     # make sure that all of the files in the web directory are world readable
     for file in os.listdir(suite.full_web_dir):
-       current_file = suite.full_web_dir + file
+        current_file = suite.full_web_dir + file
 
-       if os.path.isfile(current_file):
-          os.chmod(current_file, 0o644)
+        if os.path.isfile(current_file):
+            os.chmod(current_file, 0o644)
 
     # reset the branch to what it was originally
     suite.log.skip()
@@ -1166,11 +1185,11 @@ def test_suite(argv):
         suite.delete_tempdirs()
         return num_failed
 
-
     # store an output file in the web directory that can be parsed easily by
     # external program
     name = "source"
-    if suite.sourceTree in ["AMReX", "amrex"]: name = "AMReX"
+    if suite.sourceTree in ["AMReX", "amrex"]:
+        name = "AMReX"
     branch = ''
     if suite.repos[name].branch_wanted:
         branch = suite.repos[name].branch_wanted.strip("\"")
