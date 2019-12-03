@@ -712,8 +712,9 @@ def test_suite(argv):
 
             if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
 
-                base_cmd = "./{} {} {}={}_plt amr.check_file={}_chk amr.checkpoint_files_output=0 amr.restart={}".format(
-                    executable, test.inputFile, suite.plot_file_name, test.name, test.name, restart_file)
+                base_cmd = "./{} {} {}={}_plt amr.check_file={}_chk amr.checkpoint_files_output=0 amr.restart={} {} {}".format(
+                    executable, test.inputFile, suite.plot_file_name, test.name, test.name, restart_file,
+                    suite.globalAddToExecString, test.runtime_params)
 
             elif suite.sourceTree == "F_Src" or test.testSrcTree == "F_Src":
 
