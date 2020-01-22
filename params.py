@@ -96,6 +96,8 @@ def load_params(args):
     mysuite.repos["AMReX"] = repo.Repo(mysuite, rdir, "AMReX",
                                         branch_wanted=branch, hash_wanted=rhash)
 
+
+
     # Check for Cmake build options for both AMReX and Source
     for s in cp.sections():
         if s == "AMReX":
@@ -138,6 +140,9 @@ def load_params(args):
     else:
         mysuite.source_dir = mysuite.repos["source"].dir
 
+    # did we override the branch on the commandline?
+    if args.source_branch is not None:
+        mysuite.repos["source"].branch_wanted = args.source_branch
 
     # now flesh out the compile strings -- they may refer to either themselves
     # or the source dir

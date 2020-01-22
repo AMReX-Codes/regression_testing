@@ -695,8 +695,9 @@ def test_suite(argv):
             suite.log.log("restarting from {} ... ".format(restart_file))
 
             if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
-                base_cmd = "./{} {} {}={}_plt amr.check_file={}_chk amr.checkpoint_files_output=0 amr.restart={}".format(
-                    executable, test.inputFile, suite.plot_file_name, test.name, test.name, restart_file)
+                base_cmd = "./{} {} {}={}_plt amr.check_file={}_chk amr.checkpoint_files_output=0 amr.restart={} {} {}".format(
+                    executable, test.inputFile, suite.plot_file_name, test.name, test.name, restart_file,
+                    suite.globalAddToExecString, test.runtime_params)
 
             suite.run_test(test, base_cmd)
 
