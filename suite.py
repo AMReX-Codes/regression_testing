@@ -223,7 +223,7 @@ class Test(object):
     def crashed(self):
         """ Whether the test crashed or not """
 
-        return len(self.backtrace) > 0 or (self.run_as_script and self.return_code != 0)
+        return len(self.backtrace) > 0 or ((self.run_as_script or (not self.doComparison)) and self.return_code != 0)
 
     @property
     def outfile(self):
