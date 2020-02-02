@@ -971,7 +971,7 @@ def test_suite(argv):
                         job_file_lines = jif.readlines()
                         jif.close()
 
-                        if suite.summary_job_info_field1 is not "":
+                        if suite.summary_job_info_field1 != "":
                             for l in job_file_lines:
                                 if l.startswith(suite.summary_job_info_field1.strip()) and l.find(":") >= 0:
                                     _tmp = l.split(":")[1]
@@ -979,7 +979,7 @@ def test_suite(argv):
                                     test.job_info_field1 = _tmp[idx:]
                                     break
 
-                        if suite.summary_job_info_field2 is not "":
+                        if suite.summary_job_info_field2 != "":
                             for l in job_file_lines:
                                 if l.startswith(suite.summary_job_info_field2.strip()) and l.find(":") >= 0:
                                     _tmp = l.split(":")[1]
@@ -987,7 +987,7 @@ def test_suite(argv):
                                     test.job_info_field2 = _tmp[idx:]
                                     break
 
-                        if suite.summary_job_info_field3 is not "":
+                        if suite.summary_job_info_field3 != "":
                             for l in job_file_lines:
                                 if l.startswith(suite.summary_job_info_field3.strip()) and l.find(":") >= 0:
                                     _tmp = l.split(":")[1]
