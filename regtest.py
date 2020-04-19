@@ -7,8 +7,7 @@ There are several major sections to this source: the runtime parameter
 routines, the test suite routines, and the report generation routines.
 They are separated as such in this file.
 
-This test framework understands source based out of the F_Src and
-C_Src AMReX frameworks.
+This test framework understands source based out of the AMReX framework.
 
 """
 
@@ -530,10 +529,6 @@ def test_suite(argv):
 
             executable = test_util.get_recent_filename(bdir, "", ".ex")
 
-        elif suite.sourceTree == "F_Src" or test.testSrcTree == "F_Src":
-            comp_string, rc = suite.build_f(test=test, outfile=coutfile)
-            executable = test_util.get_recent_filename(bdir, "main", ".exe")
-
         test.comp_string = comp_string
 
         # make return code is 0 if build was successful
@@ -649,17 +644,6 @@ def test_suite(argv):
 
             base_cmd += " {} {}".format(suite.globalAddToExecString, test.runtime_params)
 
-        elif suite.sourceTree == "F_Src" or test.testSrcTree == "F_Src":
-
-            base_cmd = "./{} {} --plot_base_name {}_plt --check_base_name {}_chk ".format(
-                executable, test.inputFile, test.name, test.name)
-
-            # keep around the checkpoint files only for the restart runs
-            if not test.restartTest:
-                base_cmd += " --chk_int 0 "
-
-            base_cmd += "{} {}".format(suite.globalAddToExecString, test.runtime_params)
-
         if args.with_valgrind:
             base_cmd = "valgrind " + args.valgrind_options + " " + base_cmd
 
@@ -711,15 +695,9 @@ def test_suite(argv):
             suite.log.log("restarting from {} ... ".format(restart_file))
 
             if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
-
                 base_cmd = "./{} {} {}={}_plt amr.check_file={}_chk amr.checkpoint_files_output=0 amr.restart={} {} {}".format(
                     executable, test.inputFile, suite.plot_file_name, test.name, test.name, restart_file,
                     suite.globalAddToExecString, test.runtime_params)
-
-            elif suite.sourceTree == "F_Src" or test.testSrcTree == "F_Src":
-
-                base_cmd = "./{} {} --plot_base_name {}_plt --check_base_name {}_chk --chk_int 0 --restart {} {}".format(
-                    executable, test.inputFile, test.name, test.name, test.restartFileNum, suite.globalAddToExecString)
 
             suite.run_test(test, base_cmd)
 
@@ -887,6 +865,7 @@ def test_suite(argv):
                             shutil.rmtree("{}/{}".format(bench_dir, compare_file))
                         except:
                             pass
+
                         shutil.copytree(source_file, "{}/{}".format(bench_dir, compare_file))
 
                     with open("{}.status".format(test.name), 'w') as cf:

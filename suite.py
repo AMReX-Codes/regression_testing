@@ -384,10 +384,8 @@ class Suite(object):
         self.MPIcommand = ""
         self.MPIhost = ""
 
-        self.FCOMP = "gfortran"
         self.COMP = "g++"
 
-        self.add_to_f_make_command = ""
         self.add_to_c_make_command = ""
 
         self.summary_job_info_field1 = ""
@@ -852,43 +850,6 @@ class Suite(object):
 
         test_util.run(cmd)
 
-    def build_f(self, test=None, opts="", target="", outfile=None):
-        """ build an executable with the Fortran AMReX build system """
-
-        build_opts = ""
-        f_make_additions = self.add_to_f_make_command
-
-        if test is not None:
-            build_opts += "NDEBUG={} ".format(f_flag(test.debug, test_not=True))
-            build_opts += "ACC={} ".format(f_flag(test.acc))
-            build_opts += "MPI={} ".format(f_flag(test.useMPI))
-            build_opts += "OMP={} ".format(f_flag(test.useOMP))
-
-            if not test.extra_build_dir == "":
-                build_opts += self.repos[test.extra_build_dir].comp_string + " "
-
-            if not test.addToCompileString == "":
-                build_opts += test.addToCompileString + " "
-
-            if test.ignoreGlobalMakeAdditions:
-                f_make_additions = ""
-
-        all_opts = "{} {} {}".format(self.extra_src_comp_string, build_opts, opts)
-
-        comp_string = "{} -j{} AMREX_HOME={} COMP={} {} {} {}".format(
-            self.MAKE, self.numMakeJobs, self.amrex_dir,
-            self.FCOMP, f_make_additions, all_opts, target)
-
-        self.log.log(comp_string)
-        stdout, stderr, rc = test_util.run(comp_string, outfile=outfile)
-
-        # make returns 0 if everything was good
-        if not rc == 0:
-            self.log.warn("build failed")
-
-        return comp_string, rc
-
-
     def build_c(self, test=None, opts="", target="", outfile=None, c_make_additions=None):
 
         build_opts = ""
@@ -1072,7 +1033,6 @@ class Suite(object):
         # Define enviroment
         ENV = {}
         ENV =  dict(os.environ) # Copy of current enviroment
-        ENV['FC']  = self.FCOMP
         ENV['CXX'] = self.COMP
 
         if env is not None: ENV.update(env)
