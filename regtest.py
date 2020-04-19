@@ -424,7 +424,7 @@ def test_suite(argv):
 
     # keep track if we are running on any branch that is not the suite
     # default
-    branches = [suite.repos[r].branch_wanted for r in suite.repos]
+    branches = [suite.repos[r].get_branch_name() for r in suite.repos]
     if not all(suite.default_branch == b for b in branches):
         suite.log.warn("some git repos are not on the default branch")
         bf = open("{}/branch.status".format(suite.full_web_dir), "w")
@@ -1192,8 +1192,8 @@ def test_suite(argv):
     if suite.sourceTree in ["AMReX", "amrex"]:
         name = "AMReX"
     branch = ''
-    if suite.repos[name].branch_wanted:
-        branch = suite.repos[name].branch_wanted.strip("\"")
+    if suite.repos[name].get_branch_name():
+        branch = suite.repos[name].get_branch_name()
 
     with open("{}/suite.{}.status".format(suite.webTopDir, branch), "w") as f:
         f.write("{}; num failed: {}; source hash: {}".format(

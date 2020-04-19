@@ -94,7 +94,7 @@ def load_params(args):
     rhash = convert_type(safe_get(cp, "AMReX", "hash"))
 
     mysuite.repos["AMReX"] = repo.Repo(mysuite, rdir, "AMReX",
-                                        branch_wanted=branch, hash_wanted=rhash)
+                                       branch_wanted=branch, hash_wanted=rhash)
 
 
 
@@ -141,8 +141,14 @@ def load_params(args):
         mysuite.source_dir = mysuite.repos["source"].dir
 
     # did we override the branch on the commandline?
+    if args.source_branch is not None and args.source_pr is not None:
+        mysuite.log.fail("ERROR: cannot specify both source_branch and source_pr")
+
     if args.source_branch is not None:
         mysuite.repos["source"].branch_wanted = args.source_branch
+
+    if args.source_pr is not None:
+        mysuite.repos["source"].pr_wanted = args.source_pr
 
     # now flesh out the compile strings -- they may refer to either themselves
     # or the source dir

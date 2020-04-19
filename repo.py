@@ -5,16 +5,17 @@ import os
 import shutil
 import test_util
 
-class Repo(object):
+class Repo:
     """ a simple class to manage our git operations """
     def __init__(self, suite, directory, name,
-                 branch_wanted=None, hash_wanted=None,
+                 branch_wanted=None, pr_wanted=None, hash_wanted=None,
                  build=0, comp_string=None):
 
         self.suite = suite
         self.dir = directory
         self.name = name
         self.branch_wanted = branch_wanted
+        self.pr_wanted = pr_wanted
         self.hash_wanted = hash_wanted
 
         self.build = build   # does this repo contain build directories?
@@ -27,6 +28,16 @@ class Repo(object):
         self.update = True
         if hash_wanted:
             self.update = False
+
+    def get_branch_name(self):
+        """for descriptive purposes, return the name of the branch we will
+        use.  This could be a PR branch that was fetched"""
+        if self.pr_wanted is not None:
+            return "pr-{}".format(self.pr_wanted)
+        elif self.branch_wanted is not None:
+            return self.branch_wanted.strip("\"")
+
+        return None
 
     def git_update(self):
         """ Do a git update of the repository.  If githash is not empty, then
@@ -46,7 +57,18 @@ class Repo(object):
         if rc != 0:
             self.suite.log.fail("ERROR: git fetch was unsuccessful")
 
-        # if we need a special branch, check it out now
+        # if we need a special branch or are working on a PR, check it out now
+        if self.pr_wanted is not None:
+            self.suite.log.log("fetching PR {}".format(self.pr_wanted))
+            _, _, rc = test_util.run("git fetch origin pull/{}/head:pr-{}".format(
+                self.pr_wanted, self.pr_wanted), stdin=True)
+            if rc != 0:
+                self.suite.log.fail("ERROR: git fetch was unsuccessful")
+
+            _, _, rc = test_util.run("git checkout pr-{}".format(self.pr_wanted), stdin=True)
+            if rc != 0:
+                self.suite.log.fail("ERROR: git checkout was unsuccessful")
+
         if self.branch_orig != self.branch_wanted:
             self.suite.log.log("git checkout {} in {}".format(self.branch_wanted, self.dir))
             _, _, rc = test_util.run("git checkout {}".format(self.branch_wanted),
