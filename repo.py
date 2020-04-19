@@ -65,11 +65,12 @@ class Repo:
             if rc != 0:
                 self.suite.log.fail("ERROR: git fetch was unsuccessful")
 
+            self.suite.log.log("checking out pr-{}".format(self.pr_wanted))
             _, _, rc = test_util.run("git checkout pr-{}".format(self.pr_wanted), stdin=True)
             if rc != 0:
                 self.suite.log.fail("ERROR: git checkout was unsuccessful")
 
-        if self.branch_orig != self.branch_wanted:
+        elif self.branch_orig != self.branch_wanted:
             self.suite.log.log("git checkout {} in {}".format(self.branch_wanted, self.dir))
             _, _, rc = test_util.run("git checkout {}".format(self.branch_wanted),
                                      stdin=True)
@@ -81,22 +82,21 @@ class Repo:
             self.branch_wanted = self.branch_orig
 
         # get up to date on our branch or hash
-        if self.hash_wanted == "" or self.hash_wanted is None:
-            self.suite.log.log("'git pull' in {}".format(self.dir))
+        if self.pr_wanted is None:
+            if self.hash_wanted == "" or self.hash_wanted is None:
+                self.suite.log.log("'git pull' in {}".format(self.dir))
 
-            # we need to be tricky here to make sure that the stdin is
-            # presented to the user to get the password.
-            _, _, rc = test_util.run("git pull", stdin=True,
-                                     outfile="git.{}.out".format(self.name))
+                _, _, rc = test_util.run("git pull", stdin=True,
+                                         outfile="git.{}.out".format(self.name))
 
-        else:
-            _, _, rc = test_util.run("git checkout {}".format(self.hash_wanted),
-                                     outfile="git.{}.out".format(self.name))
+            else:
+                _, _, rc = test_util.run("git checkout {}".format(self.hash_wanted),
+                                         outfile="git.{}.out".format(self.name))
 
-        if rc != 0:
-            self.suite.log.fail("ERROR: git update was unsuccessful")
+                if rc != 0:
+                    self.suite.log.fail("ERROR: git update was unsuccessful")
 
-        shutil.copy("git.{}.out".format(self.name), self.suite.full_web_dir)
+            shutil.copy("git.{}.out".format(self.name), self.suite.full_web_dir)
 
     def save_head(self):
         """Save the current head of the repo"""
