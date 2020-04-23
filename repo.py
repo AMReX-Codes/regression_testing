@@ -134,3 +134,11 @@ class Repo:
 
         if rc != 0:
             self.suite.log.fail("ERROR: git checkout was unsuccessful")
+
+        # if we were working on a PR, delete the temporary branch, since we can't pull on it
+        if self.pr_wanted is not None:
+            self.suite.log.log("removing pr-{}".format(self.pr_wanted))
+            _, _, rc = test_util.run("git branch -D pr-{}".format(self.pr_wanted), stdin=True)
+
+        if rc != 0:
+            self.suite.log.fail("ERROR: git branch deletion was unsuccessful")
