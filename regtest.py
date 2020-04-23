@@ -1228,7 +1228,7 @@ def test_suite(argv):
     if suite.repos[name].branch_wanted:
         branch = suite.repos[name].branch_wanted.strip("\"")
 
-    with open("{}/suite.{}.status".format(suite.webTopDir, branch), "w") as f:
+    with open("{}/suite.{}.status".format(suite.webTopDir, branch.replace("/", "_")), "w") as f:
         f.write("{}; num failed: {}; source hash: {}".format(
             suite.repos[name].name, num_failed, suite.repos[name].hash_current))
 
