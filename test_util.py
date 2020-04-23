@@ -24,7 +24,7 @@ The "main" block specifies the global test suite parameters:
   useCmake       = < 0: GNU Make handles the build (default)
                      1: CMake handles the build >
 
-  sourceTree = < C_Src, F_Src, or AMReX -- what type is it? >
+  sourceTree = < C_Src or AMReX >
 
   suiteName = < descriptive name (i.e. Castro) >
 
@@ -33,10 +33,8 @@ The "main" block specifies the global test suite parameters:
 
   goUpLink = <1: add "Go UP" link at top of the web page >
 
-  FCOMP = < name of Fortran compiler >
   COMP  = < name of C/C++ compiler >
 
-  add_to_f_make_command = < any additional defines to add to the make invocation for F_Src AMReX >
   add_to_c_make_command = < any additional defines to add to the make invocation for C_Src AMReX >
 
   purge_output = <0: leave all plotfiles in place;
@@ -326,6 +324,10 @@ def get_args(arg_string=None):
     git_group.add_argument("--no_update", type=str, default="None", metavar="name",
                            help="which codes to exclude from the git update?" +
                            " (None, All, or a comma-separated list of codes)")
+    git_group.add_argument("--source_branch", type=str, default=None, metavar="branch-name",
+                           help="what git branch to use for the source repo")
+    git_group.add_argument("--source_pr", type=int, default=None, metavar="PR-number",
+                           help="what github pull request number to use for the source repo")
 
     bench_group = parser.add_argument_group("benchmark options",
                                             "options that control benchmark creation")

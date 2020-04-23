@@ -401,12 +401,10 @@ class Suite(object):
         self.MPIcommand = ""
         self.MPIhost = ""
 
-        self.FCOMP = "gfortran"
         self.COMP = "g++"
 
         self.extra_tools = ""
 
-        self.add_to_f_make_command = ""
         self.add_to_c_make_command = ""
 
         self.summary_job_info_field1 = ""
@@ -871,43 +869,6 @@ class Suite(object):
 
         test_util.run(cmd)
 
-    def build_f(self, test=None, opts="", target="", outfile=None):
-        """ build an executable with the Fortran AMReX build system """
-
-        build_opts = ""
-        f_make_additions = self.add_to_f_make_command
-
-        if test is not None:
-            build_opts += "NDEBUG={} ".format(f_flag(test.debug, test_not=True))
-            build_opts += "ACC={} ".format(f_flag(test.acc))
-            build_opts += "MPI={} ".format(f_flag(test.useMPI))
-            build_opts += "OMP={} ".format(f_flag(test.useOMP))
-
-            if not test.extra_build_dir == "":
-                build_opts += self.repos[test.extra_build_dir].comp_string + " "
-
-            if not test.addToCompileString == "":
-                build_opts += test.addToCompileString + " "
-
-            if test.ignoreGlobalMakeAdditions:
-                f_make_additions = ""
-
-        all_opts = "{} {} {}".format(self.extra_src_comp_string, build_opts, opts)
-
-        comp_string = "{} -j{} AMREX_HOME={} COMP={} {} {} {}".format(
-            self.MAKE, self.numMakeJobs, self.amrex_dir,
-            self.FCOMP, f_make_additions, all_opts, target)
-
-        self.log.log(comp_string)
-        stdout, stderr, rc = test_util.run(comp_string, outfile=outfile)
-
-        # make returns 0 if everything was good
-        if not rc == 0:
-            self.log.warn("build failed")
-
-        return comp_string, rc
-
-
     def build_c(self, test=None, opts="", target="", outfile=None, c_make_additions=None):
 
         build_opts = ""
@@ -1012,7 +973,7 @@ class Suite(object):
             self.log.log("building {}...".format(t))
             comp_string, rc = self.build_c(target="programs={}".format(t),
                                            opts="DEBUG=FALSE USE_MPI=FALSE USE_OMP=FALSE ",
-                                           c_make_additions="")
+                                           c_make_additions="", outfile="{}.make.out".format(t))
             if not rc == 0:
                 self.log.fail("unable to continue, tools not able to be built")
 
@@ -1030,10 +991,10 @@ class Suite(object):
                 ctools = []
             else:
                 ctools = ["particle_compare"]
+                self.make_realclean(repo="AMReX")
         else:
             ctools = []
 
-        self.make_realclean(repo="AMReX")
 
         for t in ctools:
             self.log.log("building {}...".format(t))
@@ -1124,7 +1085,6 @@ class Suite(object):
         # Define enviroment
         ENV = {}
         ENV =  dict(os.environ) # Copy of current enviroment
-        ENV['FC']  = self.FCOMP
         ENV['CXX'] = self.COMP
 
         if env is not None: ENV.update(env)

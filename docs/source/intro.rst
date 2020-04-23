@@ -82,8 +82,8 @@ Using example-tests.ini as a template:
       generated webpages.
 
    #. Configure the build settings if necessary. The ``sourceTree`` variable
-      determines the build system (C_Src => C++, F_Src => F90, AMReX =>
-      standalone AMReX tests), while ``COMP`` and ``FCOMP`` determine the
+      determines the build system (C_Src => C++, AMReX =>
+      standalone AMReX tests), while ``COMP`` determines the
       compilers. The ``numMakeJobs`` and ``add_to_c_make_command`` parameters
       allow for some additional control over the make command.
 
