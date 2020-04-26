@@ -585,7 +585,8 @@ def report_single_test(suite, test, tests, failure_msg=None):
         grid_error = False
         variables_error = False
         no_bench_error = False
-
+        particle_counts_differ_error = False
+        
         pcomp_line = get_particle_compare_command(diff_lines)
 
         for line in diff_lines:
@@ -602,6 +603,10 @@ def report_single_test(suite, test, tests, failure_msg=None):
 
             if "no corresponding benchmark found" in line:
                 no_bench_error = True
+                break
+
+            if "Particle data headers do not agree" in line:
+                particle_counts_differ_error = True
                 break
 
             if not in_diff_region:
@@ -685,6 +690,10 @@ def report_single_test(suite, test, tests, failure_msg=None):
 
         if variables_error:
             hf.write("<p>variables differ in files</p>\n")
+
+        if particle_counts_differ_error:
+            hf.write("<p>number of particles differ in files</p>\n")
+
 
     if (not test.compileTest) and failure_msg is None:
         # show any visualizations
