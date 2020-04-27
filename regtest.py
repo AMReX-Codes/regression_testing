@@ -793,7 +793,17 @@ def test_suite(argv):
 
                         else:
 
-                            test.compare_successful = ierr == 0
+                            # fcompare still reports success even if there were NaNs, so let's double check for NaNs
+                            has_nan = 0
+                            for line in sout:
+                                if "< NaN present >" in line:
+                                    has_nan = 1
+                                    break
+
+                            if has_nan == 0:
+                                test.compare_successful = ierr == 0
+                            else:
+                                test.compare_successful = 0
 
                         if test.compareParticles:
                             for ptype in test.particleTypes.strip().split():
