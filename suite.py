@@ -409,6 +409,7 @@ class Suite(object):
         self.slack_username = ""
 
         self.plot_file_name = "amr.plot_file"
+        self.check_file_name = "amr.check_file"
 
         self.globalAddToExecString = ""
 
