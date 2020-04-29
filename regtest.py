@@ -661,8 +661,11 @@ def test_suite(argv):
 
         if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
 
-            base_cmd = "./{} {} {}={}_plt {}={}_chk".format(
-                executable, test.inputFile, suite.plot_file_name, test.name, suite.check_file_name, test.name)
+            base_cmd = "./{} {} ".format(executable, test.inputFile)
+            if suite.plot_file_name != "":
+                base_cmd += "{}={}_plt ".format(suite.plot_file_name, test.name)
+            if suite.plot_file_name != "":
+                base_cmd += "{}={}_chk".format(suite.check_file_name, test.name)
 
             # keep around the checkpoint files only for the restart runs
             if test.restartTest:
