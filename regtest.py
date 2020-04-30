@@ -555,7 +555,7 @@ def test_suite(argv):
             # Copy executable to bin directory
             if executable is not None:
                 shutil.copy( executable, binDir )
-            
+
         test.comp_string = comp_string
         test.executable = executable
 
@@ -664,7 +664,6 @@ def test_suite(argv):
             base_cmd = "./{} {} ".format(executable, test.inputFile)
             if suite.plot_file_name != "":
                 base_cmd += "{}={}_plt ".format(suite.plot_file_name, test.name)
-            print(suite.check_file_name)
             if suite.check_file_name != "none":
                 base_cmd += "{}={}_chk".format(suite.check_file_name, test.name)
 
@@ -738,8 +737,11 @@ def test_suite(argv):
 
             if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
 
-                base_cmd = "./{} {} {}={}_plt amr.check_file={}_chk amr.restart={}".format(
-                    executable, test.inputFile, suite.plot_file_name, test.name, test.name, restart_file)
+                base_cmd = "./{} {} {}={}_plt amr.restart={}".format(
+                    executable, test.inputFile, suite.plot_file_name, test.name, restart_file)
+
+                if suite.check_file_name != "none":
+                    base_cmd += "{}={}_chk".format(suite.check_file_name, test.name)
 
             elif suite.sourceTree == "F_Src" or test.testSrcTree == "F_Src":
 
@@ -1062,7 +1064,7 @@ def test_suite(argv):
                             # Print analysis error message (useful for Travis tests)
                             with open(outfile) as f:
                                 print( f.read() )
-                            
+
                         test.analysis_successful = analysis_successful
 
             else:
@@ -1218,7 +1220,7 @@ def test_suite(argv):
     suite.log.skip()
     suite.log.bold("creating suite report...")
     report.report_all_runs(suite, active_test_list)
-    
+
     # delete any temporary directories
     suite.delete_tempdirs()
 
