@@ -790,7 +790,12 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
 
         for k, r in suite.repos.items():
             if r.update:
-                hf.write(code_str.format(r.name, r.branch_wanted, r.hash_current,
+                if r.pr_wanted is not None:
+                    branch = "PR #{}".format(r.pr_wanted)
+                else:
+                    branch = r.branch_wanted
+
+                hf.write(code_str.format(r.name, branch, r.hash_current,
                                          "ChangeLog.{}".format(r.name),
                                          "ChangeLog.{}".format(r.name)))
 

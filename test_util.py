@@ -328,6 +328,8 @@ def get_args(arg_string=None):
                            help="what git branch to use for the source repo")
     git_group.add_argument("--source_pr", type=int, default=None, metavar="PR-number",
                            help="what github pull request number to use for the source repo")
+    git_group.add_argument("--amrex_pr", type=int, default=None, metavar="PR-number",
+                           help="what github pull request number to use for the amrex repo")
 
     bench_group = parser.add_argument_group("benchmark options",
                                             "options that control benchmark creation")

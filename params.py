@@ -97,7 +97,8 @@ def load_params(args):
     mysuite.repos["AMReX"] = repo.Repo(mysuite, rdir, "AMReX",
                                        branch_wanted=branch, hash_wanted=rhash)
 
-
+    if args.amrex_pr is not None:
+        mysuite.repos["AMReX"].pr_wanted = args.amrex_pr
 
     # Check for Cmake build options for both AMReX and Source
     for s in cp.sections():
