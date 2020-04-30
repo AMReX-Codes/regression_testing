@@ -670,8 +670,9 @@ def test_suite(argv):
 
             # keep around the checkpoint files only for the restart runs
             if test.restartTest:
-                base_cmd += " amr.check_int=%d" % \
-                                (test.restartFileNum)
+                if suite.check_file_name != "none":
+                    base_cmd += " amr.check_int=%d" % \
+                        (test.restartFileNum)
 
             base_cmd += " {} {}".format(suite.globalAddToExecString, test.runtime_params)
 
