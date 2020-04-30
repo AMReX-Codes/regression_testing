@@ -28,7 +28,7 @@ import test_util
 import test_report as report
 import test_coverage as coverage
 
-safe_flags = ['USE_CUDA', 'USE_ACC', 'USE_MPI', 'USE_OMP', 'DEBUG', 'USE_GPU']
+safe_flags = ['TEST', 'USE_CUDA', 'USE_ACC', 'USE_MPI', 'USE_OMP', 'DEBUG', 'USE_GPU']
 
 def _check_safety(cs):
     try:
