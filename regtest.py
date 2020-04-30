@@ -28,39 +28,48 @@ import test_util
 import test_report as report
 import test_coverage as coverage
 
+safe_flags = ['TEST', 'USE_CUDA', 'USE_ACC', 'USE_MPI', 'USE_OMP', 'DEBUG', 'USE_GPU']
+
+def _check_safety(cs):
+    try:
+        flag = cs.split("=")[0]
+        return flag in safe_flags
+    except:
+        return False
+
+def check_realclean_safety(compile_strings):
+    split_strings = compile_strings.strip().split()
+    return all([_check_safety(cs) for cs in split_strings])
+
 def find_build_dirs(tests):
     """ given the list of test objects, find the set of UNIQUE build
         directories.  Note if we have the useExtraBuildDir flag set """
 
     build_dirs = []
-    reclean = []
+    last_safe = False
 
     for obj in tests:
-
+        
         # keep track of the build directory and which source tree it is
         # in (e.g. the extra build dir)
-
+        
         # first find the list of unique build directories
         dir_pair = (obj.buildDir, obj.extra_build_dir)
         if build_dirs.count(dir_pair) == 0:
             build_dirs.append(dir_pair)
-
-
+            
         # re-make all problems that specify an extra compile argument,
-        # just to make sure that any unique build commands are seen.
-        if not obj.addToCompileString == "":
-            reclean.append(dir_pair)
-
-    for bdir, _ in reclean:
-        for obj in tests:
-            if obj.buildDir == bdir:
-                obj.reClean = 1
-
+        # and the test that comes after, just to make sure that any
+        # unique build commands are seen.
+        obj.reClean = 1
+        if check_realclean_safety(obj.addToCompileString):
+            if last_safe:
+                obj.reClean = 0
+            else:
+                last_safe = True
+                
     return build_dirs
-
-
-
-
+                
 def cmake_setup(suite):
     "Setup for cmake"
 
@@ -738,6 +747,9 @@ def test_suite(argv):
                 if not isinstance(params.convert_type(test.nlevels), int):
                     test.nlevels = ""
 
+            if not test.doComparison:
+                test.compare_succesful = not test.crashed
+
             if args.make_benchmarks is None and test.doComparison:
 
                 suite.log.log("doing the comparison...")
@@ -774,14 +786,14 @@ def test_suite(argv):
 
                         elif test.tolerance is not None:
 
-                            command = "{} -n 0 -r {} {} {}".format(suite.tools["fcompare"],
-                                                                   test.tolerance,
-                                                                   bench_file, output_file)
+                            command = "{} --abort_if_not_all_found -n 0 -r {} {} {}".format(suite.tools["fcompare"],
+                                                                                            test.tolerance,
+                                                                                            bench_file, output_file)
 
                         else:
 
-                            command = "{} -n 0 {} {}".format(suite.tools["fcompare"],
-                                                             bench_file, output_file)
+                            command = "{} --abort_if_not_all_found -n 0 {} {}".format(suite.tools["fcompare"],
+                                                                                      bench_file, output_file)
 
                         sout, _, ierr = test_util.run(command,
                                                       outfile=test.comparison_outfile,
@@ -807,8 +819,12 @@ def test_suite(argv):
 
                         if test.compareParticles:
                             for ptype in test.particleTypes.strip().split():
-                                command = "{} {} {} {}".format(
-                                    suite.tools["particle_compare"], bench_file, output_file, ptype)
+                                if test.particle_tolerance is not None:
+                                    command = "{} -r {} {} {} {}".format(
+                                        suite.tools["particle_compare"], test.particle_tolerance, bench_file, output_file, ptype)
+                                else:
+                                    command = "{} {} {} {}".format(
+                                        suite.tools["particle_compare"], bench_file, output_file, ptype)
 
                                 sout, _, ierr = test_util.run(command,
                                                               outfile=test.comparison_outfile, store_command=True)
@@ -1205,7 +1221,7 @@ def test_suite(argv):
     if suite.repos[name].get_branch_name():
         branch = suite.repos[name].get_branch_name()
 
-    with open("{}/suite.{}.status".format(suite.webTopDir, branch), "w") as f:
+    with open("{}/suite.{}.status".format(suite.webTopDir, branch.replace("/", "_")), "w") as f:
         f.write("{}; num failed: {}; source hash: {}".format(
             suite.repos[name].name, num_failed, suite.repos[name].hash_current))
 

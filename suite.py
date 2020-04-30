@@ -85,6 +85,7 @@ class Test(object):
 
         self._doComparison = True
         self._tolerance = None
+        self._particle_tolerance = None
 
         self.analysisRoutine = ""
         self.analysisMainArgs = ""
@@ -292,6 +293,20 @@ class Test(object):
 
         self._tolerance = value
 
+    def get_particle_tolerance(self):
+        """ Returns the global particle tolerance if one was set,
+            and the test-specific one otherwise.
+        """
+
+        if Test.global_particle_tolerance is None:
+            return self._particle_tolerance
+        return Test.global_particle_tolerance
+
+    def set_particle_tolerance(self, value):
+        """ Sets the test-specific particle tolerance to the specified value. """
+
+        self._particle_tolerance = value
+        
     def get_check_performance(self):
         """ Returns whether to check performance for this test. """
 
@@ -330,6 +345,7 @@ class Test(object):
     compile_only = False
     skip_comparison = False
     global_tolerance = None
+    global_particle_tolerance = None
     performance_params = []
 
     # Properties - allow for direct access as an attribute
@@ -337,6 +353,7 @@ class Test(object):
     compileTest = property(get_compile_test, set_compile_test)
     doComparison = property(get_do_comparison, set_do_comparison)
     tolerance = property(get_tolerance, set_tolerance)
+    particle_tolerance = property(get_particle_tolerance, set_particle_tolerance)
     check_performance = property(get_check_performance, set_check_performance)
     performance_threshold = property(get_performance_threshold, set_performance_threshold)
     runs_to_average = property(get_runs_to_average, set_runs_to_average)
@@ -385,6 +402,8 @@ class Suite(object):
         self.MPIhost = ""
 
         self.COMP = "g++"
+
+        self.extra_tools = ""
 
         self.add_to_c_make_command = ""
 
@@ -945,6 +964,9 @@ class Suite(object):
         self.make_realclean(repo="AMReX")
 
         ftools = ["fcompare", "fboxinfo", "fsnapshot"]
+        if ("fextract" in self.extra_tools): ftools.append("fextract")
+        if ("fextrema" in self.extra_tools): ftools.append("fextrema")
+        if ("ftime" in self.extra_tools): ftools.append("ftime")
         if any([t for t in test_list if t.tolerance is not None]): ftools.append("fvarnames")
 
         for t in ftools:
@@ -984,6 +1006,35 @@ class Suite(object):
 
             self.tools[t] = "{}/{}".format(self.c_compare_tool_dir, exe)
 
+        if ("DiffSameDomainRefined" in self.extra_tools):
+            self.extra_tool_dir = "{}/Tools/C_util/Convergence/".format(
+                os.path.normpath(self.amrex_dir))
+
+            os.chdir(self.extra_tool_dir)
+
+            self.make_realclean(repo="AMReX")
+
+            extra_tools=[]
+            if ("DiffSameDomainRefined1d" in self.extra_tools): extra_tools.append("DiffSameDomainRefined1d")
+            if ("DiffSameDomainRefined2d" in self.extra_tools): extra_tools.append("DiffSameDomainRefined2d")
+            if ("DiffSameDomainRefined3d" in self.extra_tools): extra_tools.append("DiffSameDomainRefined3d")
+
+            for t in extra_tools:
+                if ("1d" in t): ndim=1
+                if ("2d" in t): ndim=2
+                if ("3d" in t): ndim=3
+                self.log.log("building {}...".format(t))
+                comp_string, rc = self.build_c(opts=
+                        "EBASE=DiffSameDomainRefined DIM={} DEBUG=FALSE USE_MPI=FALSE USE_OMP=FALSE ".format(ndim))
+                if not rc == 0:
+                    self.log.fail("unable to continue, tools not able to be built")
+
+                exe = test_util.get_recent_filename(self.extra_tool_dir, t, ".ex")
+
+                self.tools[t] = "{}/{}".format(self.extra_tool_dir, exe)
+                print(self.tools[t])
+            
+
         self.log.outdent()
 
     def slack_post_it(self, message):
@@ -1010,6 +1061,7 @@ class Suite(object):
         Test.compile_only = args.compile_only
         Test.skip_comparison = args.skip_comparison
         Test.global_tolerance = args.tolerance
+        Test.global_particle_tolerance = args.particle_tolerance
         Test.performance_params = args.check_performance
 
     #######################################################
@@ -1064,6 +1116,7 @@ class Suite(object):
         if not rc == 0:
             errstr  = "\n \nERROR! Cmake configuration failed for " + name + " \n"
             errstr += "Check " + coutfile + " for more information."
+            self.log.fail(errstr)
             sys.exit(errstr)
 
         return builddir, installdir
@@ -1113,7 +1166,9 @@ class Suite(object):
 
         # make returns 0 if everything was good
         if not rc == 0:
-            self.log.warn("build failed")
+            errstr  = "Failed to build target " + target
+            errstr += ". Check " + outfile + " for more information."
+            self.log.fail(errstr)
 
         comp_string = cmd
 
@@ -1145,8 +1200,7 @@ class Suite(object):
             shutil.move("{}".format(path_to_exe),
                         "{}/{}/{}.ex".format(self.source_dir,test.buildDir,test.name))
         else:
-          self.log.warn("build failed")
-
+            self.log.fail("Failed to build test " + test.name)
 
         return comp_string, rc
 
