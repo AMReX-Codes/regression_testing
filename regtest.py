@@ -663,14 +663,14 @@ def test_suite(argv):
 
             base_cmd = "./{} {} ".format(executable, test.inputFile)
             if suite.plot_file_name != "":
-                base_cmd += "{}={}_plt ".format(suite.plot_file_name, test.name)
+                base_cmd += " {}={}_plt ".format(suite.plot_file_name, test.name)
             if suite.check_file_name != "none":
-                base_cmd += "{}={}_chk".format(suite.check_file_name, test.name)
+                base_cmd += " {}={}_chk ".format(suite.check_file_name, test.name)
 
             # keep around the checkpoint files only for the restart runs
             if test.restartTest:
                 if suite.check_file_name != "none":
-                    base_cmd += " amr.check_int=%d" % \
+                    base_cmd += " amr.check_int=%d " % \
                         (test.restartFileNum)
 
             base_cmd += " {} {}".format(suite.globalAddToExecString, test.runtime_params)
@@ -737,11 +737,11 @@ def test_suite(argv):
 
             if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
 
-                base_cmd = "./{} {} {}={}_plt amr.restart={}".format(
+                base_cmd = "./{} {} {}={}_plt amr.restart={} ".format(
                     executable, test.inputFile, suite.plot_file_name, test.name, restart_file)
 
                 if suite.check_file_name != "none":
-                    base_cmd += "{}={}_chk".format(suite.check_file_name, test.name)
+                    base_cmd += " {}={}_chk ".format(suite.check_file_name, test.name)
 
             elif suite.sourceTree == "F_Src" or test.testSrcTree == "F_Src":
 
