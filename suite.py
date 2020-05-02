@@ -306,7 +306,7 @@ class Test(object):
         """ Sets the test-specific particle tolerance to the specified value. """
 
         self._particle_tolerance = value
-        
+
     def get_check_performance(self):
         """ Returns whether to check performance for this test. """
 
@@ -431,6 +431,7 @@ class Suite(object):
         self.slack_username = ""
 
         self.plot_file_name = "amr.plot_file"
+        self.check_file_name = "amr.check_file"
 
         self.globalAddToExecString = ""
 
@@ -1033,7 +1034,7 @@ class Suite(object):
 
                 self.tools[t] = "{}/{}".format(self.extra_tool_dir, exe)
                 print(self.tools[t])
-            
+
 
         self.log.outdent()
 
