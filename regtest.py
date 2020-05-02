@@ -641,13 +641,17 @@ def test_suite(argv):
 
         if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
 
-            base_cmd = "./{} {} {}={}_plt amr.check_file={}_chk".format(
-                executable, test.inputFile, suite.plot_file_name, test.name, test.name)
+            base_cmd = "./{} {} ".format(executable, test.inputFile)
+            if suite.plot_file_name != "":
+                base_cmd += " {}={}_plt ".format(suite.plot_file_name, test.name)
+            if suite.check_file_name != "none":
+		base_cmd += " {}={}_chk ".format(suite.check_file_name, test.name)
 
             # keep around the checkpoint files only for the restart runs
             if test.restartTest:
-                base_cmd += " amr.checkpoint_files_output=1 amr.check_int=%d" % \
-                                (test.restartFileNum)
+                if suite.check_file_name != "none":
+                    base_cmd += " amr.checkpoint_files_output=1 amr.check_int=%d " % \
+                        (test.restartFileNum)
             else:
                 base_cmd += " amr.checkpoint_files_output=0"
 
@@ -704,9 +708,12 @@ def test_suite(argv):
             suite.log.log("restarting from {} ... ".format(restart_file))
 
             if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
-                base_cmd = "./{} {} {}={}_plt amr.check_file={}_chk amr.checkpoint_files_output=0 amr.restart={} {} {}".format(
-                    executable, test.inputFile, suite.plot_file_name, test.name, test.name, restart_file,
-                    suite.globalAddToExecString, test.runtime_params)
+
+                base_cmd = "./{} {} {}={}_plt amr.restart={} ".format(
+                    executable, test.inputFile, suite.plot_file_name, test.name, restart_file)
+
+                if suite.check_file_name != "none":
+                    base_cmd += " {}={}_chk amr.checkpoint_files_output=0 ".format(suite.check_file_name, test.name)
 
             suite.run_test(test, base_cmd)
 
