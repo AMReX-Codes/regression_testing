@@ -645,7 +645,7 @@ def test_suite(argv):
             if suite.plot_file_name != "":
                 base_cmd += " {}={}_plt ".format(suite.plot_file_name, test.name)
             if suite.check_file_name != "none":
-		base_cmd += " {}={}_chk ".format(suite.check_file_name, test.name)
+                base_cmd += " {}={}_chk ".format(suite.check_file_name, test.name)
 
             # keep around the checkpoint files only for the restart runs
             if test.restartTest:
