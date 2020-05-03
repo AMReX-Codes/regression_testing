@@ -1114,6 +1114,7 @@ def test_suite(argv):
                 try:
                     shutil.copy(test.analysisOutputImage, suite.full_web_dir)
                 except IOError:
+                    suite.log.warn("unable to copy analysis image")
                     # analysis was not successful.  Reset the output image
                     test.analysisOutputImage = ""
 
