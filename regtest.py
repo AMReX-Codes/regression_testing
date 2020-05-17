@@ -1184,7 +1184,7 @@ def test_suite(argv):
     #--------------------------------------------------------------------------
     file_path = suite.get_wallclock_file()
     with open(file_path, 'w') as json_file:
-        json.dump(runtimes, json_file)
+        json.dump(runtimes, json_file, indent=4)
 
     #--------------------------------------------------------------------------
     # parameter coverage
