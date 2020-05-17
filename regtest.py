@@ -363,8 +363,13 @@ def test_suite(argv):
     suite.make_test_dirs()
 
     if suite.slack_post:
+        if args.note == "" and suite.repos["source"].pr_wanted is not None:
+            note = "testing PR-{}".format(suite.repos["source"].pr_wanted)
+        else:
+            note = args.note
+
         msg = "> {} ({}) test suite started, id: {}\n> {}".format(
-            suite.suiteName, suite.sub_title, suite.test_dir, args.note)
+            suite.suiteName, suite.sub_title, suite.test_dir, note)
         suite.slack_post_it(msg)
 
     if not args.copy_benchmarks is None:
