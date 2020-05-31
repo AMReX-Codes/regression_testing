@@ -467,10 +467,18 @@ class Suite(object):
         orig_name = dir_name
         dir_name = os.path.normpath(os.path.abspath(dir_name)) + "/"
 
-        if not os.path.isdir(dir_name):
-            self.log.fail("ERROR: {} is not a valid directory".format(orig_name))
+        if os.path.isdir(dir_name):
+            return dir_name
 
-        return dir_name
+        # instead check if it is relative to test top dir?
+        dir_name = os.path.normpath(os.path.join(self.testTopDir, dir_name))
+
+        if os.path.isdir(dir_name):
+            return dir_name
+
+        # we failed :(
+        self.log.fail("ERROR: {} is not a valid directory".format(orig_name))
+
 
     def init_web_dir(self, dir_name):
         """
