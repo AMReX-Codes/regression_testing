@@ -380,6 +380,8 @@ class Suite(object):
         self._noWebDir = False
         self.wallclockFile = "wallclock_history"
 
+        self.launch_dir = os.getcwd()
+
         self.useCmake = 0
         self.use_ctools = 1
 
@@ -461,10 +463,12 @@ class Suite(object):
         """ given a string representing a directory, check if it points to
             a valid directory.  If so, return the directory name """
 
-        dir_name = os.path.normpath(dir_name) + "/"
+        # assume that the directory is an absolute path
+        orig_name = dir_name
+        dir_name = os.path.normpath(os.path.abspath(dir_name)) + "/"
 
         if not os.path.isdir(dir_name):
-            self.log.fail("ERROR: {} is not a valid directory".format(dir_name))
+            self.log.fail("ERROR: {} is not a valid directory".format(orig_name))
 
         return dir_name
 
@@ -476,13 +480,11 @@ class Suite(object):
         """
 
         if not (dir_name and dir_name.strip()):
-
             self.webTopDir = tf.mkdtemp(dir=self.testTopDir) + '/'
             self._noWebDir = True
 
         else:
-
-            self.webTopDir = os.path.normpath(dir_name) + '/'
+            self.webTopDir = self.check_test_dir(dir_name)
 
     def delete_tempdirs(self):
         """
@@ -491,7 +493,6 @@ class Suite(object):
         """
 
         if self._noWebDir:
-
             shutil.rmtree(self.webTopDir)
 
     def get_tests_to_run(self, test_list_old):

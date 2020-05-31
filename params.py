@@ -74,11 +74,17 @@ def load_params(args):
                 else:
                     mysuite.sourceTree = value
 
-            elif opt == "testTopDir": mysuite.testTopDir = mysuite.check_test_dir(value)
-            elif opt == "webTopDir": mysuite.init_web_dir(value)
-            elif opt == "reportCoverage": mysuite.reportCoverage = mysuite.reportCoverage or value
-            elif opt == "emailTo": mysuite.emailTo = value.split(",")
-            elif opt == "extra_tools": mysuite.extra_tools = value
+            elif opt == "testTopDir":
+                mysuite.testTopDir = mysuite.check_test_dir(value)
+                print("just set testTopDir = {}".format(mysuite.testTopDir))
+            elif opt == "webTopDir":
+                mysuite.init_web_dir(value)
+            elif opt == "reportCoverage":
+                mysuite.reportCoverage = mysuite.reportCoverage or value
+            elif opt == "emailTo":
+                mysuite.emailTo = value.split(",")
+            elif opt == "extra_tools":
+                mysuite.extra_tools = value
 
             else:
                 # generic setting of the object attribute
