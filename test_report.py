@@ -809,11 +809,11 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
     # summary table
     if make_benchmarks is None:
         special_cols = []
-        if suite.summary_job_info_field1 is not "":
+        if suite.summary_job_info_field1 != "":
             special_cols.append(suite.summary_job_info_field1)
-        if suite.summary_job_info_field2 is not "":
+        if suite.summary_job_info_field2 != "":
             special_cols.append(suite.summary_job_info_field2)
-        if suite.summary_job_info_field3 is not "":
+        if suite.summary_job_info_field3 != "":
             special_cols.append(suite.summary_job_info_field3)
 
         cols = ["test name", "dim", "compare plotfile",
@@ -906,15 +906,15 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
 
 
             # special columns
-            if suite.summary_job_info_field1 is not "":
+            if suite.summary_job_info_field1 != "":
                 row_info.append("<div class='small'>{}</div>".format(
                     test.job_info_field1))
 
-            if suite.summary_job_info_field2 is not "":
+            if suite.summary_job_info_field2 != "":
                 row_info.append("<div class='small'>{}</div>".format(
                     test.job_info_field2))
 
-            if suite.summary_job_info_field3 is not "":
+            if suite.summary_job_info_field3 != "":
                 row_info.append("<div class='small'>{}</div>".format(
                     test.job_info_field3))
 
