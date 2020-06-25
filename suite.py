@@ -15,7 +15,6 @@ except ImportError: JSONDecodeError = ValueError
 DO_TIMINGS_PLOTS = True
 
 try:
-
     import bokeh
     from bokeh.plotting import figure, save, ColumnDataSource
     from bokeh.resources import CDN
@@ -23,15 +22,18 @@ try:
     from datetime import datetime as dt
 
 except:
-
-    try: import matplotlib
-    except: DO_TIMINGS_PLOTS = False
+    try:
+        import matplotlib
+    except:
+        DO_TIMINGS_PLOTS = False
     else:
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
 
-    try: import matplotlib.dates as dates
-    except: DO_TIMINGS_PLOTS = False
+    try:
+        import matplotlib.dates as dates
+    except:
+        DO_TIMINGS_PLOTS = False
 
 class Test(object):
 
@@ -454,7 +456,6 @@ class Suite(object):
         """
 
         if not (dir_name and dir_name.strip()):
-
             self.webTopDir = tf.mkdtemp(dir=self.testTopDir) + '/'
             self._noWebDir = True
 
@@ -474,7 +475,6 @@ class Suite(object):
         """
 
         if self._noWebDir:
-
             shutil.rmtree(self.webTopDir)
 
     def get_tests_to_run(self, test_list_old):
@@ -1022,6 +1022,7 @@ class Suite(object):
                 ctools = ["particle_compare"]
         else:
             ctools = []
+
 
         for t in ctools:
             self.log.log("building {}...".format(t))
