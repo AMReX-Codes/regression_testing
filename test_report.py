@@ -203,7 +203,7 @@ def create_css(table_height=16):
     with open("tests.css", 'w') as cf:
         cf.write(css)
 
-class HTMLList(object):
+class HTMLList:
     """ a simple class for managing nested HTML lists """
 
     def __init__(self, of=None):
@@ -252,7 +252,7 @@ class HTMLList(object):
 
         self.of.write("</ul>\n")
 
-class HTMLTable(object):
+class HTMLTable:
     """ a simple class for creating an HTML table """
 
     def __init__(self, out_file, columns=1, divs=None):
@@ -334,7 +334,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
     compile_successful = test.compile_successful
 
     analysis_successful = True
-    if (test.analysisRoutine != ''):
+    if test.analysisRoutine != '':
         analysis_successful = test.analysis_successful
 
     # we store comparison success in the test object but also read
@@ -345,7 +345,8 @@ def report_single_test(suite, test, tests, failure_msg=None):
 
             if test.doComparison:
                 compare_file = test.comparison_outfile
-                try: cf = open(compare_file, 'r')
+                try:
+                    cf = open(compare_file, 'r')
                 except IOError:
                     suite.log.warn("WARNING: no comparison file found")
                     diff_lines = ['']
@@ -354,7 +355,8 @@ def report_single_test(suite, test, tests, failure_msg=None):
                     cf.close()
 
             # last check: did we produce any backtrace files?
-            if test.crashed: compare_successful = False
+            if test.crashed:
+                compare_successful = False
 
         # write out the status file for this problem, with either
         # PASSED, PASSED SLOWLY, COMPILE FAILED, or FAILED
@@ -362,8 +364,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
         with open(status_file, 'w') as sf:
             if (compile_successful and
                 (test.compileTest or ((not test.compileTest) and
-                                          compare_successful and
-                                          analysis_successful))):
+                                      compare_successful and analysis_successful))):
                 string = "PASSED\n"
                 if test.check_performance:
                     meets_threshold, _, _ = test.measure_performance()
@@ -705,7 +706,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
         # show any analysis
         if not test.analysisOutputImage == "":
             hf.write("<P>&nbsp;\n")
-            hf.write("<P><IMG SRC='%s' BORDER=0>" % (test.analysisOutputImage) )
+            hf.write("<P><IMG SRC='%s' BORDER=0>" % (test.analysisOutputImage))
 
 
     # close
@@ -763,13 +764,13 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
     hf.write(new_head)
 
     if not note == "":
-        hf.write("<p><b>Test run note:</b><br><font color=\"gray\">%s</font>\n" % (note) )
+        hf.write("<p><b>Test run note:</b><br><font color=\"gray\">%s</font>\n" % (note))
 
     if not make_benchmarks is None:
-        hf.write("<p><b>Benchmarks updated</b><br>comment: <font color=\"gray\">{}</font>\n".format(make_benchmarks) )
+        hf.write("<p><b>Benchmarks updated</b><br>comment: <font color=\"gray\">{}</font>\n".format(make_benchmarks))
 
     hf.write("<p><b>test input parameter file:</b> <A HREF=\"%s\">%s</A>\n" %
-             (test_file, test_file) )
+             (test_file, test_file))
 
     if build_time > 0:
         hf.write("<p><b>combined build time for all tests:</b> {} s\n".format(build_time))
@@ -781,7 +782,7 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
     any_update = any([suite.repos[t].update for t in suite.repos])
 
     if any_update and not update_time == "":
-        hf.write("<p><b>Git update was done at: </b>%s\n" % (update_time) )
+        hf.write("<p><b>Git update was done at: </b>%s\n" % (update_time))
 
         hf.write("<ul>\n")
         code_str = "<li><b>{}</b><ul>" + \
@@ -930,9 +931,12 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
             ht.print_row(row_info)
 
         else:
-            if test.restartTest: continue
-            if test.compileTest: continue
-            if test.selfTest: continue
+            if test.restartTest:
+                continue
+            if test.compileTest:
+                continue
+            if test.selfTest:
+                continue
 
             # the benchmark was updated -- find the name of the new benchmark file
             benchStatusFile = "%s.status" % (test.name)
@@ -948,7 +952,7 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
 
             row_info = []
             row_info.append("{}".format(test.name))
-            if not bench_file == "none":
+            if bench_file != "none":
                 row_info.append(("BENCHMARK UPDATED", "class='benchmade'"))
                 row_info.append("new benchmark file is {}".format(bench_file))
             else:
@@ -960,7 +964,8 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
     ht.end_table()
 
     # Test coverage
-    if suite.reportCoverage: report_coverage(hf, suite)
+    if suite.reportCoverage:
+        report_coverage(hf, suite)
 
     # close
     hf.write("</div></body>\n")
@@ -993,8 +998,8 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
 
 def report_coverage(html_file, suite):
 
-    vars = (suite.covered_frac, suite.total, suite.covered_nonspecific_frac, suite.total_nonspecific)
-    if not all(vars): return
+    tvars = (suite.covered_frac, suite.total, suite.covered_nonspecific_frac, suite.total_nonspecific)
+    if not all(tvars): return
     
     cols = ["coverage type", "coverage %", "# covered", "# uncovered"]
     ht = HTMLTable(html_file, len(cols), divs=["summary"])
@@ -1024,7 +1029,7 @@ def report_coverage(html_file, suite):
 
     ht.end_table()
 
-def report_all_runs(suite, active_test_list):
+def report_all_runs(suite, active_test_list, max_per_page=50):
 
     table_height = min(max(suite.lenTestName, 4), 18)
 
@@ -1034,118 +1039,133 @@ def report_all_runs(suite, active_test_list):
 
     valid_dirs, all_tests = suite.get_run_history(active_test_list)
 
-    if suite.do_timings_plots: suite.make_timing_plots(valid_dirs=valid_dirs, all_tests=all_tests)
-
-    #--------------------------------------------------------------------------
-    # generate the HTML
-    #--------------------------------------------------------------------------
-    title = "%s regression tests" % (suite.suiteName)
-
-    hf = open("index.html", "w")
-
-    header = MAIN_HEADER.replace("@TITLE@", title).replace("@SUBTITLE@", suite.sub_title)
-
-    if suite.goUpLink:
-        header2 = header.replace("<!--GOUPLINK-->", '<a href="../">GO UP</a>')
-        hf.write(header2)
-    else:
-        hf.write(header)
-
-    hf.write("<P><TABLE class='maintable'>\n")
-
-    # write out the header
-    hf.write("<TR><TH ALIGN=CENTER>date</TH>\n")
-    for test in all_tests:
-        hf.write("<TH><div class='verticaltext'>%s</div></TH>\n" % (test))
-
-    hf.write("</TR>\n")
-
-
     if suite.do_timings_plots:
-        hf.write("<tr><td class='date'>plots</td>")
-        for t in all_tests:
-            plot_file = "{}-timings.{}".format(t, suite.plot_ext)
-            if os.path.isfile(plot_file):
-                hf.write("<TD ALIGN=CENTER title=\"{} timings plot\"><H3><a href=\"{}\"><i class=\"fa fa-line-chart\"></i></a></H3></TD>\n".format(t, plot_file))
-            else:
-                hf.write("<TD ALIGN=CENTER><H3>&nbsp;</H3></TD>\n")
+        suite.make_timing_plots(valid_dirs=valid_dirs, all_tests=all_tests)
+
+    # how many pages are we going to spread this over?
+    npages = int(len(valid_dirs)/max_per_page)+1
+
+    for n in range(npages):
+
+        #--------------------------------------------------------------------------
+        # generate the HTML
+        #--------------------------------------------------------------------------
+        title = "%s regression tests" % (suite.suiteName)
+
+        if n == 0:
+            hf = open("index.html", "w")
+        else:
+            hf = open("index{}.html".format(n), "w")
+
+
+        lvalid_dirs = valid_dirs[n*max_per_page:min((n+1)*max_per_page, len(valid_dirs)-1)]
+
+        header = MAIN_HEADER.replace("@TITLE@", title).replace("@SUBTITLE@", suite.sub_title)
+
+        if suite.goUpLink:
+            header2 = header.replace("<!--GOUPLINK-->", '<a href="../">GO UP</a>')
+            hf.write(header2)
+        else:
+            hf.write(header)
+
+        hf.write("<P><TABLE class='maintable'>\n")
+
+        # write out the header
+        hf.write("<TR><TH ALIGN=CENTER>date</TH>\n")
+        for test in all_tests:
+            hf.write("<TH><div class='verticaltext'>%s</div></TH>\n" % (test))
 
         hf.write("</TR>\n")
 
-    # loop over all the test runs
-    for tdir in valid_dirs:
+        if suite.do_timings_plots:
+            hf.write("<tr><td class='date'>plots</td>")
+            for t in all_tests:
+                plot_file = "{}-timings.{}".format(t, suite.plot_ext)
+                if os.path.isfile(plot_file):
+                    hf.write("<TD ALIGN=CENTER title=\"{} timings plot\"><H3><a href=\"{}\"><i class=\"fa fa-line-chart\"></i></a></H3></TD>\n".format(t, plot_file))
+                else:
+                    hf.write("<TD ALIGN=CENTER><H3>&nbsp;</H3></TD>\n")
 
-        # first look to see if there are any valid tests at all --
-        # otherwise we don't do anything for this date
-        valid = 0
-        for test in all_tests:
-            status_file = "{}/{}/{}.status".format(suite.webTopDir, tdir, test)
-            if os.path.isfile(status_file):
-                valid = 1
-                break
+            hf.write("</TR>\n")
 
-        if not valid: continue
+        # loop over all the test runs
+        for tdir in lvalid_dirs:
 
-        # did we run on a non-default branch?
-        try: bf = open("{}/{}/branch.status".format(suite.webTopDir, tdir), "r")
-        except:
-            branch_mark = ""
-        else:
-            branch_mark = r"&lowast;"
-            bf.close()
+            # first look to see if there are any valid tests at all --
+            # otherwise we don't do anything for this date
+            valid = 0
+            for test in all_tests:
+                status_file = "{}/{}/{}.status".format(suite.webTopDir, tdir, test)
+                if os.path.isfile(status_file):
+                    valid = 1
+                    break
 
-        # write out the directory (date)
-        hf.write("<TR><TD class='date'><SPAN CLASS='nobreak'><A class='main' HREF=\"{}/index.html\">{}&nbsp;</A>{}</SPAN></TD>\n".format(tdir, tdir, branch_mark) )
+            if not valid: continue
 
-        for test in all_tests:
-
-            # look to see if the current test was part of this suite run
-            status_file = "{}/{}/{}.status".format(suite.webTopDir, tdir, test)
-
-            status = None
-
-            if os.path.isfile(status_file):
-
-                with open(status_file, 'r') as sf:
-
-                    for line in sf:
-                        if line.find("PASSED") >= 0:
-                            if "SLOWLY" not in line: status, emoji = "passed", ":)"
-                            else: status, emoji = "passed-slowly", ":]"
-                        elif line.find("COMPILE FAILED") >= 0:
-                            status = "compfailed"
-                            emoji = ":("
-                        elif line.find("CRASHED") >= 0:
-                            status = "crashed"
-                            emoji = "xx"
-                        elif line.find("FAILED") >= 0:
-                            status = "failed"
-                            emoji = "!&nbsp;"
-                        elif line.find("benchmarks updated") >= 0:
-                            status = "benchmade"
-                            emoji = "U"
-
-                        if status is not None:
-                            break
-
-            # write out this test's status
-            if status is None:
-                hf.write("<td>&nbsp;</td>\n")
-            elif status == "benchmade":
-                hf.write("<td align=center title=\"{}\" class=\"{}\"><h3>U</h3></td>\n".format(
-                    test, status))
+            # did we run on a non-default branch?
+            try:
+                bf = open("{}/{}/branch.status".format(suite.webTopDir, tdir), "r")
+            except:
+                branch_mark = ""
             else:
-                hf.write("<td align=center title=\"{}\" class=\"{}\"><h3><a href=\"{}/{}.html\" class=\"{}\">{}</a></h3></td>\n".format(
-                    test, status, tdir, test, status, emoji))
+                branch_mark = r"&lowast;"
+                bf.close()
+
+            # write out the directory (date)
+            hf.write("<TR><TD class='date'><SPAN CLASS='nobreak'><A class='main' HREF=\"{}/index.html\">{}&nbsp;</A>{}</SPAN></TD>\n".format(tdir, tdir, branch_mark))
+
+            for test in all_tests:
+
+                # look to see if the current test was part of this suite run
+                status_file = "{}/{}/{}.status".format(suite.webTopDir, tdir, test)
+
+                status = None
+
+                if os.path.isfile(status_file):
+
+                    with open(status_file, 'r') as sf:
+
+                        for line in sf:
+                            if line.find("PASSED") >= 0:
+                                if "SLOWLY" not in line: status, emoji = "passed", ":)"
+                                else: status, emoji = "passed-slowly", ":]"
+                            elif line.find("COMPILE FAILED") >= 0:
+                                status = "compfailed"
+                                emoji = ":("
+                            elif line.find("CRASHED") >= 0:
+                                status = "crashed"
+                                emoji = "xx"
+                            elif line.find("FAILED") >= 0:
+                                status = "failed"
+                                emoji = "!&nbsp;"
+                            elif line.find("benchmarks updated") >= 0:
+                                status = "benchmade"
+                                emoji = "U"
+
+                            if status is not None:
+                                break
+
+                # write out this test's status
+                if status is None:
+                    hf.write("<td>&nbsp;</td>\n")
+                elif status == "benchmade":
+                    hf.write("<td align=center title=\"{}\" class=\"{}\"><h3>U</h3></td>\n".format(
+                        test, status))
+                else:
+                    hf.write("<td align=center title=\"{}\" class=\"{}\"><h3><a href=\"{}/{}.html\" class=\"{}\">{}</a></h3></td>\n".format(
+                        test, status, tdir, test, status, emoji))
 
 
 
-        hf.write("</TR>\n\n")
+            hf.write("</TR>\n\n")
 
-    hf.write("</TABLE>\n")
+        hf.write("</TABLE>\n")
 
-    # close
-    hf.write("</BODY>\n")
-    hf.write("</HTML>\n")
+        if n != npages-1:
+            hf.write("<p><a href=\"index{}.html\">older tests</a>".format(n+1))
 
-    hf.close()
+        # close
+        hf.write("</BODY>\n")
+        hf.write("</HTML>\n")
+
+        hf.close()
