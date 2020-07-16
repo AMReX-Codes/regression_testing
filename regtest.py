@@ -696,6 +696,16 @@ def test_suite(argv):
 
             base_cmd += " {} {}".format(suite.globalAddToExecString, test.runtime_params)
 
+        elif suite.sourceTree == "F_Src" or test.testSrcTree == "F_Src":
+
+            base_cmd = "./{} {} --plot_base_name {}_plt --check_base_name {}_chk ".format(
+                executable, test.inputFile, test.name, test.name)
+
+            # keep around the checkpoint files only for the restart runs
+            if not test.restartTest: base_cmd += " --chk_int 0 "
+
+            base_cmd += "{} {}".format(suite.globalAddToExecString, test.runtime_params)
+
         if args.with_valgrind:
             base_cmd = "valgrind " + args.valgrind_options + " " + base_cmd
 
@@ -758,6 +768,12 @@ def test_suite(argv):
 
                 if suite.check_file_name != "none":
                     base_cmd += " {}={}_chk amr.checkpoint_files_output=0 ".format(suite.check_file_name, test.name)
+                    #base_cmd += " {}={}_chk ".format(suite.check_file_name, test.name) (what's the difference?)
+
+            elif suite.sourceTree == "F_Src" or test.testSrcTree == "F_Src":
+
+                base_cmd = "./{} {} --plot_base_name {}_plt --check_base_name {}_chk --chk_int 0 --restart {} {}".format(
+                    executable, test.inputFile, test.name, test.name, test.restartFileNum, suite.globalAddToExecString)
 
             suite.run_test(test, base_cmd)
 
@@ -850,6 +866,12 @@ def test_suite(argv):
 
                         # Comparison within tolerance - reliant on fvarnames and fcompare
                         elif test.tolerance is not None:
+
+                            vars = get_variable_names(suite, bench_file)
+                            test.compare_successful = process_comparison_results(sout, vars, test)
+
+
+                        else:
 
                             vars = get_variable_names(suite, bench_file)
                             test.compare_successful = process_comparison_results(sout, vars, test)
@@ -1162,6 +1184,10 @@ def test_suite(argv):
             if test.doComparison:
                 shutil.copy("{}.status".format(test.name), suite.full_web_dir)
 
+        #----------------------------------------------------------------------
+        # Print execution time
+        #----------------------------------------------------------------------
+        suite.log.log("execution time: %.1fs" %test.wall_time)
 
         #----------------------------------------------------------------------
         # Print execution time

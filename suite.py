@@ -400,10 +400,11 @@ class Suite(object):
         self.MPIcommand = ""
         self.MPIhost = ""
 
+        self.FCOMP = "gfortran"
         self.COMP = "g++"
 
         self.extra_tools = ""
-
+        self.add_to_f_make_command = ""
         self.add_to_c_make_command = ""
 
         self.summary_job_info_field1 = ""
@@ -902,6 +903,7 @@ class Suite(object):
 
             if test.ignoreGlobalMakeAdditions:
                 f_make_additions = ""
+<<<<<<< HEAD
 
         all_opts = "{} {} {}".format(self.extra_src_comp_string, build_opts, opts)
 
@@ -922,6 +924,28 @@ class Suite(object):
         if not rc == 0:
             self.log.warn("build failed")
 
+=======
+
+        all_opts = "{} {} {}".format(self.extra_src_comp_string, build_opts, opts)
+
+        comp_string = "{} -j{} AMREX_HOME={} COMP={} {} {} {}".format(
+            self.MAKE, self.numMakeJobs, self.amrex_dir,
+            self.FCOMP, f_make_additions, all_opts, target)
+
+        return comp_string
+
+    def build_f(self, test=None, opts="", target="", outfile=None):
+        """ build an executable with the Fortran AMReX build system """
+        comp_string = self.get_comp_string_f(test, opts, target, outfile)
+
+        self.log.log(comp_string)
+        stdout, stderr, rc = test_util.run(comp_string, outfile=outfile)
+
+        # make returns 0 if everything was good
+        if not rc == 0:
+            self.log.warn("build failed")
+
+>>>>>>> b588884fa0574aa827e4d3955f60fcf194368e3b
         return comp_string, rc
 
     def get_comp_string_c(self, test=None, opts="", target="",
@@ -1029,8 +1053,13 @@ class Suite(object):
         if ("fextrema" in self.extra_tools): ftools.append("fextrema")
         if ("ftime" in self.extra_tools): ftools.append("ftime")
         if any([t for t in test_list if t.tolerance is not None]): ftools.append("fvarnames")
+<<<<<<< HEAD
         # Hack to prevent tools from building
         ftools = []
+=======
+        # Hack to prevent tools from building (is this really useful?)
+        #ftools = []
+>>>>>>> b588884fa0574aa827e4d3955f60fcf194368e3b
 
         for t in ftools:
             self.log.log("building {}...".format(t))
@@ -1148,6 +1177,7 @@ class Suite(object):
         # Define enviroment
         ENV = {}
         ENV =  dict(os.environ) # Copy of current enviroment
+        ENV['FC']  = self.FCOMP
         ENV['CXX'] = self.COMP
 
         if env is not None: ENV.update(env)
