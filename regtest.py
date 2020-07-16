@@ -873,11 +873,6 @@ def test_suite(argv):
 
                         else:
 
-                            vars = get_variable_names(suite, bench_file)
-                            test.compare_successful = process_comparison_results(sout, vars, test)
-
-                        else:
-
                             test.compare_successful = ierr == 0
 
                         if test.compareParticles:
