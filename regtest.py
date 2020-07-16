@@ -516,6 +516,10 @@ def test_suite(argv):
         # if ( suite.useCmake ): bdir = suite.source_build_dir
 
         os.chdir(bdir)
+        # Create directory for executables
+        binDir = 'Bin'
+        if not os.path.exists(binDir):
+            os.mkdir(binDir)
 
         if test.reClean == 1:
             # for one reason or another, multiple tests use different
@@ -535,15 +539,41 @@ def test_suite(argv):
 
         coutfile = "{}/{}.make.out".format(output_dir, test.name)
 
+        # First check if a previous test was compiled with the same options
         if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
-            if suite.useCmake:
-                comp_string, rc = suite.build_test_cmake(test=test, outfile=coutfile)
-            else:
-                comp_string, rc = suite.build_c(test=test, outfile=coutfile)
+            comp_string = suite.get_comp_string_c(test=test, outfile=coutfile)
+        elif suite.sourceTree == "F_Src" or test.testSrcTree == "F_Src":
+            comp_string = suite.get_comp_string_f(test=test, outfile=coutfile)
+        found_previous_test = False
+        # Loop over the existing tests
+        for previous_test in test_list:
+            # Check if the compile command was the same
+            if previous_test.comp_string == comp_string:
+                found_previous_test = True
+                break
+        if found_previous_test:
+            # Avoid recompiling in this case
+            suite.log.log("found pre-built executable for this test")
+            rc = 0
+            executable = previous_test.executable
+        else:
+            # Recompile
+            if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
+                if ( suite.useCmake ) :
+                    comp_string, rc = suite.build_test_cmake(test=test, outfile=coutfile)
+                else:
+                    comp_string, rc = suite.build_c(test=test, outfile=coutfile)
+                executable = test_util.get_recent_filename(bdir, "", ".ex")
 
-            executable = test_util.get_recent_filename(bdir, "", ".ex")
+            elif suite.sourceTree == "F_Src" or test.testSrcTree == "F_Src":
+                comp_string, rc = suite.build_f(test=test, outfile=coutfile)
+                executable = test_util.get_recent_filename(bdir, "main", ".exe")
+            # Copy executable to bin directory
+            if executable is not None:
+                shutil.copy( executable, binDir )
 
         test.comp_string = comp_string
+        test.executable = executable
 
         # make return code is 0 if build was successful
         if rc == 0:
@@ -552,11 +582,17 @@ def test_suite(argv):
         test.build_time = time.time() - test.build_time
 
         # copy the make.out into the web directory
-        shutil.copy("{}/{}.make.out".format(output_dir, test.name), suite.full_web_dir)
+        outfile = "{}/{}.make.out".format(output_dir, test.name)
+        if os.path.exists(outfile):
+            shutil.copy(outfile, suite.full_web_dir)
 
         if not test.compile_successful:
             error_msg = "ERROR: compilation failed"
             report.report_single_test(suite, test, test_list, failure_msg=error_msg)
+            # Print compilation error message (useful for Travis tests)
+            with open(outfile) as f:
+                print( f.read() )
+
             continue
 
         if test.compileTest:
@@ -572,7 +608,7 @@ def test_suite(argv):
 
         needed_files = []
         if executable is not None:
-            needed_files.append((executable, "move"))
+            needed_files.append((os.path.join(binDir,executable), "copy"))
 
         if test.run_as_script:
             needed_files.append((test.run_as_script, "copy"))
@@ -655,10 +691,8 @@ def test_suite(argv):
             # keep around the checkpoint files only for the restart runs
             if test.restartTest:
                 if suite.check_file_name != "none":
-                    base_cmd += " amr.checkpoint_files_output=1 amr.check_int=%d " % \
+                    base_cmd += " amr.check_int=%d " % \
                         (test.restartFileNum)
-            else:
-                base_cmd += " amr.checkpoint_files_output=0"
 
             base_cmd += " {} {}".format(suite.globalAddToExecString, test.runtime_params)
 
@@ -718,6 +752,11 @@ def test_suite(argv):
                     executable, test.inputFile, suite.plot_file_name, test.name, restart_file)
 
                 if suite.check_file_name != "none":
+                    base_cmd += " {}={}_chk ".format(suite.check_file_name, test.name)
+
+            elif suite.sourceTree == "F_Src" or test.testSrcTree == "F_Src":
+
+                if suite.check_file_name != "none":
                     base_cmd += " {}={}_chk amr.checkpoint_files_output=0 ".format(suite.check_file_name, test.name)
 
             suite.run_test(test, base_cmd)
@@ -751,7 +790,7 @@ def test_suite(argv):
 
 
             # get the number of levels for reporting
-            if not test.run_as_script:
+            if False:
 
                 prog = "{} -l {}".format(suite.tools["fboxinfo"], output_file)
                 stdout0, _, rc = test_util.run(prog)
@@ -796,38 +835,28 @@ def test_suite(argv):
 
                             command = "diff {} {}".format(bench_file, output_file)
 
-                        elif test.tolerance is not None:
-
-                            command = "{} --abort_if_not_all_found -n 0 -r {} {} {}".format(suite.tools["fcompare"],
-                                                                                            test.tolerance,
-                                                                                            bench_file, output_file)
-
                         else:
 
-                            command = "{} --abort_if_not_all_found -n 0 {} {}".format(suite.tools["fcompare"],
-                                                                                      bench_file, output_file)
+                            command = "{} -n 0 {} {}".format(suite.tools["fcompare"],
+                                    bench_file, output_file)
 
-                        sout, _, ierr = test_util.run(command,
-                                                      outfile=test.comparison_outfile,
-                                                      store_command=True)
+                        sout, serr, ierr = test_util.run(command,
+                                                         outfile=test.comparison_outfile,
+                                                         store_command=True)
 
                         if test.run_as_script:
 
                             test.compare_successful = not sout
 
+                        # Comparison within tolerance - reliant on fvarnames and fcompare
+                        elif test.tolerance is not None:
+
+                            vars = get_variable_names(suite, bench_file)
+                            test.compare_successful = process_comparison_results(sout, vars, test)
+
                         else:
 
-                            # fcompare still reports success even if there were NaNs, so let's double check for NaNs
-                            has_nan = 0
-                            for line in sout:
-                                if "< NaN present >" in line:
-                                    has_nan = 1
-                                    break
-
-                            if has_nan == 0:
-                                test.compare_successful = ierr == 0
-                            else:
-                                test.compare_successful = 0
+                            test.compare_successful = ierr == 0
 
                         if test.compareParticles:
                             for ptype in test.particleTypes.strip().split():
@@ -1056,6 +1085,9 @@ def test_suite(argv):
                         else:
                             analysis_successful = False
                             suite.log.warn("analysis failed...")
+                            # Print analysis error message (useful for Travis tests)
+                            with open(outfile) as f:
+                                print( f.read() )
 
                         test.analysis_successful = analysis_successful
 
@@ -1132,38 +1164,9 @@ def test_suite(argv):
 
 
         #----------------------------------------------------------------------
-        # archive (or delete) the output
+        # Print execution time
         #----------------------------------------------------------------------
-        suite.log.log("archiving the output...")
-        for pfile in os.listdir(output_dir):
-
-            if (os.path.isdir(pfile) and
-                re.match("{}.*_(plt|chk)[0-9]+".format(test.name), pfile)):
-
-                if suite.purge_output == 1 and not pfile == output_file:
-
-                    # delete the plt/chk file
-                    try:
-                        shutil.rmtree(pfile)
-                    except:
-                        suite.log.warn("unable to remove {}".format(pfile))
-
-                else:
-                    # tar it up
-                    try:
-                        tar = tarfile.open("{}.tgz".format(pfile), "w:gz")
-                        tar.add("{}".format(pfile))
-                        tar.close()
-
-                    except:
-                        suite.log.warn("unable to tar output file {}".format(pfile))
-
-                    else:
-                        try:
-                            shutil.rmtree(pfile)
-                        except OSError:
-                            suite.log.warn("unable to remove {}".format(pfile))
-
+        suite.log.log("execution time: %.1fs" %test.wall_time)
 
         #----------------------------------------------------------------------
         # write the report for this test
