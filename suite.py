@@ -114,6 +114,7 @@ class Test(object):
         self.nlevels = None  # set but running fboxinfo on the output
 
         self.comp_string = None  # set automatically
+        self.executable = None   # set automatically
         self.run_command = None  # set automatically
 
         self.job_info_field1 = ""
@@ -879,8 +880,8 @@ class Suite(object):
 
         test_util.run(cmd)
 
-    def build_c(self, test=None, opts="", target="", outfile=None, c_make_additions=None):
-
+    def get_comp_string_c(self, test=None, opts="", target="",
+                          outfile=None, c_make_additions=None):
         build_opts = ""
         if c_make_additions is None:
             c_make_additions = self.add_to_c_make_command
@@ -911,6 +912,12 @@ class Suite(object):
             self.MAKE, self.numMakeJobs, self.amrex_dir,
             all_opts, self.COMP, c_make_additions, target)
 
+        return comp_string
+
+    def build_c(self, test=None, opts="", target="",
+                outfile=None, c_make_additions=None):
+        comp_string = self.get_comp_string_c( test, opts, target,
+                                              outfile, c_make_additions )
         self.log.log(comp_string)
         stdout, stderr, rc = test_util.run(comp_string, outfile=outfile)
 

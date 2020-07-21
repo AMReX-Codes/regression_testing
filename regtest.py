@@ -49,15 +49,15 @@ def find_build_dirs(tests):
     last_safe = False
 
     for obj in tests:
-        
+
         # keep track of the build directory and which source tree it is
         # in (e.g. the extra build dir)
-        
+
         # first find the list of unique build directories
         dir_pair = (obj.buildDir, obj.extra_build_dir)
         if build_dirs.count(dir_pair) == 0:
             build_dirs.append(dir_pair)
-            
+
         # re-make all problems that specify an extra compile argument,
         # and the test that comes after, just to make sure that any
         # unique build commands are seen.
@@ -67,9 +67,9 @@ def find_build_dirs(tests):
                 obj.reClean = 0
             else:
                 last_safe = True
-                
+
     return build_dirs
-                
+
 def cmake_setup(suite):
     "Setup for cmake"
 
@@ -516,6 +516,10 @@ def test_suite(argv):
         # if ( suite.useCmake ): bdir = suite.source_build_dir
 
         os.chdir(bdir)
+        # Create directory for executables
+        binDir = 'Bin'
+        if not os.path.exists(binDir):
+            os.mkdir(binDir)
 
         if test.reClean == 1:
             # for one reason or another, multiple tests use different
@@ -536,14 +540,38 @@ def test_suite(argv):
         coutfile = "{}/{}.make.out".format(output_dir, test.name)
 
         if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
-            if suite.useCmake:
-                comp_string, rc = suite.build_test_cmake(test=test, outfile=coutfile)
-            else:
-                comp_string, rc = suite.build_c(test=test, outfile=coutfile)
 
-            executable = test_util.get_recent_filename(bdir, "", ".ex")
+            # First check whether an executable was already compiled with
+            # the same options (not enabled for CMake, for now)
+            found_previous_test = False
+            if not suite.useCmake:
+                comp_string = suite.get_comp_string_c(test=test, outfile=coutfile)
+                # Loop over the existing tests
+                for previous_test in test_list:
+                    # Check if the compile command was the same
+                    if previous_test.comp_string == comp_string:
+                        found_previous_test = True
+                        break
+
+            # Avoid recompiling in this case
+            if found_previous_test:
+                suite.log.log("found pre-built executable for this test")
+                rc = 0
+                executable = previous_test.executable
+            # Otherwise recompile
+            else:
+                if suite.useCmake:
+                    comp_string, rc = suite.build_test_cmake(test=test, outfile=coutfile)
+                else:
+                    comp_string, rc = suite.build_c(test=test, outfile=coutfile)
+                executable = test_util.get_recent_filename(bdir, "", ".ex")
+                # Copy executable to bin directory (to avoid recompiling for other tests)
+                if executable is not None:
+                    shutil.copy( executable, binDir )
 
         test.comp_string = comp_string
+        # Register name of the executable
+        test.executable = executable
 
         # make return code is 0 if build was successful
         if rc == 0:
@@ -572,7 +600,7 @@ def test_suite(argv):
 
         needed_files = []
         if executable is not None:
-            needed_files.append((executable, "move"))
+            needed_files.append((os.path.join(binDir,executable), "copy"))
 
         if test.run_as_script:
             needed_files.append((test.run_as_script, "copy"))
