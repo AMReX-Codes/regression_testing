@@ -516,10 +516,10 @@ def test_suite(argv):
         # if ( suite.useCmake ): bdir = suite.source_build_dir
 
         os.chdir(bdir)
-        # Create directory for executables
-        binDir = 'Bin'
-        if not os.path.exists(binDir):
-            os.mkdir(binDir)
+        # Create directory for previously-compiled executables
+        precompiled_dir = 'PreviouslyCompiled'
+        if not os.path.exists(precompiled_dir):
+            os.mkdir(precompiled_dir)
 
         if test.reClean == 1:
             # for one reason or another, multiple tests use different
@@ -567,9 +567,15 @@ def test_suite(argv):
                 else:
                     comp_string, rc = suite.build_c(test=test, outfile=coutfile)
                 executable = test_util.get_recent_filename(bdir, "", ".ex")
-                # Copy executable to bin directory (to avoid recompiling for other tests)
+                # Store the executable (to avoid recompiling for other tests)
                 if test.avoid_recompiling and executable is not None:
-                    shutil.copy( executable, binDir )
+                    # Create a unique directory for these compilations options,
+                    # by using the hash of the compilation options as the directory name
+                    dir_name = os.path.join( precompiled_dir, hash(comp_string) )
+                    if not os.path.exists( dir_name ):
+                        os.mkdir(dir_name)
+                    # Copy the executable
+                    shutil.copy( executable, dir_name )
 
         test.comp_string = comp_string
         # Register name of the executable
@@ -602,7 +608,12 @@ def test_suite(argv):
 
         needed_files = []
         if executable is not None:
-            needed_files.append((os.path.join(binDir,executable), "copy"))
+            if test.avoid_recompiling:
+                # Find unique directory where the executable is stored
+                dir_name = os.path.join( precompiled_dir, hash(test.comp_string) )
+                needed_files.append((os.path.join(dir_name,executable), "copy"))
+            else:
+                needed_files.append((executable, "move"))
 
         if test.run_as_script:
             needed_files.append((test.run_as_script, "copy"))
