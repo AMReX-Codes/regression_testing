@@ -569,7 +569,7 @@ def test_suite(argv):
                     # by using the hash of the compilation options as the directory name
                     if not os.path.exists('PreviouslyCompiled'):
                         os.mkdir('PreviouslyCompiled')
-                    dir_name = os.path.join( 'PreviouslyCompiled', hash(comp_string) )
+                    dir_name = os.path.join( 'PreviouslyCompiled', str(hash(comp_string)) )
                     if not os.path.exists( dir_name ):
                         os.mkdir(dir_name)
                     # Copy the executable to that unique directory
@@ -608,7 +608,7 @@ def test_suite(argv):
         if executable is not None:
             if test.avoid_recompiling:
                 # Find unique directory where the executable is stored
-                dir_name = os.path.join( 'PreviouslyCompiled', hash(test.comp_string) )
+                dir_name = os.path.join( 'PreviouslyCompiled', str(hash(test.comp_string)) )
                 needed_files.append((os.path.join(dir_name,executable), "copy"))
             else:
                 needed_files.append((executable, "move"))
