@@ -556,6 +556,8 @@ def test_suite(argv):
             # Avoid recompiling in this case
             if found_previous_test:
                 suite.log.log("found pre-built executable for this test")
+                with open(coutfile, "a") as cf:
+                    cf.write("found pre-built executable for this test\n")
                 rc = 0
                 executable = previous_test.executable
             # Otherwise recompile
@@ -566,7 +568,7 @@ def test_suite(argv):
                     comp_string, rc = suite.build_c(test=test, outfile=coutfile)
                 executable = test_util.get_recent_filename(bdir, "", ".ex")
                 # Copy executable to bin directory (to avoid recompiling for other tests)
-                if executable is not None:
+                if test.avoid_recompiling and executable is not None:
                     shutil.copy( executable, binDir )
 
         test.comp_string = comp_string
