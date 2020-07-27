@@ -544,7 +544,7 @@ def test_suite(argv):
             # First check whether an executable was already compiled with
             # the same options (not enabled for CMake, for now)
             found_previous_test = False
-            if not suite.useCmake:
+            if test.avoid_recompiling and not suite.useCmake:
                 comp_string = suite.get_comp_string_c(test=test, outfile=coutfile)
                 # Loop over the existing tests
                 for previous_test in test_list:

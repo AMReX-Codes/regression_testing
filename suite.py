@@ -344,6 +344,7 @@ class Test(object):
 
     # Static member variables, set explicitly in apply_args in Suite class
     compile_only = False
+    avoid_recompiling = False
     skip_comparison = False
     global_tolerance = None
     global_particle_tolerance = None
@@ -1076,6 +1077,7 @@ class Suite(object):
         args = self.args
 
         Test.compile_only = args.compile_only
+        Test.avoid_recompiling = args.avoid_recompiling
         Test.skip_comparison = args.skip_comparison
         Test.global_tolerance = args.tolerance
         Test.global_particle_tolerance = args.particle_tolerance

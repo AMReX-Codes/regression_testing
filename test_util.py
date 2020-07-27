@@ -343,6 +343,8 @@ def get_args(arg_string=None):
                                           "options that control how the tests are run")
     run_group.add_argument("--compile_only", action="store_true",
                            help="test only that the code compiles, without running anything")
+    run_group.add_argument("--avoid_recompiling", action="store_true",
+                           help="avoid recompiling, if an executable was already build with the same compilation options, in a previous test")
     run_group.add_argument("--with_valgrind", action="store_true",
                            help="run with valgrind")
     run_group.add_argument("--valgrind_options", type=str, default="--leak-check=yes --log-file=vallog.%p",
