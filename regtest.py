@@ -516,10 +516,6 @@ def test_suite(argv):
         # if ( suite.useCmake ): bdir = suite.source_build_dir
 
         os.chdir(bdir)
-        # Create directory for previously-compiled executables
-        precompiled_dir = 'PreviouslyCompiled'
-        if not os.path.exists(precompiled_dir):
-            os.mkdir(precompiled_dir)
 
         if test.reClean == 1:
             # for one reason or another, multiple tests use different
@@ -571,10 +567,12 @@ def test_suite(argv):
                 if test.avoid_recompiling and executable is not None:
                     # Create a unique directory for these compilations options,
                     # by using the hash of the compilation options as the directory name
-                    dir_name = os.path.join( precompiled_dir, hash(comp_string) )
+                    if not os.path.exists('PreviouslyCompiled'):
+                        os.mkdir('PreviouslyCompiled')
+                    dir_name = os.path.join( 'PreviouslyCompiled', hash(comp_string) )
                     if not os.path.exists( dir_name ):
                         os.mkdir(dir_name)
-                    # Copy the executable
+                    # Copy the executable to that unique directory
                     shutil.copy( executable, dir_name )
 
         test.comp_string = comp_string
@@ -610,7 +608,7 @@ def test_suite(argv):
         if executable is not None:
             if test.avoid_recompiling:
                 # Find unique directory where the executable is stored
-                dir_name = os.path.join( precompiled_dir, hash(test.comp_string) )
+                dir_name = os.path.join( 'PreviouslyCompiled', hash(test.comp_string) )
                 needed_files.append((os.path.join(dir_name,executable), "copy"))
             else:
                 needed_files.append((executable, "move"))
