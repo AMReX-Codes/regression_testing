@@ -50,6 +50,9 @@ def load_params(args):
 
     log.bold("loading " + args.input_file[0])
 
+    if not os.path.exists(args.input_file[0]):
+        raise OSError("Parameter file {} does not exist".format(args.input_file[0]))
+    
     try: cp.read(args.input_file[0])
     except:
         log.fail("ERROR: unable to read parameter file {}".format(args.input_file[0]))
