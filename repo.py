@@ -57,7 +57,7 @@ class Repo:
         if rc != 0:
             self.suite.log.fail("ERROR: git fetch was unsuccessful")
 
-        # if we need a special branch or are working on a PR, check it out now
+        # if we need a special branch, hash or are working on a PR, check it out now
         if self.pr_wanted is not None:
             self.suite.log.log("fetching PR {}".format(self.pr_wanted))
             _, _, rc = test_util.run("git fetch origin pull/{}/head:pr-{}".format(
@@ -70,6 +70,14 @@ class Repo:
             if rc != 0:
                 self.suite.log.fail("ERROR: git checkout was unsuccessful")
 
+        elif self.hash_wanted is not None:
+            self.suite.log.log("git checkout {} ".format(self.hash_wanted))
+            _, _, rc = test_util.run("git checkout {}".format(self.hash_wanted),
+                                         stdin=True, outfile="git.{}.out".format(self.name))
+
+            if rc != 0:
+                self.suite.log.fail("ERROR: git update was unsuccessful")
+
         elif self.branch_orig != self.branch_wanted:
             self.suite.log.log("git checkout {} in {}".format(self.branch_wanted, self.dir))
             _, _, rc = test_util.run("git checkout {}".format(self.branch_wanted),
@@ -81,20 +89,13 @@ class Repo:
         else:
             self.branch_wanted = self.branch_orig
 
-        # get up to date on our branch or hash
+        # get up to date on our branch
         if self.pr_wanted is None:
             if self.hash_wanted == "" or self.hash_wanted is None:
                 self.suite.log.log("'git pull' in {}".format(self.dir))
 
                 _, _, rc = test_util.run("git pull", stdin=True,
                                          outfile="git.{}.out".format(self.name))
-
-            else:
-                _, _, rc = test_util.run("git checkout {}".format(self.hash_wanted),
-                                         outfile="git.{}.out".format(self.name))
-
-                if rc != 0:
-                    self.suite.log.fail("ERROR: git update was unsuccessful")
 
             shutil.copy("git.{}.out".format(self.name), self.suite.full_web_dir)
 
