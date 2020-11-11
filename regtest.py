@@ -720,6 +720,8 @@ def test_suite(argv):
                 if suite.check_file_name != "none":
                     base_cmd += " {}={}_chk amr.checkpoint_files_output=0 ".format(suite.check_file_name, test.name)
 
+                base_cmd += " {} {}".format(suite.globalAddToExecString, test.runtime_params)
+
             suite.run_test(test, base_cmd)
 
         test.wall_time = time.time() - test.wall_time
