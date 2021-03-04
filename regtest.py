@@ -76,21 +76,27 @@ def cmake_setup(suite):
     #--------------------------------------------------------------------------
     # build AMReX with CMake
     #--------------------------------------------------------------------------
+    # True:  install amrex and use install-tree
+    # False: use directly build-tree
+    install = False
+
     # Configure Amrex
     builddir, installdir = suite.cmake_config(name="AMReX",
                                               path=suite.amrex_dir,
                                               configOpts=suite.amrex_cmake_opts,
-                                              install=1)
-
-    suite.amrex_install_dir = installdir
+                                              install=install)
+    if install:
+        suite.amrex_install_dir = installdir
+        target = 'install'
+    else:
+        suite.amrex_install_dir = builddir
+        target = 'all'
 
     # Define additional env variable to point to AMReX install location
-    env = {'AMREX_HOME':installdir}
+    env = {'AMReX_ROOT':suite.amrex_install_dir }
 
-
-    # Install
     rc, _ = suite.cmake_build(name="AMReX",
-                              target='install',
+                              target=target,
                               path=builddir,
                               env=env)
 
