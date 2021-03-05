@@ -1118,6 +1118,9 @@ class Suite(object):
         cmd = 'cmake {} -H{} -B{} '.format(configOpts, path, builddir)
         if install:
             cmd += '-DCMAKE_INSTALL_PREFIX:PATH='+installdir
+        else:
+            if name == 'AMReX':
+                cmd += '-DAMReX_INSTALL=OFF'
 
         self.log.log(cmd)
         stdout, stderr, rc = test_util.run(cmd, outfile=coutfile, env=ENV)
@@ -1189,7 +1192,7 @@ class Suite(object):
     def build_test_cmake(self, test, opts="",  outfile=None):
         """ build an executable with CMake build system """
 
-        env = {"AMREX_HOME":self.amrex_install_dir}
+        env = {"AMReX_ROOT":self.amrex_install_dir}
 
         rc, comp_string = self.cmake_build( name    = test.name,
                                             target  = test.target,
