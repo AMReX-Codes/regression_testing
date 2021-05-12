@@ -122,7 +122,7 @@ def load_params(args):
 
     for s in other_srcs:
         if s.startswith("extra-"):
-            k = s.split("-")[1]
+            k = s.split("-",1)[1]
         else:
             k = "source"
 
