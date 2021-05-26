@@ -1058,7 +1058,7 @@ def report_all_runs(suite, active_test_list, max_per_page=50):
             hf = open("index{}.html".format(n), "w")
 
 
-        lvalid_dirs = valid_dirs[n*max_per_page:min((n+1)*max_per_page, len(valid_dirs)-1)]
+        lvalid_dirs = valid_dirs[n*max_per_page:min((n+1)*max_per_page, len(valid_dirs))]
 
         header = MAIN_HEADER.replace("@TITLE@", title).replace("@SUBTITLE@", suite.sub_title)
 
