@@ -51,11 +51,11 @@ def load_params(args):
     log.bold("loading " + args.input_file[0])
 
     if not os.path.exists(args.input_file[0]):
-        raise OSError("Parameter file {} does not exist".format(args.input_file[0]))
+        raise OSError(f"Parameter file {args.input_file[0]} does not exist")
     
     try: cp.read(args.input_file[0])
     except:
-        log.fail("ERROR: unable to read parameter file {}".format(args.input_file[0]))
+        log.fail(f"ERROR: unable to read parameter file {args.input_file[0]}")
 
     # "main" is a special section containing the global suite parameters.
     mysuite = suite.Suite(args)
@@ -79,7 +79,7 @@ def load_params(args):
 
             elif opt == "testTopDir":
                 mysuite.testTopDir = mysuite.check_test_dir(value)
-                print("just set testTopDir = {}".format(mysuite.testTopDir))
+                print(f"just set testTopDir = {mysuite.testTopDir}")
             elif opt == "webTopDir":
                 mysuite.init_web_dir(value)
             elif opt == "reportCoverage":
@@ -94,7 +94,7 @@ def load_params(args):
                 setattr(mysuite, opt, value)
 
         else:
-            mysuite.log.warn("suite parameter {} not valid".format(opt))
+            mysuite.log.warn(f"suite parameter {opt} not valid")
 
 
     # AMReX -- this will always be defined
@@ -173,7 +173,7 @@ def load_params(args):
     for r in mysuite.repos.keys():
         if not mysuite.repos[r].build == 1:
             if not mysuite.repos[r].comp_string is None:
-                mysuite.extra_src_comp_string += " {} ".format(mysuite.repos[r].comp_string)
+                mysuite.extra_src_comp_string += f" {mysuite.repos[r].comp_string} "
 
     # checks
     if args.send_no_email:
@@ -234,8 +234,8 @@ def load_params(args):
         # set the test object data by looking at all the options in
         # the current section of the parameter file
         valid_options = list(mytest.__dict__.keys())
-        aux_pat = re.compile("aux\d+File")
-        link_pat = re.compile("link\d+File")
+        aux_pat = re.compile(r"aux\d+File")
+        link_pat = re.compile(r"link\d+File")
 
         for opt in cp.options(sec):
 
@@ -261,7 +261,7 @@ def load_params(args):
 
             else:
                 
-                mysuite.log.warn("unrecognized parameter {} for test {}".format(opt, sec))
+                mysuite.log.warn(f"unrecognized parameter {opt} for test {sec}")
 
 
         # make sure that the build directory actually exists
@@ -271,51 +271,51 @@ def load_params(args):
             bdir = mysuite.source_dir + mytest.buildDir
 
         if not os.path.isdir(bdir):
-            mysuite.log.warn("invalid build directory: {}".format(bdir))
+            mysuite.log.warn(f"invalid build directory: {bdir}")
             invalid = 1
 
 
         # make sure all the require parameters are present
         if mytest.compileTest:
             if mytest.buildDir == "":
-                mysuite.log.warn("mandatory parameters for test {} not set".format(sec))
+                mysuite.log.warn(f"mandatory parameters for test {sec} not set")
                 invalid = 1
 
         else:
             
             input_file_invalid = mytest.inputFile == "" and not mytest.run_as_script
             if mytest.buildDir == "" or input_file_invalid or mytest.dim == -1:
-                warn_msg = ["required params for test {} not set".format(sec),
-                            "buildDir = {}".format(mytest.buildDir),
-                            "inputFile = {}".format(mytest.inputFile)]
-                warn_msg += ["dim = {}".format(mytest.dim)]
+                warn_msg = [f"required params for test {sec} not set",
+                            f"buildDir = {mytest.buildDir}",
+                            f"inputFile = {mytest.inputFile}"]
+                warn_msg += [f"dim = {mytest.dim}"]
                 mysuite.log.warn(warn_msg)
 
                 invalid = 1
 
         # check the optional parameters
         if mytest.restartTest and mytest.restartFileNum == -1:
-            mysuite.log.warn("restart-test {} needs a restartFileNum".format(sec))
+            mysuite.log.warn(f"restart-test {sec} needs a restartFileNum")
             invalid = 1
 
         if mytest.selfTest and mytest.stSuccessString == "":
-            mysuite.log.warn("self-test {} needs a stSuccessString".format(sec))
+            mysuite.log.warn(f"self-test {sec} needs a stSuccessString")
             invalid = 1
 
         if mytest.useMPI and mytest.numprocs == -1:
-            mysuite.log.warn("MPI parallel test {} needs numprocs".format(sec))
+            mysuite.log.warn(f"MPI parallel test {sec} needs numprocs")
             invalid = 1
 
         if mytest.useOMP and mytest.numthreads == -1:
-            mysuite.log.warn("OpenMP parallel test {} needs numthreads".format(sec))
+            mysuite.log.warn(f"OpenMP parallel test {sec} needs numthreads")
             invalid = 1
 
         if mytest.doVis and mytest.visVar == "":
-            mysuite.log.warn("test {} has visualization, needs visVar".format(sec))
+            mysuite.log.warn(f"test {sec} has visualization, needs visVar")
             invalid = 1
 
         if mysuite.sourceTree in ["AMReX", "amrex"] and mytest.testSrcTree == "":
-            mysuite.log.warn("testSrcTree not set for AMReX test {}".format(sec))
+            mysuite.log.warn(f"testSrcTree not set for AMReX test {sec}")
             invalid = 1
 
 
@@ -323,7 +323,7 @@ def load_params(args):
         if not invalid:
             test_list.append(mytest)
         else:
-            mysuite.log.warn("test {} will be skipped".format(sec))
+            mysuite.log.warn(f"test {sec} will be skipped")
 
 
     # if any runs are parallel, make sure that the MPIcommand is defined

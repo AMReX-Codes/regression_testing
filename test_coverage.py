@@ -150,7 +150,7 @@ def get_start_line(lines, fname):
             break
 
     if start_line is None:
-        raise RuntimeError("Unable to locate start line in {}".format(fname))
+        raise RuntimeError(f"Unable to locate start line in {fname}")
 
     while "=" not in lines[start_line]:
         start_line += 1
@@ -166,7 +166,7 @@ def list_parameters(data_file, All):
     covered = []      # List to store the names of the covered parameters
     no_cover = []     # List to store the names of the non-covered parameters
 
-    with open(data_file, mode='r') as file:
+    with open(data_file) as file:
 
         lines = list(file)
         start_line = get_start_line(lines, data_file)
@@ -346,7 +346,7 @@ def output_coverage(output_name, covered, no_cover, covered_frac,
 
         coverage.write("================================================== \n")
         coverage.write(
-            "Coverage: {0:5.2f}% \n"
+            "Coverage: {:5.2f}% \n"
             .format(covered_frac*100))
         coverage.write("Total number of parameters: {} \n"
                        .format(len(covered)+len(no_cover)))

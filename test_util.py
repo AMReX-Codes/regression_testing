@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import argparse
 import os
 import shlex
@@ -171,7 +169,7 @@ created benchmarks.  If differences arise in the comparisons due to
 """
 
 
-class Log(object):
+class Log:
     """a simple logging class to show information to the terminal"""
     def __init__(self, output_file=None):
 
@@ -189,9 +187,9 @@ class Log(object):
         if output_file is not None:
             try:
                 self.of = open(output_file, "w")
-            except IOError:
+            except OSError:
                 print("ERROR: unable to open output file")
-                raise IOError
+                raise OSError
             else:
                 self.have_log = True
         else:
@@ -219,9 +217,9 @@ class Log(object):
     def fail(self, string):
         """output a failure message to the log"""
         nstr = self.fail_color + string + self.end_color
-        print("{}{}".format(self.indent_str, nstr))
+        print(f"{self.indent_str}{nstr}")
         if self.have_log:
-            self.of.write("{}{}\n".format(self.indent_str, string))
+            self.of.write(f"{self.indent_str}{string}\n")
 
         def email_developers():
             emailto = ",".join(self.suite.emailTo)
@@ -246,9 +244,9 @@ class Log(object):
     def testfail(self, string):
         """output a test failure to the log"""
         nstr = self.fail_color + string + self.end_color
-        print("{}{}".format(self.indent_str, nstr))
+        print(f"{self.indent_str}{nstr}")
         if self.have_log:
-            self.of.write("{}{}\n".format(self.indent_str, string))
+            self.of.write(f"{self.indent_str}{string}\n")
 
     def warn(self, warn_msg):
         """
@@ -265,20 +263,20 @@ class Log(object):
         nstr = self.warn_color + omsg + self.end_color
         print(nstr)
         if self.have_log:
-            self.of.write("{}\n".format(omsg))
+            self.of.write(f"{omsg}\n")
 
     def success(self, string):
         """output a success message to the log"""
         nstr = self.success_color + string + self.end_color
-        print("{}{}".format(self.indent_str, nstr))
+        print(f"{self.indent_str}{nstr}")
         if self.have_log:
-            self.of.write("{}{}\n".format(self.indent_str, string))
+            self.of.write(f"{self.indent_str}{string}\n")
 
     def log(self, string):
         """output some text to the log"""
-        print("{}{}".format(self.indent_str, string))
+        print(f"{self.indent_str}{string}")
         if self.have_log:
-            self.of.write("{}{}\n".format(self.indent_str, string))
+            self.of.write(f"{self.indent_str}{string}\n")
 
     def skip(self):
         """introduce a newline in the log"""
@@ -289,9 +287,9 @@ class Log(object):
     def bold(self, string):
         """emphasize a log message"""
         nstr = self.bold_color + string + self.end_color
-        print("{}{}".format(self.indent_str, nstr))
+        print(f"{self.indent_str}{nstr}")
         if self.have_log:
-            self.of.write("{}{}\n".format(self.indent_str, string))
+            self.of.write(f"{self.indent_str}{string}\n")
 
     def close_log(self):
         """close the log"""
@@ -403,13 +401,12 @@ def run(string, stdin=False, outfile=None, store_command=False, env=None,
     p0.stdout.close()
     p0.stderr.close()
 
-    if sys.version_info >= (3, 0):
-        stdout0 = stdout0.decode('utf-8')
-        stderr0 = stderr0.decode('utf-8')
+    stdout0 = stdout0.decode('utf-8')
+    stderr0 = stderr0.decode('utf-8')
 
     if outfile is not None:
         try: cf = open(outfile, outfile_mode)
-        except IOError:
+        except OSError:
             log.fail("  ERROR: unable to open file for writing")
         else:
             if store_command:
@@ -431,7 +428,7 @@ def run(string, stdin=False, outfile=None, store_command=False, env=None,
                 write_err = False
         if write_err:
             try: cf = open(errfile, outfile_mode)
-            except IOError:
+            except OSError:
                 log.fail("  ERROR: unable to open file for writing")
             else:
                 for line in stderr0:

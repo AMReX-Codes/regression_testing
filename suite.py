@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import datetime
 import json
 import os
@@ -35,7 +33,7 @@ except:
     except:
         DO_TIMINGS_PLOTS = False
 
-class Test(object):
+class Test:
 
     def __init__(self, name):
 
@@ -176,9 +174,9 @@ class Test(object):
 
         plts = [d for d in os.listdir(output_dir) if \
                 (os.path.isdir(d) and
-                 d.startswith("{}_plt".format(self.name)) and d[-1].isdigit()) or \
+                 d.startswith(f"{self.name}_plt") and d[-1].isdigit()) or \
                 (os.path.isfile(d) and
-                 d.startswith("{}_plt".format(self.name)) and d.endswith(".tgz"))]
+                 d.startswith(f"{self.name}_plt") and d.endswith(".tgz"))]
 
         if len(plts) == 0:
             self.log.warn("test did not produce any output")
@@ -235,19 +233,19 @@ class Test(object):
     def outfile(self):
         """ The basename of this run's output file """
 
-        return "{}.run.out".format(self.name)
+        return f"{self.name}.run.out"
 
     @property
     def errfile(self):
         """ The basename of this run's error file """
 
-        return "{}.err.out".format(self.name)
+        return f"{self.name}.err.out"
 
     @property
     def comparison_outfile(self):
         """ The basename of this run's comparison output file """
 
-        return "{}.compare.out".format(self.name)
+        return f"{self.name}.compare.out"
 
     def record_runtime(self, suite):
 
@@ -358,7 +356,7 @@ class Test(object):
     performance_threshold = property(get_performance_threshold, set_performance_threshold)
     runs_to_average = property(get_runs_to_average, set_runs_to_average)
 
-class Suite(object):
+class Suite:
 
     def __init__(self, args):
 
@@ -477,7 +475,7 @@ class Suite(object):
             return dir_name
 
         # we failed :(
-        self.log.fail("ERROR: {} is not a valid directory".format(orig_name))
+        self.log.fail(f"ERROR: {orig_name} is not a valid directory")
 
 
     def init_web_dir(self, dir_name):
@@ -546,7 +544,7 @@ class Suite(object):
                 if len(_tmp) == 1:
                     new_test_list += _tmp
                 else:
-                    self.log.fail("ERROR: {} is not a valid test".format(test))
+                    self.log.fail(f"ERROR: {test} is not a valid test")
 
             test_list = new_test_list
 
@@ -561,13 +559,13 @@ class Suite(object):
             if not self.args.make_benchmarks is None:
                 os.mkdir(bench_dir)
             else:
-                self.log.fail("ERROR: benchmark directory, {}, does not exist".format(bench_dir))
+                self.log.fail(f"ERROR: benchmark directory, {bench_dir}, does not exist")
         return bench_dir
 
     def get_wallclock_file(self):
         """ returns the path to the json file storing past runtimes for each test """
 
-        return os.path.join(self.get_bench_dir(), "{}.json".format(self.wallclockFile))
+        return os.path.join(self.get_bench_dir(), f"{self.wallclockFile}.json")
 
     def make_test_dirs(self):
         os.chdir(self.testTopDir)
@@ -595,7 +593,7 @@ class Suite(object):
         else:
             for i in range(1, maxRuns):
                 if not os.path.isdir(full_test_dir): break
-                test_dir = today + "-{:03d}/".format(i)
+                test_dir = today + f"-{i:03d}/"
                 full_test_dir = self.testTopDir + self.suiteName + "-tests/" + test_dir
 
         self.log.skip()
@@ -604,7 +602,7 @@ class Suite(object):
 
         # make the web directory -- this is where all the output and HTML will be
         # put, so it is easy to move the entire test website to a different disk
-        full_web_dir = "{}/{}/".format(self.webTopDir, test_dir)
+        full_web_dir = f"{self.webTopDir}/{test_dir}/"
 
         if self.args.do_temp_run:
             if os.path.isdir(full_web_dir):
@@ -684,12 +682,12 @@ class Suite(object):
         if os.path.isfile(json_file):
 
             try:
-                timings = json.load(open(json_file, 'r'))
+                timings = json.load(open(json_file))
                 # Check for proper format
                 item = next(iter(timings.values()))
                 if not isinstance(item, dict): raise JSONDecodeError()
                 return timings
-            except (IOError, OSError, JSONDecodeError, StopIteration): pass
+            except (OSError, JSONDecodeError, StopIteration): pass
 
         valid_dirs, all_tests = self.get_run_history(check_activity=False)
 
@@ -700,7 +698,7 @@ class Suite(object):
 
             # Get status files
             dir_path = os.path.join(self.webTopDir, dir)
-            sfiles = glob.glob("{}/*.status".format(dir_path))
+            sfiles = glob.glob(f"{dir_path}/*.status")
             sfiles = list(filter(os.path.isfile, sfiles))
 
             # Tests that should be counted
@@ -718,7 +716,7 @@ class Suite(object):
 
             for test in filter(lambda x: x in passed, all_tests):
 
-                file = "{}/{}.html".format(dir_path, test)
+                file = f"{dir_path}/{test}.html"
                 try: file = open(file)
                 except: continue
 
@@ -803,7 +801,7 @@ class Suite(object):
                 fig = plt.gcf()
                 fig.autofmt_xdate()
 
-                plt.savefig("{}/{}-timings.{}".format(self.webTopDir, t, self.plot_ext))
+                plt.savefig(f"{self.webTopDir}/{t}-timings.{self.plot_ext}")
 
             else:
 
@@ -819,8 +817,8 @@ class Suite(object):
                 plot.yaxis.axis_label = "Runtime (s)"
 
                 save(plot, resources=CDN,
-                        filename="{}/{}-timings.{}".format(self.webTopDir, t, self.plot_ext),
-                        title="{} Runtime History".format(t))
+                        filename=f"{self.webTopDir}/{t}-timings.{self.plot_ext}",
+                        title=f"{t} Runtime History")
 
     def get_last_run(self):
         """ return the name of the directory corresponding to the previous
@@ -854,8 +852,8 @@ class Suite(object):
             if not os.path.isdir(test): continue
 
             # the status files are in the web dir
-            status_file = "{}/{}/{}.status".format(self.webTopDir, test_dir, test)
-            with open(status_file, "r") as sf:
+            status_file = f"{self.webTopDir}/{test_dir}/{test}.status"
+            with open(status_file) as sf:
                 for line in sf:
                     if line.find("FAILED") >= 0 or line.find("CRASHED") >= 0:
                         failed.append(test)
@@ -886,11 +884,11 @@ class Suite(object):
             c_make_additions = self.add_to_c_make_command
 
         if test is not None:
-            build_opts += "DEBUG={} ".format(c_flag(test.debug))
-            build_opts += "USE_ACC={} ".format(c_flag(test.acc))
-            build_opts += "USE_MPI={} ".format(c_flag(test.useMPI))
-            build_opts += "USE_OMP={} ".format(c_flag(test.useOMP))
-            build_opts += "DIM={} ".format(test.dim)
+            build_opts += f"DEBUG={c_flag(test.debug)} "
+            build_opts += f"USE_ACC={c_flag(test.acc)} "
+            build_opts += f"USE_MPI={c_flag(test.useMPI)} "
+            build_opts += f"USE_OMP={c_flag(test.useOMP)} "
+            build_opts += f"DIM={test.dim} "
 
             if not test.extra_build_dir == "":
                 build_opts += self.repos[test.extra_build_dir].comp_string + " "
@@ -905,7 +903,7 @@ class Suite(object):
             if test.ignoreGlobalMakeAdditions:
                 c_make_additions = ""
 
-        all_opts = "{} {} {}".format(self.extra_src_comp_string, build_opts, opts)
+        all_opts = f"{self.extra_src_comp_string} {build_opts} {opts}"
 
         comp_string = "{} -j{} AMREX_HOME={} {} COMP={} {} {}".format(
             self.MAKE, self.numMakeJobs, self.amrex_dir,
@@ -923,12 +921,12 @@ class Suite(object):
     def run_test(self, test, base_command):
         test_env = None
         if test.useOMP:
-            test_env = dict(os.environ, OMP_NUM_THREADS="{}".format(test.numthreads))
+            test_env = dict(os.environ, OMP_NUM_THREADS=f"{test.numthreads}")
 
         if test.useMPI and not test.run_as_script:
             test_run_command = self.MPIcommand
             test_run_command = test_run_command.replace("@host@", self.MPIhost)
-            test_run_command = test_run_command.replace("@nprocs@", "{}".format(test.numprocs))
+            test_run_command = test_run_command.replace("@nprocs@", f"{test.numprocs}")
             test_run_command = test_run_command.replace("@command@", base_command)
         else:
             test_run_command = base_command
@@ -953,9 +951,9 @@ class Suite(object):
         backtrace = test.find_backtrace()
 
         for btf in backtrace:
-            ofile = "{}/{}.{}".format(self.full_web_dir, test.name, btf)
+            ofile = f"{self.full_web_dir}/{test.name}.{btf}"
             shutil.copy(btf, ofile)
-            test.backtrace.append("{}.{}".format(test.name, btf))
+            test.backtrace.append(f"{test.name}.{btf}")
 
 
     def build_tools(self, test_list):
@@ -980,15 +978,15 @@ class Suite(object):
         if any([t for t in test_list if t.tolerance is not None]): ftools.append("fvarnames")
 
         for t in ftools:
-            self.log.log("building {}...".format(t))
-            comp_string, rc = self.build_c(target="programs={}".format(t),
+            self.log.log(f"building {t}...")
+            comp_string, rc = self.build_c(target=f"programs={t}",
                                            opts="DEBUG=FALSE USE_MPI=FALSE USE_OMP=FALSE ",
-                                           c_make_additions="", outfile="{}.make.out".format(t))
+                                           c_make_additions="", outfile=f"{t}.make.out")
             if not rc == 0:
                 self.log.fail("unable to continue, tools not able to be built")
 
             exe = test_util.get_recent_filename(self.f_compare_tool_dir, t, ".ex")
-            self.tools[t] = "{}/{}".format(self.f_compare_tool_dir, exe)
+            self.tools[t] = f"{self.f_compare_tool_dir}/{exe}"
 
         self.c_compare_tool_dir = "{}/Tools/Postprocessing/C_Src/".format(
             os.path.normpath(self.amrex_dir))
@@ -1007,14 +1005,14 @@ class Suite(object):
 
 
         for t in ctools:
-            self.log.log("building {}...".format(t))
+            self.log.log(f"building {t}...")
             comp_string, rc = self.build_c(opts="DEBUG=FALSE USE_MPI=FALSE EBASE=particle_compare ")
             if not rc == 0:
                 self.log.fail("unable to continue, tools not able to be built")
 
             exe = test_util.get_recent_filename(self.c_compare_tool_dir, t, ".exe")
 
-            self.tools[t] = "{}/{}".format(self.c_compare_tool_dir, exe)
+            self.tools[t] = f"{self.c_compare_tool_dir}/{exe}"
 
         if ("DiffSameDomainRefined" in self.extra_tools):
             self.extra_tool_dir = "{}/Tools/C_util/Convergence/".format(
@@ -1033,15 +1031,15 @@ class Suite(object):
                 if ("1d" in t): ndim=1
                 if ("2d" in t): ndim=2
                 if ("3d" in t): ndim=3
-                self.log.log("building {}...".format(t))
+                self.log.log(f"building {t}...")
                 comp_string, rc = self.build_c(opts=
-                        "EBASE=DiffSameDomainRefined DIM={} DEBUG=FALSE USE_MPI=FALSE USE_OMP=FALSE ".format(ndim))
+                        f"EBASE=DiffSameDomainRefined DIM={ndim} DEBUG=FALSE USE_MPI=FALSE USE_OMP=FALSE ")
                 if not rc == 0:
                     self.log.fail("unable to continue, tools not able to be built")
 
                 exe = test_util.get_recent_filename(self.extra_tool_dir, t, ".ex")
 
-                self.tools[t] = "{}/{}".format(self.extra_tool_dir, exe)
+                self.tools[t] = f"{self.extra_tool_dir}/{exe}"
                 print(self.tools[t])
 
 
@@ -1057,7 +1055,7 @@ class Suite(object):
         payload["text"] = message.replace("'", "")  # apostrophes
 
         s = json.dumps(payload)
-        cmd = "curl -X POST --data-urlencode 'payload={}' {}".format(s, self.slack_webhook_url)
+        cmd = f"curl -X POST --data-urlencode 'payload={s}' {self.slack_webhook_url}"
         test_util.run(cmd)
 
     def apply_args(self):
@@ -1112,10 +1110,10 @@ class Suite(object):
             os.mkdir(installdir)
 
         # Logfile
-        coutfile = '{}{}.cmake.log'.format( self.full_test_dir, name )
+        coutfile = f'{self.full_test_dir}{name}.cmake.log'
 
         # Run cmake
-        cmd = 'cmake {} -H{} -B{} '.format(configOpts, path, builddir)
+        cmd = f'cmake {configOpts} -H{path} -B{builddir} '
         if install:
             cmd += '-DCMAKE_INSTALL_PREFIX:PATH='+installdir
         else:
@@ -1171,9 +1169,9 @@ class Suite(object):
         if outfile is not None:
             coutfile = outfile
         else:
-            coutfile = '{}{}.{}.make.log'.format( self.full_test_dir, name, target )
+            coutfile = f'{self.full_test_dir}{name}.{target}.make.log'
 
-        cmd = '{} -j{} {} {}'.format( self.MAKE, self.numMakeJobs, opts, target )
+        cmd = f'{self.MAKE} -j{self.numMakeJobs} {opts} {target}'
         self.log.log(cmd)
         stdout, stderr, rc = test_util.run(cmd, outfile=coutfile, cwd=path, env=ENV )
 
@@ -1210,8 +1208,8 @@ class Suite(object):
                     break
 
             # Copy and rename executable to test dir
-            shutil.move("{}".format(path_to_exe),
-                        "{}/{}/{}.ex".format(self.source_dir,test.buildDir,test.name))
+            shutil.move(f"{path_to_exe}",
+                        f"{self.source_dir}/{test.buildDir}/{test.name}.ex")
         else:
             self.log.fail("Failed to build test " + test.name)
 

@@ -198,7 +198,7 @@ r"""
 def create_css(table_height=16):
     """ write the css file for the webpages """
 
-    css = CSS_CONTENTS.replace("@TABLEHEIGHT@", "{}em".format(table_height))
+    css = CSS_CONTENTS.replace("@TABLEHEIGHT@", f"{table_height}em")
 
     with open("tests.css", 'w') as cf:
         cf.write(css)
@@ -241,7 +241,7 @@ class HTMLList:
                     self.of.write("</li>\n")
 
             current_indent = i
-            self.of.write("<li>{}\n".format(c))
+            self.of.write(f"<li>{c}\n")
 
         # finish current item
         self.of.write("</li>")
@@ -269,7 +269,7 @@ class HTMLTable:
     def start_table(self):
         if not self.divs is None:
             for d in self.divs:
-                self.hf.write("<div id='{}'>\n".format(d))
+                self.hf.write(f"<div id='{d}'>\n")
         self.hf.write("<p><table>\n")
 
     def header(self, header_list):
@@ -279,7 +279,7 @@ class HTMLTable:
         self.hf.write(line.format(*header_list))
 
     def print_single_row(self, row):
-        self.hf.write("<tr class='special'><td colspan={}>".format(self.columns)+row+"</td></tr>\n")
+        self.hf.write(f"<tr class='special'><td colspan={self.columns}>"+row+"</td></tr>\n")
 
     def print_row(self, row_list, highlight=False):
         """ row_list are the individual table elements.  Note that if
@@ -294,9 +294,9 @@ class HTMLTable:
             line = "<tr>"
             for d in row_list:
                 if isinstance(d, tuple):
-                    line += "<td {}>{}</td>".format(d[1], d[0])
+                    line += f"<td {d[1]}>{d[0]}</td>"
                 else:
-                    line += "<td>{}</td>".format(d)
+                    line += f"<td>{d}</td>"
             line += "</tr>\n"
         self.hf.write(line.format(*row_list))
 
@@ -346,8 +346,8 @@ def report_single_test(suite, test, tests, failure_msg=None):
             if test.doComparison:
                 compare_file = test.comparison_outfile
                 try:
-                    cf = open(compare_file, 'r')
-                except IOError:
+                    cf = open(compare_file)
+                except OSError:
                     suite.log.warn("WARNING: no comparison file found")
                     diff_lines = ['']
                 else:
@@ -360,7 +360,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
 
         # write out the status file for this problem, with either
         # PASSED, PASSED SLOWLY, COMPILE FAILED, or FAILED
-        status_file = "{}.status".format(test.name)
+        status_file = f"{test.name}.status"
         with open(status_file, 'w') as sf:
             if (compile_successful and
                 (test.compileTest or ((not test.compileTest) and
@@ -371,16 +371,16 @@ def report_single_test(suite, test, tests, failure_msg=None):
                     if not (meets_threshold is None or meets_threshold):
                         string = "PASSED SLOWLY\n"
                 sf.write(string)
-                suite.log.success("{} PASSED".format(test.name))
+                suite.log.success(f"{test.name} PASSED")
             elif not compile_successful:
                 sf.write("COMPILE FAILED\n")
-                suite.log.testfail("{} COMPILE FAILED".format(test.name))
+                suite.log.testfail(f"{test.name} COMPILE FAILED")
             elif test.crashed:
                 sf.write("CRASHED\n")
-                suite.log.testfail("{} CRASHED (backtraces produced)".format(test.name))
+                suite.log.testfail(f"{test.name} CRASHED (backtraces produced)")
             else:
                 sf.write("FAILED\n")
-                suite.log.testfail("{} FAILED".format(test.name))
+                suite.log.testfail(f"{test.name} FAILED")
 
     else:
         # we came in already admitting we failed...
@@ -389,10 +389,10 @@ def report_single_test(suite, test, tests, failure_msg=None):
         else:
             msg = "FAILED"
 
-        status_file = "{}.status".format(test.name)
+        status_file = f"{test.name}.status"
         with open(status_file, 'w') as sf:
-            sf.write("{}\n".format(msg))
-        suite.log.testfail("{} {}".format(test.name, msg))
+            sf.write(f"{msg}\n")
+        suite.log.testfail(f"{test.name} {msg}")
 
 
     #--------------------------------------------------------------------------
@@ -402,7 +402,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
     # write the css file
     create_css()
 
-    html_file = "{}.html".format(test.name)
+    html_file = f"{test.name}.html"
     hf = open(html_file, 'w')
 
     new_head = HTML_HEADER
@@ -410,12 +410,12 @@ def report_single_test(suite, test, tests, failure_msg=None):
     # arrows for previous and next test
     new_head += r"""<table style="width: 100%" class="head"><br><tr>"""
     if current_index > 0:
-        new_head += r"""<td><< <a href="{}.html">previous test</td>""".format(tests[current_index-1].name)
+        new_head += fr"""<td><< <a href="{tests[current_index-1].name}.html">previous test</td>"""
     else:
         new_head += r"""<td>&nbsp;</td>"""
 
     if current_index < len(tests)-1:
-        new_head += r"""<td class="alignright"><a href="{}.html">next test >></td>""".format(tests[current_index+1].name)
+        new_head += fr"""<td class="alignright"><a href="{tests[current_index+1].name}.html">next test >></td>"""
     else:
         new_head += r"""<td>&nbsp;</td>"""
 
@@ -437,7 +437,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
         ll.indent()
 
         ll.item("<h3 class=\"failed\">Failed</h3>")
-        ll.item("{}".format(failure_msg))
+        ll.item(f"{failure_msg}")
 
         ll.outdent()
 
@@ -445,11 +445,11 @@ def report_single_test(suite, test, tests, failure_msg=None):
     ll.item("Build/Test information:")
     ll.indent()
 
-    ll.item("Build directory: {}".format(test.buildDir))
+    ll.item(f"Build directory: {test.buildDir}")
 
     if not test.extra_build_dir == "":
         ll.indent()
-        ll.item("in {}".format(suite.repos[test.extra_build_dir].dir))
+        ll.item(f"in {suite.repos[test.extra_build_dir].dir}")
         ll.outdent()
 
     if not test.compileTest:
@@ -464,16 +464,16 @@ def report_single_test(suite, test, tests, failure_msg=None):
             ll.item("Parallel run")
             ll.indent()
             if test.useMPI:
-                ll.item("MPI numprocs = {}".format(test.numprocs))
+                ll.item(f"MPI numprocs = {test.numprocs}")
             if test.useOMP:
-                ll.item("OpenMP numthreads = {}".format(test.numthreads))
+                ll.item(f"OpenMP numthreads = {test.numthreads}")
             ll.outdent()
 
         if test.restartTest:
 
             ll.item("Restart test")
             ll.indent()
-            ll.item("Job was run as normal and then restarted from checkpoint # {}, and the two final outputs were compared".format(test.restartFileNum))
+            ll.item(f"Job was run as normal and then restarted from checkpoint # {test.restartFileNum}, and the two final outputs were compared")
             ll.outdent()
 
 
@@ -481,20 +481,20 @@ def report_single_test(suite, test, tests, failure_msg=None):
         ll.indent()
 
         if test.inputFile:
-            ll.item("input file: <a href=\"{}.{}\">{}</a>".format(test.name, test.inputFile, test.inputFile))
+            ll.item(f"input file: <a href=\"{test.name}.{test.inputFile}\">{test.inputFile}</a>")
 
         if suite.sourceTree == "C_Src" and test.probinFile != "":
-            ll.item("probin file: <a href=\"{}.{}\">{}</a>".format(test.name, test.probinFile, test.probinFile))
+            ll.item(f"probin file: <a href=\"{test.name}.{test.probinFile}\">{test.probinFile}</a>")
 
         for i, afile in enumerate(test.auxFiles):
             # sometimes the auxFile was in a subdirectory under the
             # build directory.
             root_file = os.path.basename(afile)
-            ll.item("auxillary file {}: <a href=\"{}.{}\">{}</a>".format(i+1, test.name, root_file, afile))
+            ll.item(f"auxillary file {i+1}: <a href=\"{test.name}.{root_file}\">{afile}</a>")
 
         ll.outdent()
 
-        ll.item("Dimensionality: {}".format(test.dim))
+        ll.item(f"Dimensionality: {test.dim}")
 
     ll.outdent()   # end of build information
 
@@ -507,9 +507,9 @@ def report_single_test(suite, test, tests, failure_msg=None):
     else:
         ll.item("<h3 class=\"failed\">Failed</h3>")
 
-    ll.item("Compilation time: {:.3f} s".format(test.build_time))
-    ll.item("Compilation command:<br><tt>{}</tt>".format(test.comp_string))
-    ll.item("<a href=\"{}.make.out\">make output</a>".format(test.name))
+    ll.item(f"Compilation time: {test.build_time:.3f} s")
+    ll.item(f"Compilation command:<br><tt>{test.comp_string}</tt>")
+    ll.item(f"<a href=\"{test.name}.make.out\">make output</a>")
 
     ll.outdent()
 
@@ -519,7 +519,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
         # execution summary
         ll.item("Execution:")
         ll.indent()
-        ll.item("Execution time: {:.3f} s".format(test.wall_time))
+        ll.item(f"Execution time: {test.wall_time:.3f} s")
 
         if test.check_performance:
 
@@ -530,16 +530,16 @@ def report_single_test(suite, test, tests, failure_msg=None):
                 if meets_threshold: style = "mild-success"
                 else: style = "mild-failure"
 
-                ll.item("{} run average: {:.3f} s".format(test.runs_to_average, test.past_average))
+                ll.item(f"{test.runs_to_average} run average: {test.past_average:.3f} s")
                 ll.item("Relative performance: <span class=\"{}\">{:.1f}% {}</span>".format(
                     style, percentage, compare_str))
 
-        ll.item("Execution command:<br><tt>{}</tt>".format(test.run_command))
-        ll.item("<a href=\"{}.run.out\">execution output</a>".format(test.name))
+        ll.item(f"Execution command:<br><tt>{test.run_command}</tt>")
+        ll.item(f"<a href=\"{test.name}.run.out\">execution output</a>")
         if test.has_stderr:
-            ll.item("<a href=\"{}.err.out\">execution stderr</a>".format(test.name))
+            ll.item(f"<a href=\"{test.name}.err.out\">execution stderr</a>")
         if test.has_jobinfo:
-            ll.item("<a href=\"{}.job_info\">job_info</a>".format(test.name))
+            ll.item(f"<a href=\"{test.name}.job_info\">job_info</a>")
         ll.outdent()
 
 
@@ -548,7 +548,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
             ll.item("Backtraces:")
             ll.indent()
             for bt in test.backtrace:
-                ll.item("<a href=\"{}\">{}</a>".format(bt, bt))
+                ll.item(f"<a href=\"{bt}\">{bt}</a>")
             ll.outdent()
 
         # comparison summary
@@ -571,7 +571,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
             else:
                 ll.item("<h3 class=\"failed\">Failed</h3>")
 
-            ll.item("<a href=\"{}.analysis.out\">execution output</a>".format(test.name))
+            ll.item(f"<a href=\"{test.name}.analysis.out\">execution output</a>")
             ll.outdent()
 
     ll.write_list()
@@ -701,7 +701,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
         if test.doVis:
             if not test.png_file is None:
                 hf.write("<P>&nbsp;\n")
-                hf.write("<P><IMG SRC='{}' BORDER=0>".format(test.png_file))
+                hf.write(f"<P><IMG SRC='{test.png_file}' BORDER=0>")
 
         # show any analysis
         if not test.analysisOutputImage == "":
@@ -731,12 +731,12 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
     os.chdir(suite.full_web_dir)
 
     try:
-        build_time = sum([q.build_time for q in test_list])
+        build_time = sum(q.build_time for q in test_list)
     except:
         build_time = -1
 
     try:
-        wall_time = sum([q.wall_time for q in test_list])
+        wall_time = sum(q.wall_time for q in test_list)
     except:
         wall_time = -1
 
@@ -767,16 +767,16 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
         hf.write("<p><b>Test run note:</b><br><font color=\"gray\">%s</font>\n" % (note))
 
     if not make_benchmarks is None:
-        hf.write("<p><b>Benchmarks updated</b><br>comment: <font color=\"gray\">{}</font>\n".format(make_benchmarks))
+        hf.write(f"<p><b>Benchmarks updated</b><br>comment: <font color=\"gray\">{make_benchmarks}</font>\n")
 
     hf.write("<p><b>test input parameter file:</b> <A HREF=\"%s\">%s</A>\n" %
              (test_file, test_file))
 
     if build_time > 0:
-        hf.write("<p><b>combined build time for all tests:</b> {} s\n".format(build_time))
+        hf.write(f"<p><b>combined build time for all tests:</b> {build_time} s\n")
 
     if wall_time > 0:
-        hf.write("<p><b>wall clock time for all tests:</b> {} s\n".format(wall_time))
+        hf.write(f"<p><b>wall clock time for all tests:</b> {wall_time} s\n")
 
     # git info lists
     any_update = any([suite.repos[t].update for t in suite.repos])
@@ -792,13 +792,13 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
         for k, r in suite.repos.items():
             if r.update:
                 if r.pr_wanted is not None:
-                    branch = "PR #{}".format(r.pr_wanted)
+                    branch = f"PR #{r.pr_wanted}"
                 else:
                     branch = r.branch_wanted
 
                 hf.write(code_str.format(r.name, branch, r.hash_current,
-                                         "ChangeLog.{}".format(r.name),
-                                         "ChangeLog.{}".format(r.name)))
+                                         f"ChangeLog.{r.name}",
+                                         f"ChangeLog.{r.name}"))
 
         hf.write("</ul>")
 
@@ -838,7 +838,7 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
             status_file = "%s.status" % (test.name)
 
             status = None
-            with open(status_file, 'r') as sf:
+            with open(status_file) as sf:
                 for line in sf:
                     if line.find("PASSED") >= 0:
                         status = "passed"
@@ -861,9 +861,9 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
                         break
 
             row_info = []
-            row_info.append("<a href=\"{}.html\">{}</a>".format(test.name, test.name))
+            row_info.append(f"<a href=\"{test.name}.html\">{test.name}</a>")
             row_info.append(test.dim)
-            row_info.append("<div class='small'>{}</div>".format(test.compare_file_used))
+            row_info.append(f"<div class='small'>{test.compare_file_used}</div>")
 
             if not test.nlevels is None:
                 row_info.append(test.nlevels)
@@ -871,13 +871,13 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
                 row_info.append("")
 
             if test.useMPI:
-                row_info.append("&check; ({})".format(test.numprocs))
+                row_info.append(f"&check; ({test.numprocs})")
             else:
                 row_info.append("")
 
             # OMP ?
             if test.useOMP:
-                row_info.append("&check; ({})".format(test.numthreads))
+                row_info.append(f"&check; ({test.numthreads})")
             else:
                 row_info.append("")
 
@@ -920,13 +920,13 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
                     test.job_info_field3))
 
             # build time
-            row_info.append("{:.3f}&nbsp;s".format(test.build_time))
+            row_info.append(f"{test.build_time:.3f}&nbsp;s")
 
             # wallclock time
-            row_info.append("{:.3f}&nbsp;s".format(test.wall_time))
+            row_info.append(f"{test.wall_time:.3f}&nbsp;s")
 
             # result
-            row_info.append((status.upper(), "class='{}'".format(td_class)))
+            row_info.append((status.upper(), f"class='{td_class}'"))
 
             ht.print_row(row_info)
 
@@ -943,7 +943,7 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
 
             bench_file = "none"
 
-            with open(benchStatusFile, 'r') as bf:
+            with open(benchStatusFile) as bf:
                 for line in bf:
                     index = line.find("file:")
                     if index >= 0:
@@ -951,10 +951,10 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
                         break
 
             row_info = []
-            row_info.append("{}".format(test.name))
+            row_info.append(f"{test.name}")
             if bench_file != "none":
                 row_info.append(("BENCHMARK UPDATED", "class='benchmade'"))
-                row_info.append("new benchmark file is {}".format(bench_file))
+                row_info.append(f"new benchmark file is {bench_file}")
             else:
                 row_info.append(("BENCHMARK NOT UPDATED", "class='failed'"))
                 row_info.append("compilation or execution failed")
@@ -1010,21 +1010,21 @@ def report_coverage(html_file, suite):
     # Overall coverage
     row_info = []
     row_info.append("<a href=\"{}\">{}</a>".format(coverage.SPEC_FILE, "overall"))
-    row_info.append("{:.2f}%".format(100 * suite.covered_frac))
+    row_info.append(f"{100 * suite.covered_frac:.2f}%")
     covered = int(round(suite.total * suite.covered_frac))
     uncovered = suite.total - covered
-    row_info.append("{}".format(covered))
-    row_info.append("{}".format(uncovered))
+    row_info.append(f"{covered}")
+    row_info.append(f"{uncovered}")
     ht.print_row(row_info)
 
     # Nonspecific-only coverage
     row_info = []
     row_info.append("<a href=\"{}\">{}</a>".format(coverage.NONSPEC_FILE, "nonspecific only"))
-    row_info.append("{:.2f}%".format(100 * suite.covered_nonspecific_frac))
+    row_info.append(f"{100 * suite.covered_nonspecific_frac:.2f}%")
     covered = int(round(suite.total_nonspecific * suite.covered_nonspecific_frac))
     uncovered = suite.total_nonspecific - covered
-    row_info.append("{}".format(covered))
-    row_info.append("{}".format(uncovered))
+    row_info.append(f"{covered}")
+    row_info.append(f"{uncovered}")
     ht.print_row(row_info)
 
     ht.end_table()
@@ -1055,7 +1055,7 @@ def report_all_runs(suite, active_test_list, max_per_page=50):
         if n == 0:
             hf = open("index.html", "w")
         else:
-            hf = open("index{}.html".format(n), "w")
+            hf = open(f"index{n}.html", "w")
 
 
         lvalid_dirs = valid_dirs[n*max_per_page:min((n+1)*max_per_page, len(valid_dirs))]
@@ -1080,9 +1080,9 @@ def report_all_runs(suite, active_test_list, max_per_page=50):
         if suite.do_timings_plots:
             hf.write("<tr><td class='date'>plots</td>")
             for t in all_tests:
-                plot_file = "{}-timings.{}".format(t, suite.plot_ext)
+                plot_file = f"{t}-timings.{suite.plot_ext}"
                 if os.path.isfile(plot_file):
-                    hf.write("<TD ALIGN=CENTER title=\"{} timings plot\"><H3><a href=\"{}\"><i class=\"fa fa-line-chart\"></i></a></H3></TD>\n".format(t, plot_file))
+                    hf.write(f"<TD ALIGN=CENTER title=\"{t} timings plot\"><H3><a href=\"{plot_file}\"><i class=\"fa fa-line-chart\"></i></a></H3></TD>\n")
                 else:
                     hf.write("<TD ALIGN=CENTER><H3>&nbsp;</H3></TD>\n")
 
@@ -1095,7 +1095,7 @@ def report_all_runs(suite, active_test_list, max_per_page=50):
             # otherwise we don't do anything for this date
             valid = 0
             for test in all_tests:
-                status_file = "{}/{}/{}.status".format(suite.webTopDir, tdir, test)
+                status_file = f"{suite.webTopDir}/{tdir}/{test}.status"
                 if os.path.isfile(status_file):
                     valid = 1
                     break
@@ -1104,7 +1104,7 @@ def report_all_runs(suite, active_test_list, max_per_page=50):
 
             # did we run on a non-default branch?
             try:
-                bf = open("{}/{}/branch.status".format(suite.webTopDir, tdir), "r")
+                bf = open(f"{suite.webTopDir}/{tdir}/branch.status")
             except:
                 branch_mark = ""
             else:
@@ -1112,18 +1112,18 @@ def report_all_runs(suite, active_test_list, max_per_page=50):
                 bf.close()
 
             # write out the directory (date)
-            hf.write("<TR><TD class='date'><SPAN CLASS='nobreak'><A class='main' HREF=\"{}/index.html\">{}&nbsp;</A>{}</SPAN></TD>\n".format(tdir, tdir, branch_mark))
+            hf.write(f"<TR><TD class='date'><SPAN CLASS='nobreak'><A class='main' HREF=\"{tdir}/index.html\">{tdir}&nbsp;</A>{branch_mark}</SPAN></TD>\n")
 
             for test in all_tests:
 
                 # look to see if the current test was part of this suite run
-                status_file = "{}/{}/{}.status".format(suite.webTopDir, tdir, test)
+                status_file = f"{suite.webTopDir}/{tdir}/{test}.status"
 
                 status = None
 
                 if os.path.isfile(status_file):
 
-                    with open(status_file, 'r') as sf:
+                    with open(status_file) as sf:
 
                         for line in sf:
                             if line.find("PASSED") >= 0:
@@ -1162,7 +1162,7 @@ def report_all_runs(suite, active_test_list, max_per_page=50):
         hf.write("</TABLE>\n")
 
         if n != npages-1:
-            hf.write("<p><a href=\"index{}.html\">older tests</a>".format(n+1))
+            hf.write(f"<p><a href=\"index{n+1}.html\">older tests</a>")
 
         # close
         hf.write("</BODY>\n")
