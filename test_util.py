@@ -239,7 +239,7 @@ class Log:
             email_developers()
 
         self.close_log()
-        sys.exit()
+        sys.exit(1)
 
     def testfail(self, string):
         """output a test failure to the log"""
