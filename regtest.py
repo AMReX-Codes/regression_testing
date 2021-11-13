@@ -480,7 +480,7 @@ def test_suite(argv):
     #--------------------------------------------------------------------------
     # Setup Cmake if needed
     #--------------------------------------------------------------------------
-    if suite.useCmake:
+    if suite.useCmake and not suite.isSuperbuild:
         cmake_setup(suite)
 
 

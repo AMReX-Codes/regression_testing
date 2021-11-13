@@ -22,6 +22,9 @@ The "main" block specifies the global test suite parameters:
   useCmake       = < 0: GNU Make handles the build (default)
                      1: CMake handles the build >
 
+  isSuperbuild   = < 0: pre-build AMReX and source (default)
+                     1: CMake downloads AMReX and needs separate configure & build >
+
   sourceTree = < C_Src or AMReX >
 
   suiteName = < descriptive name (i.e. Castro) >
