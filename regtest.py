@@ -683,7 +683,7 @@ def test_suite(argv):
 
         # if it is a restart test, then rename the final output file and
         # restart the test
-        if test.restartTest:
+        if test.return_code == 0 and test.restartTest:
             skip_restart = False
 
             last_file = test.get_compare_file(output_dir=output_dir)
@@ -733,14 +733,14 @@ def test_suite(argv):
         test.wall_time = time.time() - test.wall_time
 
         # Check for performance drop
-        if test.check_performance:
+        if test.return_code == 0 and test.check_performance:
             test_performance(test, suite, runtimes)
 
         #----------------------------------------------------------------------
         # do the comparison
         #----------------------------------------------------------------------
         output_file = ""
-        if not test.selfTest:
+        if test.return_code == 0 and not test.selfTest:
 
             if test.outputFile == "":
                 if test.compareFile == "":
@@ -946,7 +946,7 @@ def test_suite(argv):
             else:  # don't do a pltfile comparison
                 test.compare_successful = True
 
-        else:   # selfTest
+        else if test.return_code == 0:   # selfTest
 
             if args.make_benchmarks is None:
 
@@ -979,7 +979,7 @@ def test_suite(argv):
         #----------------------------------------------------------------------
         # do any requested visualization (2- and 3-d only) and analysis
         #----------------------------------------------------------------------
-        if not test.selfTest:
+        if test.return_code == 0 and not test.selfTest:
             if output_file != "":
                 if args.make_benchmarks is None:
 
@@ -1075,7 +1075,7 @@ def test_suite(argv):
         # if the test ran and passed, add its runtime to the dictionary
         #----------------------------------------------------------------------
 
-        if test.record_runtime(suite):
+        if test.return_code == 0 and test.record_runtime(suite):
             test_dict = runtimes.setdefault(test.name, suite.timing_default)
             test_dict["runtimes"].insert(0, test.wall_time)
             test_dict["dates"].insert(0, suite.test_dir.rstrip("/"))
@@ -1083,7 +1083,7 @@ def test_suite(argv):
         #----------------------------------------------------------------------
         # move the output files into the web directory
         #----------------------------------------------------------------------
-        if args.make_benchmarks is None:
+        if test.return_code == 0 and args.make_benchmarks is None:
             shutil.copy(test.outfile, suite.full_web_dir)
             if os.path.isfile(test.errfile):
                 shutil.copy(test.errfile, suite.full_web_dir)
@@ -1134,7 +1134,7 @@ def test_suite(argv):
             # were any Backtrace files output (indicating a crash)
             suite.copy_backtrace(test)
 
-        else:
+        else if test.return_code == 0 and:
             if test.doComparison:
                 shutil.copy(f"{test.name}.status", suite.full_web_dir)
 
