@@ -99,6 +99,7 @@ class Test:
         self.diffDir = ""
         self.diffOpts = ""
 
+        self.cmakeSetupOpts = ""
         self.addToCompileString = ""
         self.ignoreGlobalMakeAdditions = 0
 
@@ -1192,6 +1193,14 @@ class Suite:
 
         env = {"AMReX_ROOT":self.amrex_install_dir}
 
+        # re-configure if additional build options are set
+        if not test.cmakeSetupOpts == "":
+            builddir, installdir = self.cmake_config(
+                name=test.name,
+                path=self.source_dir,
+                configOpts=test.cmakeSetupOpts)
+
+        # compile
         rc, comp_string = self.cmake_build( name    = test.name,
                                             target  = test.target,
                                             path    = self.source_build_dir,
