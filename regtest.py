@@ -573,6 +573,7 @@ def test_suite(argv):
         #----------------------------------------------------------------------
         # copy the necessary files over to the run directory
         #----------------------------------------------------------------------
+        suite.log.log(f"run & test directory: {output_dir}")
         suite.log.log("copying files to run directory...")
 
         needed_files = []
