@@ -1113,7 +1113,7 @@ class Suite:
         coutfile = f'{self.full_test_dir}{name}.cmake.log'
 
         # Run cmake
-        cmd = f'cmake {configOpts} -H{path} -B{builddir} '
+        cmd = f'cmake {configOpts} -S {path} -B {builddir} '
         if install:
             cmd += '-DCMAKE_INSTALL_PREFIX:PATH='+installdir
         else:
@@ -1202,14 +1202,46 @@ class Suite:
         # make returns 0 if everything was good
         if rc == 0:
             # Find location of executable
+            path_to_exe = None
+
+            # search by target name
             for root, dirnames, filenames in os.walk(self.source_build_dir):
                 if test.target in filenames:
                     path_to_exe = os.path.join(root, test.target)
                     break
 
-            # Copy and rename executable to test dir
-            shutil.move(f"{path_to_exe}",
-                        f"{self.source_dir}/{test.buildDir}/{test.name}.ex")
+            # fallback: pick first executable in CMake output directory
+            if path_to_exe is None:
+                path_to_bin = None
+                cmake_output_dir = "CMAKE_RUNTIME_OUTPUT_DIRECTORY:PATH="
+                cmake_cache = os.path.join(self.source_build_dir, "CMakeCache.txt")
+                with open(cmake_cache, "r") as cc:
+                    for ln in cc.readlines():
+                        if ln.startswith(cmake_output_dir):
+                            path_to_bin = ln[len(cmake_output_dir):].strip()
+                            break
+
+                if path_to_bin is None:
+                    self.log.warn("build successful but binary directory not found")
+                    rc = 1
+                else:
+                    # Find location of executable
+                    for root, dirnames, filenames in os.walk(path_to_bin):
+                        for f in filenames:
+                            f_path = os.path.join(root, f)
+                            if os.access(f_path, os.X_OK):
+                                path_to_exe = f_path
+                                break
+                        if path_to_exe is not None:
+                            break
+
+            if path_to_exe is None:
+                self.log.warn("build successful but executable not found")
+                rc = 1
+            else:
+                # Copy and rename executable to test dir
+                shutil.move(f"{path_to_exe}",
+                            f"{self.source_dir}/{test.buildDir}/{test.name}.ex")
         else:
             self.log.fail("Failed to build test " + test.name)
 
