@@ -663,7 +663,8 @@ def test_suite(argv):
                     base_cmd += " amr.checkpoint_files_output=1 amr.check_int=%d " % \
                         (test.restartFileNum)
             else:
-                base_cmd += " amr.checkpoint_files_output=0"
+                if suite.check_file_name != "none":
+                    base_cmd += " amr.checkpoint_files_output=0"
 
             base_cmd += f" {suite.globalAddToExecString} {test.runtime_params}"
 
