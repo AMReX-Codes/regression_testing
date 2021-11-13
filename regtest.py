@@ -583,7 +583,7 @@ def test_suite(argv):
             needed_files.append((test.run_as_script, "copy"))
 
         if test.inputFile:
-
+            suite.log.log("path to input file: {}".format(test.inputFile))
             needed_files.append((test.inputFile, "copy"))
             # strip out any sub-directory from the build dir
             test.inputFile = os.path.basename(test.inputFile)
