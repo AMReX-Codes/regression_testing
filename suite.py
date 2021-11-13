@@ -382,6 +382,7 @@ class Suite:
         self.launch_dir = os.getcwd()
 
         self.useCmake = 0
+        self.isSuperbuild = 0
         self.use_ctools = 1
 
         self.reportCoverage = args.with_coverage
@@ -1193,12 +1194,17 @@ class Suite:
 
         env = {"AMReX_ROOT":self.amrex_install_dir}
 
-        # re-configure if additional build options are set
-        if not test.cmakeSetupOpts == "":
+        # super-builds always need a configure now, all other builds might
+        # add additional CMake config options and re-configure on existing configured
+        # build directory, if additional build cmakeSetupOpts are set
+        if self.isSuperbuild or test.cmakeSetupOpts != "":
             builddir, installdir = self.cmake_config(
                 name=test.name,
                 path=self.source_dir,
-                configOpts=test.cmakeSetupOpts)
+                configOpts=self.amrex_cmake_opts + " " +
+                           self.source_cmake_opts + " " +
+                           test.cmakeSetupOpts)
+            self.source_build_dir = builddir
 
         # compile
         rc, comp_string = self.cmake_build( name    = test.name,
