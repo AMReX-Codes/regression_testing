@@ -1173,7 +1173,7 @@ class Suite:
         else:
             coutfile = f'{self.full_test_dir}{name}.{target}.make.log'
 
-        cmd = f'{self.MAKE} -j{self.numMakeJobs} {opts} {target}'
+        cmd = f'cmake --build {self.source_build_dir} -j {self.numMakeJobs} -- {opts} {target}'
         self.log.log(cmd)
         stdout, stderr, rc = test_util.run(cmd, outfile=coutfile, cwd=path, env=ENV )
 
