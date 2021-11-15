@@ -99,6 +99,7 @@ class Test:
         self.diffDir = ""
         self.diffOpts = ""
 
+        self.cmakeSetupOpts = ""
         self.addToCompileString = ""
         self.ignoreGlobalMakeAdditions = 0
 
@@ -381,6 +382,7 @@ class Suite:
         self.launch_dir = os.getcwd()
 
         self.useCmake = 0
+        self.isSuperbuild = 0
         self.use_ctools = 1
 
         self.reportCoverage = args.with_coverage
@@ -1171,7 +1173,7 @@ class Suite:
         else:
             coutfile = f'{self.full_test_dir}{name}.{target}.make.log'
 
-        cmd = f'{self.MAKE} -j{self.numMakeJobs} {opts} {target}'
+        cmd = f'cmake --build {self.source_build_dir} -j {self.numMakeJobs} -- {opts} {target}'
         self.log.log(cmd)
         stdout, stderr, rc = test_util.run(cmd, outfile=coutfile, cwd=path, env=ENV )
 
@@ -1192,6 +1194,19 @@ class Suite:
 
         env = {"AMReX_ROOT":self.amrex_install_dir}
 
+        # super-builds always need a configure now, all other builds might
+        # add additional CMake config options and re-configure on existing configured
+        # build directory, if additional build cmakeSetupOpts are set
+        if self.isSuperbuild or test.cmakeSetupOpts != "":
+            builddir, installdir = self.cmake_config(
+                name=test.name,
+                path=self.source_dir,
+                configOpts=self.amrex_cmake_opts + " " +
+                           self.source_cmake_opts + " " +
+                           test.cmakeSetupOpts)
+            self.source_build_dir = builddir
+
+        # compile
         rc, comp_string = self.cmake_build( name    = test.name,
                                             target  = test.target,
                                             path    = self.source_build_dir,
