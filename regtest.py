@@ -947,7 +947,7 @@ def test_suite(argv):
             else:  # don't do a pltfile comparison
                 test.compare_successful = True
 
-        else if test.return_code == 0:   # selfTest
+        elif test.return_code == 0:   # selfTest
 
             if args.make_benchmarks is None:
 
@@ -1135,7 +1135,7 @@ def test_suite(argv):
             # were any Backtrace files output (indicating a crash)
             suite.copy_backtrace(test)
 
-        else if test.return_code == 0 and:
+        elif test.return_code == 0:
             if test.doComparison:
                 shutil.copy(f"{test.name}.status", suite.full_web_dir)
 
