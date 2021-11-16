@@ -42,6 +42,7 @@ class Test:
         self.log = None
 
         self.buildDir = ""
+        self.output_dir = ""
 
         self.extra_build_dir = ""
 
