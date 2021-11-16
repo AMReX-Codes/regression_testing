@@ -25,9 +25,10 @@ jobs:
       - name: Install pylint
         run: |
           python -m pip install --upgrade pip
+          pip install matplotlib
           pip install bokeh
           pip install pylint
 
       - name: Validate
-        run: pylint --errors-only . *.py
+        run: pylint --errors-only *.py
 
