@@ -543,10 +543,10 @@ def test_suite(argv):
         if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
             if suite.useCmake:
                 comp_string, rc = suite.build_test_cmake(test=test, outfile=coutfile)
+                executable = test_util.get_recent_filename(output_dir, "", ".ex")
             else:
                 comp_string, rc = suite.build_c(test=test, outfile=coutfile)
-
-            executable = test_util.get_recent_filename(bdir, "", ".ex")
+                executable = test_util.get_recent_filename(bdir, "", ".ex")
 
         test.comp_string = comp_string
 
