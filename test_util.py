@@ -447,7 +447,7 @@ def get_recent_filename(fdir, base, extension):
     files = [f for f in os.listdir(fdir) if (f.startswith(base) and
                                              f.endswith(extension))]
 
-    files.sort(key=lambda x: os.path.getmtime(x))
+    files.sort(key=lambda x: os.path.getmtime(os.path.join(fdir, x)))
 
     try:
         return files.pop()
