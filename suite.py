@@ -2,6 +2,7 @@ import datetime
 import json
 import os
 import glob
+from pathlib import Path
 import shutil
 import sys
 import test_util
@@ -1245,8 +1246,9 @@ class Suite:
                         for f in filenames:
                             f_path = os.path.join(root, f)
                             if os.access(f_path, os.X_OK):
-                                path_to_exe = f_path
-                                break
+                                if not Path(f_path).is_symlink():
+                                    path_to_exe = f_path
+                                    break
                         if path_to_exe is not None:
                             break
 
