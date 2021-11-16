@@ -1,0 +1,248 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Introduction &#8212; regression_testing  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Notification Options" href="notification.html" />
+    <link rel="prev" title="regression_testing" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<p>The regression_testing set of utilities is fully documented in the remainder of
+this guide. This page offers a brief introduction to the toolkit and its usage.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>regression_testing is a set of regression test management routines for libraries
+and applications extending the AMReX framework for block-structured AMR
+(adaptive mesh refinement). It allows for full automation of testing procedures,
+including compilation and execution of code and analysis routines, as well as
+interfacing with version control (namely, Git) and generating HTML output for
+display on a webserver. Additional features such as performance monitoring and
+assessment of parameter coverage are also available, although the latter is
+directly dependent on application output and may not be usable in all cases.</p>
+</section>
+<section id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<section id="getting-the-toolkit">
+<h3>Getting the toolkit<a class="headerlink" href="#getting-the-toolkit" title="Permalink to this headline">¶</a></h3>
+<p>The project source may be obtained directly from <a class="reference external" href="https://github.com/AMReX-Codes/regression_testing">GitHub</a> via git clone with the
+following terminal command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ git clone https://github.com/AMReX-Codes/regression_testing.git
+</pre></div>
+</div>
+</section>
+<section id="running-a-test-suite">
+<h3>Running a test suite<a class="headerlink" href="#running-a-test-suite" title="Permalink to this headline">¶</a></h3>
+<p>The main module is regtest.py, executable from the shell with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ ./regtest.py <span class="o">[</span>options<span class="o">]</span> configuration_file
+</pre></div>
+</div>
+<p>To output a verbose description of usage and setup, including optional
+arguments, run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ ./regtest.py -h
+</pre></div>
+</div>
+<p>Each test suite is defined in a separate <a class="reference external" href="https://docs.python.org/3/library/configparser.html#supported-ini-file-structure">INI formatted</a> configuration file,
+containing global settings (e.g. test and web output directories, suite name),
+locations and branches for the source library and any dependencies, and
+definitions of the test problems with any problem-specific parameters. An
+example file (example-tests.ini) using the Castro code may be found in the main
+directory of the project repository.</p>
+<p>Before any tests may be performed, the suite must be directed to generate
+initial benchmarks with the make_benchmarks option:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ ./regtest.py --make_benchmarks <span class="s2">&quot;helpful comment&quot;</span> configuration_file
+</pre></div>
+</div>
+</section>
+<section id="quickstart">
+<h3>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h3>
+<p>This section provides a guide describing basic setup.</p>
+<p>Using example-tests.ini as a template:</p>
+<ol class="open arabic">
+<li><p>In section [main]:</p>
+<ol class="loweralpha">
+<li><p>Set <code class="docutils literal notranslate"><span class="pre">testTopDir</span></code> to the absolute path to the parent directory of the
+test suite, under which the benchmark and test output directories will be
+nested, and set <code class="docutils literal notranslate"><span class="pre">webTopDir</span></code> to point to the desired root directory for
+generated webpages.</p></li>
+<li><p>Configure the build settings if necessary. The <code class="docutils literal notranslate"><span class="pre">sourceTree</span></code> variable
+determines the build system (C_Src =&gt; C++, AMReX =&gt;
+standalone AMReX tests), while <code class="docutils literal notranslate"><span class="pre">COMP</span></code> determines the
+compilers. The <code class="docutils literal notranslate"><span class="pre">numMakeJobs</span></code> and <code class="docutils literal notranslate"><span class="pre">add_to_c_make_command</span></code> parameters
+allow for some additional control over the make command.</p></li>
+</ol>
+</li>
+<li><p>Setting up the repositories:</p>
+<p>Each repository needed to build and run the test problems receives its own
+section in the configuration file, containing the repository location and the
+git branch to build from. As the testing routine performs a git pull in each
+repository at the start of a test run, it is recommended to have local clones
+of the repositories that may be used exclusively for testing to avoid
+confusion and potential merge conflicts.</p>
+<ol class="loweralpha">
+<li><p>The AMReX repository has a special section in the INI file (aptly
+designated [AMReX]). The <code class="docutils literal notranslate"><span class="pre">dir</span></code> parameter here should be set to the
+absolute path to the repository, and the <code class="docutils literal notranslate"><span class="pre">branch</span></code> parameter to the
+remote git branch to pull.</p></li>
+<li><p>The [source] section corresponds to the repository containing the main
+application code. The parameters should be set as they were for AMReX.</p></li>
+<li><p>Any additional repositories needed as dependencies or host test
+problems should be listed in subsequent sections of the form
+[extra-&lt;repository_name&gt;].</p>
+<p>These sections each have two additional parameters: <code class="docutils literal notranslate"><span class="pre">comp_string</span></code>, which
+contains any environment variables needed by the make system (e.g.
+<code class="docutils literal notranslate"><span class="pre">comp_string</span> <span class="pre">=</span> <span class="pre">REPOSITORY_HOME=repository/path</span></code>), and <code class="docutils literal notranslate"><span class="pre">build</span></code>, which
+indicates that the repository contains build directories for test problems
+if set to 1. The <code class="docutils literal notranslate"><span class="pre">build</span></code> parameter is optional and is off by default.</p>
+</li>
+</ol>
+</li>
+<li><p>Problem setups:</p>
+<p>Each problem is defined in its own section, labeled with the problem name. A
+number of options are available for test configuration, and are detailed
+later in the guide - this list only touches on the main parameters necessary
+for the tests to function.</p>
+<ol class="loweralpha">
+<li><p>If the problem build directory is not contained in the main repository
+(corresponding to [source]), it is necessary to set the
+<code class="docutils literal notranslate"><span class="pre">extra_build_dir</span></code> parameter to the section title associated with the
+correct host repository. Otherwise this may be left blank.</p></li>
+<li><p>Set the value of <code class="docutils literal notranslate"><span class="pre">buildDir</span></code> to the relative path from the repository’s
+root directory to the problem build directory. For example, if the
+repository is Castro and the build directory is
+path/to/Castro/Exec/Sod_stellar, <code class="docutils literal notranslate"><span class="pre">buildDir</span></code> should be set to
+Exec/Sod_stellar.</p></li>
+<li><p>Specify the input file to be supplied to the executable using the
+<code class="docutils literal notranslate"><span class="pre">inputFile</span></code> parameter, and specify a probin file (with <code class="docutils literal notranslate"><span class="pre">probinFile</span></code>)
+if necessary.</p></li>
+<li><p>Specify any parallelization options for the test problem. The parameters
+<code class="docutils literal notranslate"><span class="pre">useMPI</span></code>, <code class="docutils literal notranslate"><span class="pre">useOMP</span></code> and <code class="docutils literal notranslate"><span class="pre">acc</span></code> control whether the test uses MPI,
+OpenMP, and OpenACC respectively. MPI tests also require the number of
+processors <code class="docutils literal notranslate"><span class="pre">numprocs</span></code>, and OpenMP tests the number of threads
+<code class="docutils literal notranslate"><span class="pre">numthreads</span></code>.</p></li>
+<li><p>Use the <code class="docutils literal notranslate"><span class="pre">addToCompileString</span></code> parameter for general variable definitions
+that should be supplied to the make command. The definitions should be
+space delimited arguments, of the form VARIABLE_NAME=&lt;value&gt; (e.g.
+<code class="docutils literal notranslate"><span class="pre">addToCompileString</span> <span class="pre">=</span> <span class="pre">NET_INPUTS=&quot;path/to/network/inputs&quot;</span></code>).</p></li>
+<li><p>Additional runtime parameters to be supplied to the executable may be
+specified with the <code class="docutils literal notranslate"><span class="pre">runtime_params</span></code> variable. The given string
+will be appended to the command line arguments upon execution.</p></li>
+</ol>
+</li>
+<li><p>Generate benchmarks and run the test:</p>
+<p>Once the configuration file is complete, generate benchmarks and run the test
+suite from the repository’s main directory using the following commands:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ ./regtest.py --make_benchmarks <span class="s2">&quot;helpful comment&quot;</span> configuration_file
+$ ./regtest.py configuration_file
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">regression_testing</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting Started</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notification.html">Notification Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="analysis.html">Analysis Features</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">regression_testing</a></li>
+      <li>Next: <a href="notification.html" title="next chapter">Notification Options</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, AMReX Team.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/intro.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
