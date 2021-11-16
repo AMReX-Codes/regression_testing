@@ -207,7 +207,7 @@ def build_master(covered_temp, no_cover_temp, covered, no_cover, ignore,
         else:
             pass
 
-        if no_cover_temp[i] not in (no_cover or Covered):
+        if no_cover_temp[i] not in (no_cover or covered):
             no_cover.append(no_cover_temp[i])
         else:
             pass
