@@ -9,4 +9,4 @@ make html
 cd ../
 
 mkdir -p out/
-mv docs/build/html/* out/
+mv docs/_build/html/* out/
