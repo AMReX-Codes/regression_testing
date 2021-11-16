@@ -688,9 +688,9 @@ class Suite:
                 timings = json.load(open(json_file))
                 # Check for proper format
                 item = next(iter(timings.values()))
-                if not isinstance(item, dict): raise JSONDecodeError()
+                if not isinstance(item, dict): raise ValueError
                 return timings
-            except (OSError, JSONDecodeError, StopIteration): pass
+            except (OSError, ValueError, JSONDecodeError, StopIteration): pass
 
         valid_dirs, all_tests = self.get_run_history(check_activity=False)
 
