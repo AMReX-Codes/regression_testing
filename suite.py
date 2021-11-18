@@ -1217,7 +1217,13 @@ class Suite:
                                             outfile = outfile)
 
         # make returns 0 if everything was good
-        if rc == 0:
+        if rc != 0:
+            self.log.fail("Failed to build test " + test.name)
+
+        # if we built a binary executable, we need to rename it into a
+        # GNUmake-like naming scheme so that the rest of the test logic can
+        # pick it up
+        elif not test.run_as_script:
             # Find location of executable
             path_to_exe = None
 
@@ -1239,8 +1245,9 @@ class Suite:
                             break
 
                 if path_to_bin is None:
-                    self.log.warn("build successful but binary directory not found")
-                    rc = 1
+                    if not test.customRunCmd:
+                        self.log.warn("build successful but binary directory not found")
+                        rc = 1
                 else:
                     # Find location of executable
                     for root, dirnames, filenames in os.walk(path_to_bin):
@@ -1254,14 +1261,13 @@ class Suite:
                             break
 
             if path_to_exe is None:
-                self.log.warn("build successful but executable not found")
-                rc = 1
+                if not test.customRunCmd:
+                    self.log.warn("build successful but executable not found")
+                    rc = 1
             else:
                 # Copy and rename executable to test dir
                 shutil.move(f"{path_to_exe}",
                             f"{self.source_dir}/{test.buildDir}/{test.name}.ex")
-        else:
-            self.log.fail("Failed to build test " + test.name)
 
         return comp_string, rc
 
