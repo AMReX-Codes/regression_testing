@@ -546,10 +546,7 @@ def test_suite(argv):
             else:
                 comp_string, rc = suite.build_c(test=test, outfile=coutfile)
 
-            if test.run_as_script:
-                executable = None
-            else:
-                executable = test_util.get_recent_filename(bdir, "", ".ex")
+            executable = test_util.get_recent_filename(bdir, "", ".ex")
 
         test.comp_string = comp_string
 
