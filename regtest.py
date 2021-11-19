@@ -555,6 +555,7 @@ def test_suite(argv):
             test.compile_successful = True
         # Compute compile time
         test.build_time = time.time() - test.build_time
+        suite.log.log(f"Compilation time: {test.build_time:.3f} s")
 
         # copy the make.out into the web directory
         shutil.copy(f"{output_dir}/{test.name}.make.out", suite.full_web_dir)
@@ -732,6 +733,7 @@ def test_suite(argv):
             suite.run_test(test, base_cmd)
 
         test.wall_time = time.time() - test.wall_time
+        suite.log.log(f"Execution time: {test.wall_time:.3f} s")
 
         # Check for performance drop
         if test.return_code == 0 and test.check_performance:
