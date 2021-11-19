@@ -669,15 +669,14 @@ def test_suite(argv):
 
             base_cmd += f" {suite.globalAddToExecString} {test.runtime_params}"
 
-        if args.with_valgrind:
-            base_cmd = "valgrind " + args.valgrind_options + " " + base_cmd
-
         if test.run_as_script:
             base_cmd = f"./{test.run_as_script} {test.script_args}"
 
         if test.customRunCmd is not None:
             base_cmd = test.customRunCmd
 
+        if args.with_valgrind:
+            base_cmd = "valgrind " + args.valgrind_options + " " + base_cmd
 
 
         suite.run_test(test, base_cmd)
@@ -728,6 +727,17 @@ def test_suite(argv):
                     base_cmd += f" {suite.check_file_name}={test.name}_chk amr.checkpoint_files_output=0 "
 
                 base_cmd += f" {suite.globalAddToExecString} {test.runtime_params}"
+
+                if test.run_as_script:
+                    base_cmd = f"./{test.run_as_script} {test.script_args}"
+                    # base_cmd += " amr.restart={}".format(restart_file)
+
+                if test.customRunCmd is not None:
+                    base_cmd = test.customRunCmd
+                    base_cmd += " amr.restart={}".format(restart_file)
+
+                if args.with_valgrind:
+                    base_cmd = "valgrind " + args.valgrind_options + " " + base_cmd
 
             suite.run_test(test, base_cmd)
 
