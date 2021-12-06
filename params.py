@@ -100,7 +100,7 @@ def load_params(args):
     # AMReX -- this will always be defined
     rdir = mysuite.check_test_dir(safe_get(cp, "AMReX", "dir"))
 
-    branch = convert_type(safe_get(cp, "AMReX", "branch"))
+    branch = safe_get(cp, "AMReX", "branch")  # note: always as string
     rhash = convert_type(safe_get(cp, "AMReX", "hash"))
 
     mysuite.repos["AMReX"] = repo.Repo(mysuite, rdir, "AMReX",
@@ -127,7 +127,7 @@ def load_params(args):
             k = "source"
 
         rdir = mysuite.check_test_dir(safe_get(cp, s, "dir"))
-        branch = convert_type(safe_get(cp, s, "branch"))
+        branch = safe_get(cp, s, "branch")  # note: always as string
         rhash = convert_type(safe_get(cp, s, "hash"))
 
 
