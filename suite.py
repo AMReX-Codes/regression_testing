@@ -85,6 +85,7 @@ class Test:
 
         self._doComparison = True
         self._tolerance = None
+        self._abs_tolerance = None
         self._particle_tolerance = None
 
         self.analysisRoutine = ""
@@ -294,6 +295,20 @@ class Test:
 
         self._tolerance = value
 
+    def get_abs_tolerance(self):
+        """ Returns the global absolute tolerance if one was set,
+            and the test-specific one otherwise.
+        """
+
+        if Test.global_abs_tolerance is None:
+            return self._abs_tolerance
+        return Test.global_abs_tolerance
+
+    def set_abs_tolerance(self, value):
+        """ Sets the test-specific absolute tolerance to the specified value. """
+
+        self._abs_tolerance = value
+
     def get_particle_tolerance(self):
         """ Returns the global particle tolerance if one was set,
             and the test-specific one otherwise.
@@ -346,6 +361,7 @@ class Test:
     compile_only = False
     skip_comparison = False
     global_tolerance = None
+    global_abs_tolerance = None
     global_particle_tolerance = None
     performance_params = []
 
@@ -354,6 +370,7 @@ class Test:
     compileTest = property(get_compile_test, set_compile_test)
     doComparison = property(get_do_comparison, set_do_comparison)
     tolerance = property(get_tolerance, set_tolerance)
+    abs_tolerance = property(get_abs_tolerance, set_abs_tolerance)
     particle_tolerance = property(get_particle_tolerance, set_particle_tolerance)
     check_performance = property(get_check_performance, set_check_performance)
     performance_threshold = property(get_performance_threshold, set_performance_threshold)
@@ -979,7 +996,7 @@ class Suite:
         if ("fextract" in self.extra_tools): ftools.append("fextract")
         if ("fextrema" in self.extra_tools): ftools.append("fextrema")
         if ("ftime" in self.extra_tools): ftools.append("ftime")
-        if any([t for t in test_list if t.tolerance is not None]): ftools.append("fvarnames")
+        if any([t for t in test_list if t.tolerance is not None or t.abs_tolerance is not None]): ftools.append("fvarnames")
 
         for t in ftools:
             self.log.log(f"building {t}...")
@@ -1073,6 +1090,7 @@ class Suite:
         Test.compile_only = args.compile_only
         Test.skip_comparison = args.skip_comparison
         Test.global_tolerance = args.tolerance
+        Test.global_abs_tolerance = args.abs_tolerance
         Test.global_particle_tolerance = args.particle_tolerance
         Test.performance_params = args.check_performance
 

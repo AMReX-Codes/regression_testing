@@ -144,7 +144,10 @@ Each test is given its own block, with the general form:
   tolerance = < floating point number representing the largest relative error
                 permitted between the run output and the benchmark for mesh data,
                 default is 0.0 >
-  particle_tolerance = < same as the above, for particle comparisons
+  abs_tolerance = < floating point number representing the largest absolute
+                    error permitted between the run output and the benchmark for
+                    mesh data, default is 0.0 >
+  particle_tolerance = < same as tolerance, for particle comparisons >
   outputFile = < explicit output file to compare with -- exactly as it will
                  be written.  No prefix of the test name will be done >
 
@@ -374,6 +377,8 @@ def get_args(arg_string=None):
                               help="run analysis for each test without comparison to benchmarks")
     comp_options.add_argument("--tolerance", type=float, default=None, metavar="value",
                               help="largest relative error permitted during mesh comparison")
+    comp_options.add_argument("--abs_tolerance", type=float, default=None, metavar="value",
+                              help="largest absolute error permitted during mesh comparison")
     comp_options.add_argument("--particle_tolerance", type=float, default=None, metavar="value",
                               help="largest relative error permitted during particle comparison")
     parser.add_argument("input_file", metavar="input-file", type=str, nargs=1,
