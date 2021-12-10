@@ -232,8 +232,8 @@ def process_comparison_results(stdout, tvars, test):
     indices = filter(lambda i: words[i] in tvars, range(len(words)))
 
     for i in indices:
-        _, _, rel_err = words[i: i + 3]
-        if abs(test.tolerance) <= abs(float(rel_err)):
+        _, abs_err, rel_err = words[i: i + 3]
+        if abs(test.tolerance) < abs(float(rel_err)) and test.abs_tolerance < abs(float(abs_err)):
             return False
 
     return True
@@ -817,16 +817,17 @@ def test_suite(argv):
 
                             command = f"diff {bench_file} {output_file}"
 
-                        elif test.tolerance is not None:
-
-                            command = "{} --abort_if_not_all_found -n 0 -r {} {} {}".format(suite.tools["fcompare"],
-                                                                                            test.tolerance,
-                                                                                            bench_file, output_file)
-
                         else:
 
-                            command = "{} --abort_if_not_all_found -n 0 {} {}".format(suite.tools["fcompare"],
-                                                                                      bench_file, output_file)
+                            command = "{} --abort_if_not_all_found -n 0".format(suite.tools["fcompare"])
+
+                            if test.tolerance is not None:
+                                command += " --rel_tol {}".format(test.tolerance)
+
+                            if test.abs_tolerance is not None:
+                                command += " --abs_tol {}".format(test.abs_tolerance)
+
+                            command += " {} {}".format(bench_file, output_file)
 
                         sout, _, ierr = test_util.run(command,
                                                       outfile=test.comparison_outfile,
