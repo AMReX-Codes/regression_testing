@@ -21,6 +21,9 @@ import tarfile
 import time
 import re
 import json
+import fasteners
+import tempfile
+import getpass
 
 import params
 import test_util
@@ -1293,5 +1296,17 @@ def test_suite(argv):
 
 
 if __name__ == "__main__":
-    n = test_suite(sys.argv[1:])
-    sys.exit(n)
+    temp_dir = tempfile.gettempdir()
+    temp_file = os.path.join(temp_dir, 'amrex_regtest_lock_file_'+getpass.getuser())
+    test_lock = fasteners.InterProcessLock(temp_file)
+    gotten = test_lock.acquire(blocking=False)
+    status = 255
+    try:
+        if gotten:
+            status = test_suite(sys.argv[1:])
+        else:
+            print("Wait please! Another process is running regression tests.")
+    finally:
+        if gotten:
+            test_lock.release()
+        sys.exit(status)
