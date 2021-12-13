@@ -424,6 +424,7 @@ class Suite:
 
         self.COMP = "g++"
 
+        self.ftools = ["fcompare", "fboxinfo", "fsnapshot"]
         self.extra_tools = ""
 
         self.add_to_c_make_command = ""
@@ -992,7 +993,7 @@ class Suite:
 
         self.make_realclean(repo="AMReX")
 
-        ftools = ["fcompare", "fboxinfo", "fsnapshot"]
+        ftools = self.ftools
         if ("fextract" in self.extra_tools): ftools.append("fextract")
         if ("fextrema" in self.extra_tools): ftools.append("fextrema")
         if ("ftime" in self.extra_tools): ftools.append("ftime")
