@@ -86,6 +86,8 @@ def load_params(args):
                 mysuite.reportCoverage = mysuite.reportCoverage or value
             elif opt == "emailTo":
                 mysuite.emailTo = value.split(",")
+            elif opt == "ftools":
+                mysuite.ftools = value
             elif opt == "extra_tools":
                 mysuite.extra_tools = value
 
