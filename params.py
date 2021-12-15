@@ -87,7 +87,7 @@ def load_params(args):
             elif opt == "emailTo":
                 mysuite.emailTo = value.split(",")
             elif opt == "ftools":
-                mysuite.ftools = value
+                mysuite.ftools = value.split()
             elif opt == "extra_tools":
                 mysuite.extra_tools = value
 
