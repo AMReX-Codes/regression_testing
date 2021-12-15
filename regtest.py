@@ -772,7 +772,7 @@ def test_suite(argv):
 
 
             # get the number of levels for reporting
-            if not test.run_as_script:
+            if not test.run_as_script and "fboxinfo" in suite.tools:
 
                 prog = "{} -l {}".format(suite.tools["fboxinfo"], output_file)
                 stdout0, _, rc = test_util.run(prog)
