@@ -14,6 +14,8 @@ The "main" block specifies the global test suite parameters:
 
   [main]
 
+  verbose        = < repeat captured errors to stderr, e.g., for CI runs >
+
   testTopDir     = < full path to test output directory >
   webTopDir      = < full path to test web output directory >
   wallclockFile  = < name of json file for storing past runtimes, to which .json will be appended;

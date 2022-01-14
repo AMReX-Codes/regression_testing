@@ -383,6 +383,8 @@ class Suite:
         self.args = args
         self.apply_args()
 
+        self.verbose = 0  # repeat captured errors to stderr, e.g., for CI runs
+
         # this will hold all of the Repo() objects for the AMReX, source,
         # and build directories
         self.repos = {}
