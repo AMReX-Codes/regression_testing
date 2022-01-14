@@ -967,6 +967,16 @@ class Suite:
         test.run_command = test_run_command
         test.return_code = ierr
 
+        # Print compilation error message (useful for CI tests)
+        if test.return_code != 0 and self.verbose > 0:
+            self.log.warn("Test stdout:")
+            with open(f"{outfile}") as f:
+                print(f.read())
+            if os.path.isfile(errfile):
+                self.log.warn("Test stderr:")
+                with open(f"{errfile}") as f:
+                    print(f.read())
+
     def copy_backtrace(self, test):
         """
         if any backtrace files were output (because the run crashed), find them
