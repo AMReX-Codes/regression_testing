@@ -40,6 +40,8 @@ The "main" block specifies the global test suite parameters:
 
   add_to_c_make_command = < any additional defines to add to the make invocation for C_Src AMReX >
 
+  archive_output = <0: leave all plotfiles in place;
+                    1: tar plotfiles after compare (default) >
   purge_output = <0: leave all plotfiles in place;
                   1: delete plotfiles after compare >
 

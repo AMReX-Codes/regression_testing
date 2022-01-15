@@ -462,6 +462,9 @@ class Suite:
         # this will be automatically filled
         self.extra_src_comp_string = ""
 
+        # archive output upon completion
+        self.archive_output = 1
+
         # delete all plot/checkfiles but the plotfile used for comparison upon
         # completion
         self.purge_output = 0
