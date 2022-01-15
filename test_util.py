@@ -164,6 +164,9 @@ Each test is given its own block, with the general form:
   runs_to_average = < number of past runs to include when computing the average,
                       default is 5 >
 
+  runtime_params =  < run-time parameters to be added to the test command line 
+                      arguments > 
+
 Getting started:
 
 To set up a test suite, it is probably easiest to write the
