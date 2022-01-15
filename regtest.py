@@ -1181,7 +1181,7 @@ def test_suite(argv):
                     except:
                         suite.log.warn(f"unable to remove {pfile}")
 
-                else:
+                elif suite.archive_output == 1:
                     # tar it up
                     try:
                         tar = tarfile.open(f"{pfile}.tgz", "w:gz")
