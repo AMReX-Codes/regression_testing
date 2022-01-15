@@ -563,6 +563,12 @@ def test_suite(argv):
         if not test.compile_successful:
             error_msg = "ERROR: compilation failed"
             report.report_single_test(suite, test, test_list, failure_msg=error_msg)
+
+            # Print compilation error message (useful for CI tests)
+            if suite.verbose > 0:
+                with open(f"{output_dir}/{test.name}.make.out") as f:
+                    print(f.read())
+
             continue
 
         if test.compileTest:
@@ -1078,6 +1084,11 @@ def test_suite(argv):
                         else:
                             analysis_successful = False
                             suite.log.warn("analysis failed...")
+
+                            # Print analysis error message (useful for CI tests)
+                            if suite.verbose > 0:
+                                with open(outfile) as f:
+                                    print(f.read())
 
                         test.analysis_successful = analysis_successful
 
