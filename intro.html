@@ -95,8 +95,8 @@ generated webpages.</p></li>
 <li><p>Configure the build settings if necessary. The <code class="docutils literal notranslate"><span class="pre">sourceTree</span></code> variable
 determines the build system (C_Src =&gt; C++, AMReX =&gt;
 standalone AMReX tests), while <code class="docutils literal notranslate"><span class="pre">COMP</span></code> determines the
-compilers. The <code class="docutils literal notranslate"><span class="pre">numMakeJobs</span></code> and <code class="docutils literal notranslate"><span class="pre">add_to_c_make_command</span></code> parameters
-allow for some additional control over the make command.</p></li>
+compilers (e.g., <code class="docutils literal notranslate"><span class="pre">g++</span></code>). The <code class="docutils literal notranslate"><span class="pre">numMakeJobs</span></code> and <code class="docutils literal notranslate"><span class="pre">add_to_c_make_command</span></code>
+parameters allow for some additional control over the make command.</p></li>
 </ol>
 </li>
 <li><p>Setting up the repositories:</p>
@@ -233,7 +233,7 @@ $ ./regtest.py configuration_file
       &copy;2018, AMReX Team.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
