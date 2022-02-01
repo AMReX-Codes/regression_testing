@@ -424,7 +424,7 @@ class Suite:
         self.MPIcommand = ""
         self.MPIhost = ""
 
-        self.COMP = "g++"
+        self.COMP = ""  # e.g., g++
 
         self.ftools = ["fcompare", "fboxinfo", "fsnapshot"]
         self.extra_tools = ""
@@ -1131,7 +1131,8 @@ class Suite:
         # Define enviroment
         ENV = {}
         ENV =  dict(os.environ) # Copy of current enviroment
-        ENV['CXX'] = self.COMP
+        if self.COMP:
+            ENV['CXX'] = self.COMP
 
         if env is not None: ENV.update(env)
 
