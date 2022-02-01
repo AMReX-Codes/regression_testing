@@ -36,7 +36,7 @@ The "main" block specifies the global test suite parameters:
 
   goUpLink = <1: add "Go UP" link at top of the web page >
 
-  COMP  = < name of C/C++ compiler >
+  COMP  = < name of C/C++ compiler, e.g., g++ >
 
   add_to_c_make_command = < any additional defines to add to the make invocation for C_Src AMReX >
 
