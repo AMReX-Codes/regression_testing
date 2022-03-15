@@ -1108,6 +1108,9 @@ def test_suite(argv):
         #----------------------------------------------------------------------
         # move the output files into the web directory
         #----------------------------------------------------------------------
+        # were any Backtrace files output (indicating a crash)
+        suite.copy_backtrace(test)
+
         if test.return_code == 0 and args.make_benchmarks is None:
             shutil.copy(test.outfile, suite.full_web_dir)
             if os.path.isfile(test.errfile):
@@ -1155,9 +1158,6 @@ def test_suite(argv):
                     suite.log.warn("unable to copy analysis image")
                     # analysis was not successful.  Reset the output image
                     test.analysisOutputImage = ""
-
-            # were any Backtrace files output (indicating a crash)
-            suite.copy_backtrace(test)
 
         elif test.return_code == 0:
             if test.doComparison:
