@@ -1062,6 +1062,7 @@ def test_suite(argv):
                     if not test.analysisRoutine == "":
 
                         suite.log.log("doing the analysis...")
+                        analysis_start_time = time.time()
                         if not test.extra_build_dir == "":
                             tool = f"{suite.repos[test.extra_build_dir].dir}/{test.analysisRoutine}"
                         else:
@@ -1089,6 +1090,9 @@ def test_suite(argv):
                             if suite.verbose > 0:
                                 with open(outfile) as f:
                                     print(f.read())
+
+                        analysis_time = analysis_start_time - time.time()
+                        suite.log.log(f"Analysis time: {analyis_time:.3f} s")
 
                         test.analysis_successful = analysis_successful
 
