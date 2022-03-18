@@ -1092,7 +1092,7 @@ def test_suite(argv):
                                     print(f.read())
 
                         analysis_time = analysis_start_time - time.time()
-                        suite.log.log(f"Analysis time: {analyis_time:.3f} s")
+                        suite.log.log(f"Analysis time: {analysis_time:.3f} s")
 
                         test.analysis_successful = analysis_successful
 
