@@ -1091,7 +1091,7 @@ def test_suite(argv):
                                 with open(outfile) as f:
                                     print(f.read())
 
-                        analysis_time = analysis_start_time - time.time()
+                        analysis_time = time.time() - analysis_start_time
                         suite.log.log(f"Analysis time: {analysis_time:.3f} s")
 
                         test.analysis_successful = analysis_successful
