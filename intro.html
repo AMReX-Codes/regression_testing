@@ -1,7 +1,7 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
@@ -12,6 +12,7 @@
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -34,11 +35,11 @@
           <div class="body" role="main">
             
   <section id="introduction">
-<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">¶</a></h1>
 <p>The regression_testing set of utilities is fully documented in the remainder of
 this guide. This page offers a brief introduction to the toolkit and its usage.</p>
 <section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">¶</a></h2>
 <p>regression_testing is a set of regression test management routines for libraries
 and applications extending the AMReX framework for block-structured AMR
 (adaptive mesh refinement). It allows for full automation of testing procedures,
@@ -49,9 +50,9 @@ assessment of parameter coverage are also available, although the latter is
 directly dependent on application output and may not be usable in all cases.</p>
 </section>
 <section id="getting-started">
-<h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this heading">¶</a></h2>
 <section id="getting-the-toolkit">
-<h3>Getting the toolkit<a class="headerlink" href="#getting-the-toolkit" title="Permalink to this headline">¶</a></h3>
+<h3>Getting the toolkit<a class="headerlink" href="#getting-the-toolkit" title="Permalink to this heading">¶</a></h3>
 <p>The project source may be obtained directly from <a class="reference external" href="https://github.com/AMReX-Codes/regression_testing">GitHub</a> via git clone with the
 following terminal command:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ git clone https://github.com/AMReX-Codes/regression_testing.git
@@ -59,7 +60,7 @@ following terminal command:</p>
 </div>
 </section>
 <section id="running-a-test-suite">
-<h3>Running a test suite<a class="headerlink" href="#running-a-test-suite" title="Permalink to this headline">¶</a></h3>
+<h3>Running a test suite<a class="headerlink" href="#running-a-test-suite" title="Permalink to this heading">¶</a></h3>
 <p>The main module is regtest.py, executable from the shell with:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ ./regtest.py <span class="o">[</span>options<span class="o">]</span> configuration_file
 </pre></div>
@@ -82,7 +83,7 @@ initial benchmarks with the make_benchmarks option:</p>
 </div>
 </section>
 <section id="quickstart">
-<h3>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h3>
+<h3>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this heading">¶</a></h3>
 <p>This section provides a guide describing basic setup.</p>
 <p>Using example-tests.ini as a template:</p>
 <ol class="open arabic">
@@ -216,7 +217,7 @@ $ ./regtest.py configuration_file
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 
 
 
@@ -233,7 +234,7 @@ $ ./regtest.py configuration_file
       &copy;2018, AMReX Team.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
