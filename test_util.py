@@ -82,6 +82,12 @@ The general form is:
 
   cmakeSetupOpts = < Options for CMake Setup (used only if useCmake=1) >
 
+  cmake = < cmake command >
+
+      This can be changed to specify a specific CMake verison. i.e. if
+      you have ver. 3.17 installed as `cmake_3.17`, write
+      cmake = cmake_3.17
+
   comp_string = < a string that is added to the make line >
 
       comp_string can refer to both the main source directory (as @source@)
@@ -166,8 +172,8 @@ Each test is given its own block, with the general form:
   runs_to_average = < number of past runs to include when computing the average,
                       default is 5 >
 
-  runtime_params =  < run-time parameters to be added to the test command line 
-                      arguments > 
+  runtime_params =  < run-time parameters to be added to the test command line
+                      arguments >
 
 Getting started:
 
