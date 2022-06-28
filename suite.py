@@ -478,6 +478,9 @@ class Suite:
         # an asterisk will appear next to the date in the main page
         self.default_branch = "master"
 
+        # For setting a specific version of cmake
+        self.cmake = "cmake"
+
     @property
     def timing_default(self):
         """ Determines the format of the wallclock history JSON file """
@@ -1152,7 +1155,7 @@ class Suite:
         coutfile = f'{self.full_test_dir}{name}.cmake.log'
 
         # Run cmake
-        cmd = f'cmake {configOpts} -S {path} -B {builddir} '
+        cmd = f'{self.cmake} {configOpts} -S {path} -B {builddir} '
         if install:
             cmd += '-DCMAKE_INSTALL_PREFIX:PATH='+installdir
         else:
@@ -1210,14 +1213,17 @@ class Suite:
         else:
             coutfile = f'{self.full_test_dir}{name}.{target}.make.log'
 
-        cmd = f'cmake --build {self.source_build_dir} -j {self.numMakeJobs} -- {opts} {target}'
+        if self.source_build_dir == "":
+            self.source_build_dir = path
+
+        cmd = f'{self.cmake} --build {self.source_build_dir} -j {self.numMakeJobs} -- {opts} {target}'
         self.log.log(cmd)
         stdout, stderr, rc = test_util.run(cmd, outfile=coutfile, cwd=path, env=ENV )
 
         # make returns 0 if everything was good
         if not rc == 0:
             errstr  = "Failed to build target " + target
-            errstr += ". Check " + outfile + " for more information."
+            errstr += ". Check " + coutfile + " for more information."
             self.log.fail(errstr)
 
         comp_string = cmd
