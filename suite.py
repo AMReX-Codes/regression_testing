@@ -795,7 +795,7 @@ class Suite:
 
             return HoverTool(
                 tooltips=[("date", "@date{%F}"), ("runtime", "@runtime{0.00}")],
-                formatters={"date": "datetime"})
+                formatters={"@date": "datetime"})
 
         # make the plots
         for t in all_tests:
