@@ -1115,7 +1115,7 @@ def test_suite(argv):
         # were any Backtrace files output (indicating a crash)
         suite.copy_backtrace(test)
 
-        if test.return_code == 0 and args.make_benchmarks is None:
+        if args.make_benchmarks is None:
             shutil.copy(test.outfile, suite.full_web_dir)
             if os.path.isfile(test.errfile):
                 shutil.copy(test.errfile, suite.full_web_dir)
@@ -1128,7 +1128,6 @@ def test_suite(argv):
                 pass
 
             if test.inputFile:
-
                 shutil.copy(test.inputFile, "{}/{}.{}".format(
                     suite.full_web_dir, test.name, test.inputFile))
 
