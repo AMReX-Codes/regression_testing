@@ -1121,7 +1121,10 @@ def test_suite(argv):
                 shutil.copy(test.errfile, suite.full_web_dir)
                 test.has_stderr = True
             if test.doComparison:
-                shutil.copy(test.comparison_outfile, suite.full_web_dir)
+                try:
+                    shutil.copy(test.comparison_outfile, suite.full_web_dir)
+                except FileNotFoundError:
+                    pass
             try:
                 shutil.copy(f"{test.name}.analysis.out", suite.full_web_dir)
             except:

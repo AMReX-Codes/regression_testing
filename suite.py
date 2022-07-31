@@ -189,10 +189,6 @@ class Test:
         plts.sort()
         last_plot = plts.pop()
 
-        if last_plot.endswith("00000"):
-            self.log.warn("only plotfile 0 was output -- skipping comparison")
-            return ""
-
         return last_plot
 
     def measure_performance(self):
