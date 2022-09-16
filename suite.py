@@ -1113,7 +1113,7 @@ class Suite:
     #        CMake utilities                              #
     #######################################################
     def cmake_config( self, name, path, configOpts="",  install = 0, env = None):
-        "Generate Cmake configuration"
+        "Generate CMake configuration"
 
         self.log.outdent()
         self.log.skip()
@@ -1163,20 +1163,26 @@ class Suite:
 
         # Check exit condition
         if not rc == 0:
-            errstr  = "\n \nERROR! Cmake configuration failed for " + name + " \n"
+            errstr  = "\n \nERROR! CMake configuration failed for " + name + " \n"
             errstr += "Check " + coutfile + " for more information."
             self.log.fail(errstr)
+
+            if self.verbose > 0:
+                print(f"\nContent of {coutfile}:")
+                with open(f"{coutfile}") as f:
+                    print(f.read())
+
             sys.exit(errstr)
 
         return builddir, installdir
 
 
     def cmake_clean( self, name, path ):
-        "Clean Cmake build and install directories"
+        "Clean CMake build and install directories"
 
         self.log.outdent()
         self.log.skip()
-        self.log.bold("cleaning " + name +  " Cmake directories...")
+        self.log.bold("cleaning " + name +  " CMake directories...")
         self.log.indent()
 
         # Setup dir names
@@ -1193,7 +1199,7 @@ class Suite:
         return
 
     def cmake_build( self, name, target, path, opts = '', env = None, outfile = None ):
-        "Build target for a repo configured via cmake"
+        "Build target for a repo configured via CMake"
 
         self.log.outdent()
         self.log.skip()
