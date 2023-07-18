@@ -1,4 +1,5 @@
 import argparse
+import re
 import os
 import shlex
 import subprocess
@@ -241,12 +242,17 @@ class Log:
             self.of.write(f"{self.indent_str}{string}\n")
 
         def email_developers():
+            pattern = r'(\/.*?\.out)'
+            filename = re.findall(pattern, string)
+            error_file = open(filename[0], "r") if filename else None
+            error_string = error_file.read().encode("utf-8") if error_file else ""
+
             emailto = ",".join(self.suite.emailTo)
             emailfrom = self.suite.emailFrom
             subject = "Regression testing suite failed to run for {}".format(
                 self.suite.suiteName)
-            msg = "To: {} \nFrom: {} \nSubject: {}\n\n Reason: {}".format(
-                emailto, emailfrom, subject, string)
+            msg = "To: {} \nFrom: {} \nSubject: {}\n\n Reason: {}\n\n{}".format(
+                emailto, emailfrom, subject, string, error_string)
 
             server = smtplib.SMTP('localhost')
             server.sendmail(self.suite.emailFrom, self.suite.emailTo, msg)
