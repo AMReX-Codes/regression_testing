@@ -867,7 +867,7 @@ def test_suite(argv):
                                 if test.particle_abs_tolerance is not None:
                                     command += " --abs_tol {}".format(test.particle_abs_tolerance)
 
-                                command += "{} {} {}".format(bench_file, output_file, ptype)
+                                command += " {} {} {}".format(bench_file, output_file, ptype)
 
                                 sout, _, ierr = test_util.run(command,
                                                               outfile=test.comparison_outfile, store_command=True)
