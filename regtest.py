@@ -859,12 +859,15 @@ def test_suite(argv):
 
                         if test.compareParticles:
                             for ptype in test.particleTypes.strip().split():
+                                command = "{}".format(suite.tools["particle_compare"])
+
                                 if test.particle_tolerance is not None:
-                                    command = "{} -r {} {} {} {}".format(
-                                        suite.tools["particle_compare"], test.particle_tolerance, bench_file, output_file, ptype)
-                                else:
-                                    command = "{} {} {} {}".format(
-                                        suite.tools["particle_compare"], bench_file, output_file, ptype)
+                                    command += " --rel_tol {}".format(test.particle_tolerance)
+
+                                if test.particle_abs_tolerance is not None:
+                                    command += " --abs_tol {}".format(test.particle_abs_tolerance)
+
+                                command == "{} {} {}".format(bench_file, output_file, ptype)
 
                                 sout, _, ierr = test_util.run(command,
                                                               outfile=test.comparison_outfile, store_command=True)

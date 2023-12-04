@@ -87,6 +87,7 @@ class Test:
         self._tolerance = None
         self._abs_tolerance = None
         self._particle_tolerance = None
+        self._particle_abs_tolerance = None
 
         self.analysisRoutine = ""
         self.analysisMainArgs = ""
@@ -319,6 +320,20 @@ class Test:
 
         self._particle_tolerance = value
 
+    def get_particle_abs_tolerance(self):
+        """ Returns the global particle absolute tolerance if one was set,
+            and the test-specific one otherwise.
+        """
+
+        if Test.global_particle_abs_tolerance is None:
+            return self._particle_abs_tolerance
+        return Test.global_particle_abs_tolerance
+
+    def set_particle_abs_tolerance(self, value):
+        """ Sets the test-specific particle absolute tolerance to the specified value. """
+
+        self._particle_abs_tolerance = value
+
     def get_check_performance(self):
         """ Returns whether to check performance for this test. """
 
@@ -359,6 +374,7 @@ class Test:
     global_tolerance = None
     global_abs_tolerance = None
     global_particle_tolerance = None
+    global_particle_abs_tolerance = None
     performance_params = []
 
     # Properties - allow for direct access as an attribute
@@ -368,6 +384,7 @@ class Test:
     tolerance = property(get_tolerance, set_tolerance)
     abs_tolerance = property(get_abs_tolerance, set_abs_tolerance)
     particle_tolerance = property(get_particle_tolerance, set_particle_tolerance)
+    particle_abs_tolerance = property(get_particle_abs_tolerance, set_particle_abs_tolerance)
     check_performance = property(get_check_performance, set_check_performance)
     performance_threshold = property(get_performance_threshold, set_performance_threshold)
     runs_to_average = property(get_runs_to_average, set_runs_to_average)
@@ -1107,6 +1124,7 @@ class Suite:
         Test.global_tolerance = args.tolerance
         Test.global_abs_tolerance = args.abs_tolerance
         Test.global_particle_tolerance = args.particle_tolerance
+        Test.global_particle_abs_tolerance = args.particle_abs_tolerance
         Test.performance_params = args.check_performance
 
     #######################################################
