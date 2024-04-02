@@ -855,7 +855,7 @@ class Suite:
                 plot = figure(**settings)
                 plot.add_tools(hover_tool())
 
-                plot.circle("date", "runtime", source=source)
+                plot.scatter("date", "runtime", source=source)
                 plot.xaxis.axis_label = "Date"
                 plot.yaxis.axis_label = "Runtime (s)"
 
@@ -1059,7 +1059,7 @@ class Suite:
 
         for t in ctools:
             self.log.log(f"building {t}...")
-            comp_string, rc = self.build_c(opts="DEBUG=FALSE USE_MPI=FALSE EBASE={}".format(t))
+            comp_string, rc = self.build_c(opts=f"DEBUG=FALSE USE_MPI=FALSE EBASE={t}")
             if not rc == 0:
                 self.log.fail("unable to continue, tools not able to be built")
 
@@ -1212,7 +1212,7 @@ class Suite:
             shutil.rmtree(builddir)
 
         if os.path.isdir(installdir):
-                shutil.rmtree(installdir)
+            shutil.rmtree(installdir)
 
         return
 
@@ -1299,7 +1299,7 @@ class Suite:
                 path_to_bin = None
                 cmake_output_dir = "CMAKE_RUNTIME_OUTPUT_DIRECTORY:PATH="
                 cmake_cache = os.path.join(self.source_build_dir, "CMakeCache.txt")
-                with open(cmake_cache, "r") as cc:
+                with open(cmake_cache) as cc:
                     for ln in cc.readlines():
                         if ln.startswith(cmake_output_dir):
                             path_to_bin = ln[len(cmake_output_dir):].strip()
