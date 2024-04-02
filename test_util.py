@@ -245,7 +245,7 @@ class Log:
         def email_developers():
             pattern = r'(\/.*?\.out)'
             filename = re.findall(pattern, string)
-            error_file = open(filename[0], "r") if filename else None
+            error_file = open(filename[0]) if filename else None
             error_string = error_file.read().encode("utf-8") if error_file else ""
 
             emailto = ",".join(self.suite.emailTo)

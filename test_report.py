@@ -381,7 +381,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
                     if suite.verbose > 0:
                         for btf in test.backtrace:
                             suite.log.warn(f"+++ Next backtrace: {btf} +++")
-                            suite.log.warn(open(btf, 'r').read())
+                            suite.log.warn(open(btf).read())
                             suite.log.warn(f"+++ End of backtrace: {btf} +++\n")
                     suite.log.testfail(f"{test.name} CRASHED (backtraces produced)")
                 else:
