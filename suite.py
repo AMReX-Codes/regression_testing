@@ -1212,7 +1212,7 @@ class Suite:
             shutil.rmtree(builddir)
 
         if os.path.isdir(installdir):
-                shutil.rmtree(installdir)
+            shutil.rmtree(installdir)
 
         return
 
