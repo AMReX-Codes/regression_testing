@@ -402,7 +402,7 @@ class Suite:
         # and build directories
         self.repos = {}
 
-        self.test_file_path = os.getcwd() + '/' + self.args.input_file[0]
+        self.test_file_path = os.path.abspath(self.args.input_file[0])
 
         self.suiteName = "testDefault"
         self.sub_title = ""
