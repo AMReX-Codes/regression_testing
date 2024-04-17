@@ -48,15 +48,15 @@ def find_build_dirs(tests):
     last_safe = False
 
     for obj in tests:
-        
+
         # keep track of the build directory and which source tree it is
         # in (e.g. the extra build dir)
-        
+
         # first find the list of unique build directories
         dir_pair = (obj.buildDir, obj.extra_build_dir)
         if build_dirs.count(dir_pair) == 0:
             build_dirs.append(dir_pair)
-            
+
         # re-make all problems that specify an extra compile argument,
         # and the test that comes after, just to make sure that any
         # unique build commands are seen.
@@ -66,9 +66,9 @@ def find_build_dirs(tests):
                 obj.reClean = 0
             else:
                 last_safe = True
-                
+
     return build_dirs
-                
+
 def cmake_setup(suite):
     "Setup for cmake"
 
@@ -1177,10 +1177,13 @@ def test_suite(argv):
         # archive (or delete) the output
         #----------------------------------------------------------------------
         suite.log.log("archiving the output...")
+        match_count = 0
         for pfile in os.listdir(output_dir):
 
             if (os.path.isdir(pfile) and
                 re.match(f"{test.name}.*_(plt|chk)[0-9]+", pfile)):
+
+                match_count += 1
 
                 if suite.purge_output == 1 and not pfile == output_file:
 
@@ -1205,6 +1208,9 @@ def test_suite(argv):
                             shutil.rmtree(pfile)
                         except OSError:
                             suite.log.warn(f"unable to remove {pfile}")
+
+        if (match_count == 0):
+            suite.log.fail("ERROR: test output could not be found!")
 
 
         #----------------------------------------------------------------------
