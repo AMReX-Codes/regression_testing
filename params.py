@@ -236,8 +236,8 @@ def load_params(args):
         # set the test object data by looking at all the options in
         # the current section of the parameter file
         valid_options = list(mytest.__dict__.keys())
-        aux_pat = re.compile(r"aux\d+File")
-        link_pat = re.compile(r"link\d+File")
+        aux_pat = re.compile(r"aux\d+File", re.IGNORECASE)
+        link_pat = re.compile(r"link\d+File", re.IGNORECASE)
 
         for opt in cp.options(sec):
 
