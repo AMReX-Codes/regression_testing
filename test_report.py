@@ -650,7 +650,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
                         line.strip().replace('<', '&lt;').replace('>', '&gt;'))
                     continue
 
-                fields = [q.strip() for q in line.split("  ") if not q == ""]
+                fields = [q.strip() for q in line.split("  ") if not q.strip() == ""]
 
                 if fields:
                     if fields[0].startswith("variable"):
