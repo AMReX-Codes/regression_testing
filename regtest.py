@@ -1209,7 +1209,7 @@ def test_suite(argv):
                         except OSError:
                             suite.log.warn(f"unable to remove {pfile}")
 
-        if (match_count == 0):
+        if suite.fail_on_no_output and match_count == 0:
             suite.log.fail("ERROR: test output could not be found!")
 
 
