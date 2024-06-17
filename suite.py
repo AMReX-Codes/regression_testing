@@ -990,7 +990,7 @@ class Suite:
         test.return_code = ierr
 
         # Print compilation error message (useful for CI tests)
-        if test.return_code != 0 and self.verbose > 0:
+        if test.return_code != 0 and self.verbose > 0 or self.verbose > 1:
             self.log.warn("Test stdout:")
             with open(f"{outfile}") as f:
                 print(f.read())
