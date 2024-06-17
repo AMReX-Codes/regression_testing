@@ -4,7 +4,6 @@ import os
 import shlex
 import subprocess
 import sys
-import email
 import smtplib
 
 USAGE = """
