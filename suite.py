@@ -494,6 +494,9 @@ class Suite:
         # For setting a specific version of cmake
         self.cmake = "cmake"
 
+        # do we fail if there is no output?
+        self.fail_on_no_output = 0
+
     @property
     def timing_default(self):
         """ Determines the format of the wallclock history JSON file """
