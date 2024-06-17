@@ -1174,10 +1174,13 @@ def test_suite(argv):
         # archive (or delete) the output
         #----------------------------------------------------------------------
         suite.log.log("archiving the output...")
+        match_count = 0
         for pfile in os.listdir(output_dir):
 
             if (os.path.isdir(pfile) and
                 re.match(f"{test.name}.*_(plt|chk)[0-9]+", pfile)):
+
+                match_count += 1
 
                 if suite.purge_output == 1 and not pfile == output_file:
 
@@ -1202,6 +1205,9 @@ def test_suite(argv):
                             shutil.rmtree(pfile)
                         except OSError:
                             suite.log.warn(f"unable to remove {pfile}")
+
+        if suite.fail_on_no_output and match_count == 0:
+            suite.log.fail("ERROR: test output could not be found!")
 
 
         #----------------------------------------------------------------------

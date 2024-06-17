@@ -410,7 +410,7 @@ class Suite:
         # and build directories
         self.repos = {}
 
-        self.test_file_path = os.getcwd() + '/' + self.args.input_file[0]
+        self.test_file_path = os.path.abspath(self.args.input_file[0])
 
         self.suiteName = "testDefault"
         self.sub_title = ""
@@ -501,6 +501,9 @@ class Suite:
 
         # For setting a specific version of cmake
         self.cmake = "cmake"
+
+        # do we fail if there is no output?
+        self.fail_on_no_output = 0
 
     @property
     def timing_default(self):
