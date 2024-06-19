@@ -1133,7 +1133,8 @@ class Suite:
     #######################################################
     #        CMake utilities                              #
     #######################################################
-    def cmake_config( self, name, path, configOpts="",  install = 0, env = None):
+    def cmake_config( self, name, path, configOpts="",  install = 0, env =
+                      None, test = None):
         "Generate CMake configuration"
 
         self.log.outdent()
@@ -1179,6 +1180,9 @@ class Suite:
             if name == 'AMReX':
                 cmd += '-DAMReX_INSTALL=OFF'
 
+        if test.dim > 0:
+            cmd += '-DAMReX_SPACEDIM='+str(test.dim)
+                
         self.log.log(cmd)
         stdout, stderr, rc = test_util.run(cmd, outfile=coutfile, env=ENV)
 
@@ -1269,7 +1273,7 @@ class Suite:
                 path=self.source_dir,
                 configOpts=self.amrex_cmake_opts + " " +
                            self.source_cmake_opts + " " +
-                           test.cmakeSetupOpts)
+                           test.cmakeSetupOpts, test=test)
             self.source_build_dir = builddir
 
         # compile
