@@ -61,6 +61,7 @@ class Test:
         self.run_as_script = ""
         self.script_args = ""
         self.return_code = None
+        self.ignore_return_code = 0
 
         self.restartTest = 0
         self.restartFileNum = -1
@@ -990,7 +991,7 @@ class Suite:
         test.return_code = ierr
 
         # Print compilation error message (useful for CI tests)
-        if test.return_code != 0 and self.verbose > 0:
+        if (test.ignore_return_code == 0 and test.return_code != 0) and self.verbose > 0:
             self.log.warn("Test stdout:")
             with open(f"{outfile}") as f:
                 print(f.read())

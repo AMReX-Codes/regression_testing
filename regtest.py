@@ -690,7 +690,7 @@ def test_suite(argv):
 
         # if it is a restart test, then rename the final output file and
         # restart the test
-        if test.return_code == 0 and test.restartTest:
+        if (test.ignore_return_code == 1 or test.return_code == 0) and test.restartTest:
             skip_restart = False
 
             last_file = test.get_compare_file(output_dir=output_dir)
@@ -752,14 +752,14 @@ def test_suite(argv):
         suite.log.log(f"Execution time: {test.wall_time:.3f} s")
 
         # Check for performance drop
-        if test.return_code == 0 and test.check_performance:
+        if (test.ignore_return_code == 1 or test.return_code == 0) and test.check_performance:
             test_performance(test, suite, runtimes)
 
         #----------------------------------------------------------------------
         # do the comparison
         #----------------------------------------------------------------------
         output_file = ""
-        if test.return_code == 0 and not test.selfTest:
+        if (test.ignore_return_code == 1 or test.return_code == 0) and not test.selfTest:
 
             if test.outputFile == "":
                 if test.compareFile == "":
@@ -788,6 +788,8 @@ def test_suite(argv):
 
             if not test.doComparison:
                 test.compare_succesful = not test.crashed
+
+            print(f"at the top of the make_benchamrks: {test.doComparison=}, {args.make_benchmarks=}")
 
             if args.make_benchmarks is None and test.doComparison:
 
@@ -909,6 +911,8 @@ def test_suite(argv):
 
             elif test.doComparison:   # make_benchmarks
 
+                print("!!!!!! here -- we should be making benchmarks")
+
                 if not compare_file == "":
 
                     if not output_file == compare_file:
@@ -969,7 +973,7 @@ def test_suite(argv):
             else:  # don't do a pltfile comparison
                 test.compare_successful = True
 
-        elif test.return_code == 0:   # selfTest
+        elif (test.ignore_return_code == 1 or test.return_code == 0):   # selfTest
 
             if args.make_benchmarks is None:
 
@@ -1002,7 +1006,7 @@ def test_suite(argv):
         #----------------------------------------------------------------------
         # do any requested visualization (2- and 3-d only) and analysis
         #----------------------------------------------------------------------
-        if test.return_code == 0 and not test.selfTest:
+        if (test.ignore_return_code == 1 or test.return_code == 0) and not test.selfTest:
             if output_file != "":
                 if args.make_benchmarks is None:
 
@@ -1109,7 +1113,7 @@ def test_suite(argv):
         # if the test ran and passed, add its runtime to the dictionary
         #----------------------------------------------------------------------
 
-        if test.return_code == 0 and test.record_runtime(suite):
+        if (test.ignore_return_code == 1 or test.return_code == 0) and test.record_runtime(suite):
             test_dict = runtimes.setdefault(test.name, suite.timing_default)
             test_dict["runtimes"].insert(0, test.wall_time)
             test_dict["dates"].insert(0, suite.test_dir.rstrip("/"))
@@ -1170,7 +1174,7 @@ def test_suite(argv):
                     # analysis was not successful.  Reset the output image
                     test.analysisOutputImage = ""
 
-        elif test.return_code == 0:
+        elif test.ignore_return_code == 1 or test.return_code == 0:
             if test.doComparison:
                 shutil.copy(f"{test.name}.status", suite.full_web_dir)
 
