@@ -1058,7 +1058,9 @@ def test_suite(argv):
                             ppm_file = test_util.get_recent_filename(output_dir, "", ".ppm")
                             if not ppm_file is None:
                                 png_file = ppm_file.replace(".ppm", ".png")
-                                test_util.run(f"convert {ppm_file} {png_file}")
+                                from PIL import Image
+                                with Image.open(ppm_file) as im:
+                                    im.save(png_file)
                                 test.png_file = png_file
 
                     # analysis
