@@ -1189,9 +1189,6 @@ def test_suite(argv):
 
                 if suite.purge_output == 1 and not pfile == output_file and not suite.make_benchmarks:
 
-                    print("pfile:", pfile)
-                    print("output_file:", output_file)
-                    
                     # delete the plt/chk file
                     try:
                         shutil.rmtree(pfile)
