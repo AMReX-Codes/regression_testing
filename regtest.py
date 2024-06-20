@@ -789,8 +789,6 @@ def test_suite(argv):
             if not test.doComparison:
                 test.compare_succesful = not test.crashed
 
-            print(f"at the top of the make_benchamrks: {test.doComparison=}, {args.make_benchmarks=}")
-
             if args.make_benchmarks is None and test.doComparison:
 
                 suite.log.log("doing the comparison...")
@@ -910,8 +908,6 @@ def test_suite(argv):
                     test.compare_successful = test.compare_successful and diff_successful
 
             elif test.doComparison:   # make_benchmarks
-
-                print("!!!!!! here -- we should be making benchmarks")
 
                 if not compare_file == "":
 
