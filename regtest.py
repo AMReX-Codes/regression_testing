@@ -1222,6 +1222,23 @@ def test_suite(argv):
             suite.log.log("creating problem test report ...")
             report.report_single_test(suite, test, test_list)
 
+        #----------------------------------------------------------------------
+        # if test ran and passed, remove test directory if requested
+        #----------------------------------------------------------------------
+        if (test.ignore_return_code == 1 or test.return_code == 0):
+            if args.rm_testdir:
+                suite.log.log("removing subdirectories in test directory...")
+                for file_name in os.listdir(output_dir):
+                    file_path = os.path.join(output_dir, file_name)
+                    #if os.path.isfile(file_path) or os.path.islink(file_path):
+                    #    os.unlink(file_path)
+                    #elif os.path.isdir(file_path):
+                    #    shutil.rmtree(file_path)
+                    if os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                # switch to the full test directory
+                os.chdir(suite.full_test_dir)
+
     #--------------------------------------------------------------------------
     # Clean Cmake build and install directories if needed
     #--------------------------------------------------------------------------

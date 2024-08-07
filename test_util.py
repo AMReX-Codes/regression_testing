@@ -390,6 +390,8 @@ def get_args(arg_string=None):
                                help="complete report generation from a crashed test suite run named testdir")
     suite_options.add_argument("--log_file", type=str, default=None, metavar="logfile",
                                help="log file to write output to (in addition to stdout")
+    suite_options.add_argument("--rm_testdir", action="store_true",
+                               help="remove individual test directory after each passed test")
 
     comp_options = parser.add_argument_group("comparison options",
                                              "options that control how the comparisons are done")
