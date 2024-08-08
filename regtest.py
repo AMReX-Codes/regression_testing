@@ -787,7 +787,7 @@ def test_suite(argv):
                     test.nlevels = ""
 
             if not test.doComparison:
-                test.compare_succesful = not test.crashed
+                test.compare_successful = not test.crashed
 
             if args.make_benchmarks is None and test.doComparison:
 
