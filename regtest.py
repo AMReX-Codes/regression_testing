@@ -1227,7 +1227,7 @@ def test_suite(argv):
         #----------------------------------------------------------------------
         test_successful = (test.return_code == 0 and test.analysis_successful and test.compare_successful)
         if (test.ignore_return_code == 1 or test_successful):
-            if args.rm_testdir:
+            if args.clean_testdir:
                 suite.log.log("removing subdirectories from test directory...")
                 for file_name in os.listdir(output_dir):
                     file_path = os.path.join(output_dir, file_name)
