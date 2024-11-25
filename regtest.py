@@ -541,14 +541,48 @@ def test_suite(argv):
         coutfile = f"{output_dir}/{test.name}.make.out"
 
         if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
-            if suite.useCmake:
-                comp_string, rc = suite.build_test_cmake(test=test, outfile=coutfile)
-            else:
-                comp_string, rc = suite.build_c(test=test, outfile=coutfile)
 
-            executable = test_util.get_recent_filename(bdir, "", ".ex")
+            # First check whether an executable was already compiled with
+            # the same options (not enabled for CMake, for now)
+            found_previous_test = False
+            if test.avoid_recompiling and not suite.useCmake:
+                comp_string = suite.get_comp_string_c(test=test, outfile=coutfile)
+                # Loop over the existing tests
+                for previous_test in test_list:
+                    # Check if the compile command was the same
+                    if previous_test.comp_string == comp_string:
+                        found_previous_test = True
+                        break
+
+            # Avoid recompiling in this case
+            if found_previous_test:
+                suite.log.log("found pre-built executable for this test")
+                with open(coutfile, "a") as cf:
+                    cf.write("found pre-built executable for this test\n")
+                rc = 0
+                executable = previous_test.executable
+            # Otherwise recompile
+            else:
+                if suite.useCmake:
+                    comp_string, rc = suite.build_test_cmake(test=test, outfile=coutfile)
+                else:
+                    comp_string, rc = suite.build_c(test=test, outfile=coutfile)
+                executable = test_util.get_recent_filename(bdir, "", ".ex")
+                # Store the executable (to avoid recompiling for other tests)
+                if test.avoid_recompiling and executable is not None:
+                    # Create a unique directory for these compilations options,
+                    # by using the hash of the compilation options as the directory name
+                    if not os.path.exists('PreviouslyCompiled'):
+                        os.mkdir('PreviouslyCompiled')
+                    dir_name = os.path.join( 'PreviouslyCompiled', str(hash(comp_string)) )
+                    if not os.path.exists( dir_name ):
+                        os.mkdir(dir_name)
+                    # Copy the executable to that unique directory
+                    shutil.copy( executable, dir_name )
 
         test.comp_string = comp_string
+        # Register name of the executable
+        test.executable = executable
 
         # make return code is 0 if build was successful
         if rc == 0:
@@ -585,7 +619,12 @@ def test_suite(argv):
 
         needed_files = []
         if executable is not None:
-            needed_files.append((executable, "move"))
+            if test.avoid_recompiling:
+                # Find unique directory where the executable is stored
+                dir_name = os.path.join( 'PreviouslyCompiled', str(hash(test.comp_string)) )
+                needed_files.append((os.path.join(dir_name,executable), "copy"))
+            else:
+                needed_files.append((executable, "move"))
 
         if test.run_as_script:
             needed_files.append((test.run_as_script, "copy"))
