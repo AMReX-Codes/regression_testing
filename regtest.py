@@ -38,7 +38,7 @@ def _check_safety(cs):
 
 def check_realclean_safety(compile_strings):
     split_strings = compile_strings.strip().split()
-    return all([_check_safety(cs) for cs in split_strings])
+    return all(_check_safety(cs) for cs in split_strings)
 
 def find_build_dirs(tests):
     """ given the list of test objects, find the set of UNIQUE build
@@ -357,7 +357,7 @@ def test_suite(argv):
     #--------------------------------------------------------------------------
     # check bench dir and create output directories
     #--------------------------------------------------------------------------
-    all_compile = all([t.compileTest == 1 for t in test_list])
+    all_compile = all(t.compileTest == 1 for t in test_list)
 
     if not all_compile:
         bench_dir = suite.get_bench_dir()
@@ -369,12 +369,11 @@ def test_suite(argv):
 
     if suite.slack_post:
         if args.note == "" and suite.repos["source"].pr_wanted is not None:
-            note = "testing PR-{}".format(suite.repos["source"].pr_wanted)
+            note = f"testing PR-{suite.repos["source"].pr_wanted}"
         else:
             note = args.note
 
-        msg = "> {} ({}) test suite started, id: {}\n> {}".format(
-            suite.suiteName, suite.sub_title, suite.test_dir, note)
+        msg = f"> {suite.suiteName} ({suite.sub_title}) test suite started, id: {suite.test_dir}\n> {note}"
         suite.slack_post_it(msg)
 
     if not args.copy_benchmarks is None:
@@ -591,7 +590,7 @@ def test_suite(argv):
             needed_files.append((test.run_as_script, "copy"))
 
         if test.inputFile:
-            suite.log.log("path to input file: {}".format(test.inputFile))
+            suite.log.log(f"path to input file: {test.inputFile}")
             needed_files.append((test.inputFile, "copy"))
             # strip out any sub-directory from the build dir
             test.inputFile = os.path.basename(test.inputFile)
@@ -741,7 +740,7 @@ def test_suite(argv):
 
                 if test.customRunCmd is not None:
                     base_cmd = test.customRunCmd
-                    base_cmd += " amr.restart={}".format(restart_file)
+                    base_cmd += f" amr.restart={restart_file}"
 
                 if args.with_valgrind:
                     base_cmd = "valgrind " + args.valgrind_options + " " + base_cmd
@@ -780,7 +779,7 @@ def test_suite(argv):
             # get the number of levels for reporting
             if not test.run_as_script and "fboxinfo" in suite.tools:
 
-                prog = "{} -l {}".format(suite.tools["fboxinfo"], output_file)
+                prog = f"{suite.tools["fboxinfo"]} -l {output_file}"
                 stdout0, _, rc = test_util.run(prog)
                 test.nlevels = stdout0.rstrip('\n')
                 if not isinstance(params.convert_type(test.nlevels), int):
@@ -825,15 +824,15 @@ def test_suite(argv):
 
                         else:
 
-                            command = "{} --abort_if_not_all_found -n 0".format(suite.tools["fcompare"])
+                            command = f"{suite.tools["fcompare"]} --abort_if_not_all_found -n 0"
 
                             if test.tolerance is not None:
-                                command += " --rel_tol {}".format(test.tolerance)
+                                command += f" --rel_tol {test.tolerance}"
 
                             if test.abs_tolerance is not None:
-                                command += " --abs_tol {}".format(test.abs_tolerance)
+                                command += f" --abs_tol {test.abs_tolerance}"
 
-                            command += " {} {}".format(bench_file, output_file)
+                            command += f" {bench_file} {output_file}"
 
                         sout, _, ierr = test_util.run(command,
                                                       outfile=test.comparison_outfile,
@@ -859,15 +858,15 @@ def test_suite(argv):
 
                         if test.compareParticles:
                             for ptype in test.particleTypes.strip().split():
-                                command = "{}".format(suite.tools["particle_compare"])
+                                command = f"{suite.tools["particle_compare"]}"
 
                                 if test.particle_tolerance is not None:
-                                    command += " --rel_tol {}".format(test.particle_tolerance)
+                                    command += f" --rel_tol {test.particle_tolerance}"
 
                                 if test.particle_abs_tolerance is not None:
-                                    command += " --abs_tol {}".format(test.particle_abs_tolerance)
+                                    command += f" --abs_tol {test.particle_abs_tolerance}"
 
-                                command += " {} {} {}".format(bench_file, output_file, ptype)
+                                command += f" {bench_file} {output_file} {ptype}"
 
                                 sout, _, ierr = test_util.run(command,
                                                               outfile=test.comparison_outfile, store_command=True)
@@ -892,11 +891,10 @@ def test_suite(argv):
                     suite.log.log("doing the diff...")
                     suite.log.log(f"diff dir: {test.diffDir}")
 
-                    command = "diff {} -r {} {}".format(
-                        test.diffOpts, diff_dir_bench, test.diffDir)
+                    command = f"diff {test.diffOpts} -r {diff_dir_bench} {test.diffDir}"
 
                     outfile = test.comparison_outfile
-                    sout, serr, diff_status = test_util.run(command, outfile=outfile, store_command=True)
+                    sout, _, diff_status = test_util.run(command, outfile=outfile, store_command=True)
 
                     if diff_status == 0:
                         diff_successful = True
@@ -1136,24 +1134,23 @@ def test_suite(argv):
                 pass
 
             if test.inputFile:
-                shutil.copy(test.inputFile, "{}/{}.{}".format(
-                    suite.full_web_dir, test.name, test.inputFile))
+                shutil.copy(test.inputFile,
+                            f"{suite.full_web_dir}/{test.name}.{test.inputFile}")
 
             if test.has_jobinfo:
-                shutil.copy(job_info_file, "{}/{}.job_info".format(
-                    suite.full_web_dir, test.name))
+                shutil.copy(job_info_file,
+                            f"{suite.full_web_dir}/{test.name}")
 
             if suite.sourceTree == "C_Src" and test.probinFile != "":
-                shutil.copy(test.probinFile, "{}/{}.{}".format(
-                    suite.full_web_dir, test.name, test.probinFile))
+                shutil.copy(test.probinFile,
+                            f"{suite.full_web_dir}/{test.name}.{test.probinFile}")
 
             for af in test.auxFiles:
 
                 # strip out any sub-directory under build dir for the aux file
                 # when copying
                 shutil.copy(os.path.basename(af),
-                            "{}/{}.{}".format(suite.full_web_dir,
-                                              test.name, os.path.basename(af)))
+                            f"{suite.full_web_dir}/{test.name}.{os.path.basename(af)}")
 
             if not test.png_file is None:
                 try:
