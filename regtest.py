@@ -1180,6 +1180,7 @@ def test_suite(argv):
         #----------------------------------------------------------------------
         suite.log.log("archiving the output...")
         match_count = 0
+        archived_file_list = []
         for pfile in os.listdir(output_dir):
 
             if (os.path.isdir(pfile) and
@@ -1198,9 +1199,11 @@ def test_suite(argv):
                 elif suite.archive_output == 1:
                     # tar it up
                     try:
-                        tar = tarfile.open(f"{pfile}.tgz", "w:gz")
+                        tarfilename = f"{pfile}.tgz"
+                        tar = tarfile.open(tarfilename, "w:gz")
                         tar.add(f"{pfile}")
                         tar.close()
+                        archived_file_list.append(tarfilename)
 
                     except:
                         suite.log.warn(f"unable to tar output file {pfile}")
@@ -1228,11 +1231,23 @@ def test_suite(argv):
         test_successful = (test.return_code == 0 and test.analysis_successful and test.compare_successful)
         if (test.ignore_return_code == 1 or test_successful):
             if args.clean_testdir:
+                # remove subdirectories
                 suite.log.log("removing subdirectories from test directory...")
                 for file_name in os.listdir(output_dir):
                     file_path = os.path.join(output_dir, file_name)
                     if os.path.isdir(file_path):
                         shutil.rmtree(file_path)
+
+                # remove archived plotfiles
+                suite.log.log("removing compressed plotfiles from test directory...")
+                for file_name in archived_file_list:
+                    file_path = os.path.join(output_dir, file_name)
+                    os.remove(file_path)
+
+                # delete executable
+                suite.log.log("removing executable from test directory...")
+                os.remove(executable)
+
                 # switch to the full test directory
                 os.chdir(suite.full_test_dir)
 
