@@ -1235,6 +1235,10 @@ def test_suite(argv):
                         shutil.rmtree(file_path)
                 # switch to the full test directory
                 os.chdir(suite.full_test_dir)
+            if args.delete_exe:
+                suite.log.log("removing executable from test directory...")
+                os.remove(executable)
+
 
     #--------------------------------------------------------------------------
     # Clean Cmake build and install directories if needed
