@@ -1244,10 +1244,6 @@ def test_suite(argv):
                     file_path = os.path.join(output_dir, file_name)
                     os.remove(file_path)
 
-                # delete executable
-                suite.log.log("removing executable from test directory...")
-                os.remove(executable)
-
                 # switch to the full test directory
                 os.chdir(suite.full_test_dir)
 
