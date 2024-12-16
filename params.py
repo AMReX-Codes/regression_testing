@@ -163,6 +163,10 @@ def load_params(args):
     if args.source_pr is not None:
         mysuite.repos["source"].pr_wanted = args.source_pr
 
+    # update Git submodules?
+    if args.updateGitSubmodules is not None:
+        mysuite.updateGitSubmodules = args.updateGitSubmodules
+    
     # now flesh out the compile strings -- they may refer to either themselves
     # or the source dir
     for r in mysuite.repos.keys():
