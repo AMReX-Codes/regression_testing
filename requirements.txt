@@ -3,3 +3,4 @@ sphinx_rtd_theme
 Sphinx
 nbsphinx>=0.3.1
 pillow
+bokeh
