@@ -101,6 +101,7 @@ class Repo:
         if self.suite.updateGitSubmodules == 1:
             # update submodules to those specified by the current commit
             # (--init is required because there may be new submodules since the last checkout)
+            self.suite.log.log(f"git submodule update in {self.dir}")
             _, _, rc = test_util.run(f"git submodule update --init")
 
             if rc != 0:
