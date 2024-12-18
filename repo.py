@@ -98,6 +98,15 @@ class Repo:
 
             shutil.copy(f"git.{self.name}.out", self.suite.full_web_dir)
 
+        if self.suite.updateGitSubmodules == 1:
+            # update submodules to those specified by the current commit
+            # (--init is required because there may be new submodules since the last checkout)
+            self.suite.log.log(f"git submodule update in {self.dir}")
+            _, _, rc = test_util.run(f"git submodule update --init")
+
+            if rc != 0:
+                self.suite.log.fail("ERROR: git submodule update was unsuccessful")
+        
     def save_head(self):
         """Save the current head of the repo"""
 

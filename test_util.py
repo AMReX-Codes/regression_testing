@@ -28,6 +28,9 @@ The "main" block specifies the global test suite parameters:
   isSuperbuild   = < 0: pre-build AMReX and source (default)
                      1: CMake downloads AMReX and needs separate configure & build >
 
+  updateGitSubmodules = < 0: don't update submodules when changing git branches (default)
+                       1: run `git submodule update --init` after changing git branches >
+
   sourceTree = < C_Src or AMReX >
 
   suiteName = < descriptive name (i.e. Castro) >

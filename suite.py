@@ -419,7 +419,7 @@ class Suite:
         self.useCmake = 0
         self.isSuperbuild = 0
         self.use_ctools = 1
-
+        
         self.reportCoverage = args.with_coverage
 
         # set automatically
@@ -435,6 +435,8 @@ class Suite:
         self.amrex_install_dir = "" # Cmake installation dir
         self.amrex_cmake_opts = ""
 
+        self.updateGitSubmodules = 0
+        
         self.MPIcommand = ""
         self.MPIhost = ""
 
