@@ -395,6 +395,8 @@ def get_args(arg_string=None):
                                help="log file to write output to (in addition to stdout")
     suite_options.add_argument("--clean_testdir", action="store_true",
                                help="remove individual test directory after each passed test")
+    suite_options.add_argument("--delete_exe", action="store_true",
+                               help="remove executable in test directory after each passed test")
 
     comp_options = parser.add_argument_group("comparison options",
                                              "options that control how the comparisons are done")
