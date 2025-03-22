@@ -118,6 +118,7 @@ class Test:
         self.nlevels = None  # set but running fboxinfo on the output
 
         self.comp_string = None  # set automatically
+        self.executable = None   # set automatically
         self.run_command = None  # set automatically
 
         self.job_info_field1 = ""
@@ -371,6 +372,7 @@ class Test:
 
     # Static member variables, set explicitly in apply_args in Suite class
     compile_only = False
+    avoid_recompiling = False
     skip_comparison = False
     global_tolerance = None
     global_abs_tolerance = None
@@ -926,8 +928,8 @@ class Suite:
 
         test_util.run(cmd)
 
-    def build_c(self, test=None, opts="", target="", outfile=None, c_make_additions=None):
-
+    def get_comp_string_c(self, test=None, opts="", target="",
+                          outfile=None, c_make_additions=None):
         build_opts = ""
         if c_make_additions is None:
             c_make_additions = self.add_to_c_make_command
@@ -958,6 +960,12 @@ class Suite:
             self.MAKE, self.numMakeJobs, self.amrex_dir,
             all_opts, self.COMP, c_make_additions, target)
 
+        return comp_string
+
+    def build_c(self, test=None, opts="", target="",
+                outfile=None, c_make_additions=None):
+        comp_string = self.get_comp_string_c( test, opts, target,
+                                              outfile, c_make_additions )
         self.log.log(comp_string)
         stdout, stderr, rc = test_util.run(comp_string, outfile=outfile)
 
@@ -1126,6 +1134,7 @@ class Suite:
         args = self.args
 
         Test.compile_only = args.compile_only
+        Test.avoid_recompiling = args.avoid_recompiling
         Test.skip_comparison = args.skip_comparison
         Test.global_tolerance = args.tolerance
         Test.global_abs_tolerance = args.abs_tolerance
