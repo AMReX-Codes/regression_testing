@@ -1188,7 +1188,7 @@ def test_suite(argv):
 
                 match_count += 1
 
-                if suite.purge_output == 1 and not pfile == output_file:
+                if suite.purge_output == 1 and not pfile == output_file and not suite.make_benchmarks:
 
                     # delete the plt/chk file
                     try:
