@@ -1,6 +1,4 @@
-try: import ConfigParser as configparser
-except ImportError:
-    import configparser   # python 3
+import configparser
 
 import getpass
 import os
@@ -16,19 +14,27 @@ def convert_type(string):
     if string is None:
         return None
 
-    try: int(string)
-    except: pass
-    else: return int(string)
+    try:
+        int(string)
+    except:
+        pass
+    else:
+        return int(string)
 
-    try: float(string)
-    except: pass
-    else: return float(string)
+    try:
+        float(string)
+    except:
+        pass
+    else:
+        return float(string)
 
     return string.strip()
 
 def safe_get(cp, sec, opt, default=None):
-    try: v = cp.get(sec, opt)
-    except: v = default
+    try:
+        v = cp.get(sec, opt)
+    except:
+        v = default
     return v
 
 def load_params(args):
@@ -52,8 +58,9 @@ def load_params(args):
 
     if not os.path.exists(args.input_file[0]):
         raise OSError(f"Parameter file {args.input_file[0]} does not exist")
-    
-    try: cp.read(args.input_file[0])
+
+    try:
+        cp.read(args.input_file[0])
     except:
         log.fail(f"ERROR: unable to read parameter file {args.input_file[0]}")
 
@@ -120,7 +127,8 @@ def load_params(args):
 
     # now all the other build and source directories
     other_srcs = [s for s in cp.sections() if s.startswith("extra-")]
-    if not mysuite.sourceTree in ["AMReX", "amrex"]: other_srcs.append("source")
+    if not mysuite.sourceTree in ["AMReX", "amrex"]:
+        other_srcs.append("source")
 
     for s in other_srcs:
         if s.startswith("extra-"):
@@ -134,7 +142,8 @@ def load_params(args):
 
 
         build = convert_type(safe_get(cp, s, "build", default=0))
-        if s == "source": build = 1
+        if s == "source":
+            build = 1
 
         comp_string = safe_get(cp, s, "comp_string")
 
@@ -165,14 +174,14 @@ def load_params(args):
 
     # now flesh out the compile strings -- they may refer to either themselves
     # or the source dir
-    for r in mysuite.repos.keys():
+    for r in mysuite.repos:
         s = mysuite.repos[r].comp_string
         if not s is None:
             mysuite.repos[r].comp_string = \
                 s.replace("@self@", mysuite.repos[r].dir).replace("@source@", mysuite.repos["source"].dir)
 
     # the suite needs to know any ext_src_comp_string
-    for r in mysuite.repos.keys():
+    for r in mysuite.repos:
         if not mysuite.repos[r].build == 1:
             if not mysuite.repos[r].comp_string is None:
                 mysuite.extra_src_comp_string += f" {mysuite.repos[r].comp_string} "
@@ -197,7 +206,8 @@ def load_params(args):
             mysuite.slack_post = 0
         else:
             print(mysuite.slack_webhookfile)
-            try: f = open(mysuite.slack_webhookfile)
+            try:
+                f = open(mysuite.slack_webhookfile)
             except:
                 mysuite.log.warn("unable to open webhook file")
                 mysuite.slack_post = 0
@@ -212,7 +222,8 @@ def load_params(args):
 
     # Make sure the web dir is valid
     if not os.path.isdir(mysuite.webTopDir):
-        try: os.mkdir(mysuite.webTopDir)
+        try:
+            os.mkdir(mysuite.webTopDir)
         except:
             mysuite.log.fail("ERROR: unable to create the web directory: {}\n".format(
                 mysuite.webTopDir))
@@ -223,7 +234,8 @@ def load_params(args):
 
     for sec in cp.sections():
 
-        if sec in ["main", "AMReX", "source"] or sec.startswith("extra-"): continue
+        if sec in ["main", "AMReX", "source"] or sec.startswith("extra-"):
+            continue
 
         # maximum test name length -- used for HTML formatting
         mysuite.lenTestName = max(mysuite.lenTestName, len(sec))
@@ -252,17 +264,17 @@ def load_params(args):
                 else:
                     # generic setting of the object attribute
                     setattr(mytest, opt, value)
-            
+
             elif aux_pat.match(opt):
-                
+
                 mytest.auxFiles.append(value)
-                
+
             elif link_pat.match(opt):
-                
+
                 mytest.linkFiles.append(value)
 
             else:
-                
+
                 mysuite.log.warn(f"unrecognized parameter {opt} for test {sec}")
 
 
@@ -284,7 +296,7 @@ def load_params(args):
                 invalid = 1
 
         else:
-            
+
             input_file_invalid = mytest.inputFile == "" and not mytest.run_as_script
             if mytest.buildDir == "" or input_file_invalid or mytest.dim == -1:
                 warn_msg = [f"required params for test {sec} not set",
@@ -329,7 +341,7 @@ def load_params(args):
 
 
     # if any runs are parallel, make sure that the MPIcommand is defined
-    any_MPI = any([t.useMPI for t in test_list])
+    any_MPI = any(t.useMPI for t in test_list)
 
     if any_MPI and mysuite.MPIcommand == "":
         mysuite.log.fail("ERROR: some tests are MPI parallel, but MPIcommand not defined")

@@ -247,7 +247,7 @@ class HTMLList:
         self.of.write("</li>")
 
         # finish nesting
-        for n in range(0, current_indent):
+        for _ in range(0, current_indent):
             self.of.write("</ul></li>\n")
 
         self.of.write("</ul>\n")
@@ -303,7 +303,7 @@ class HTMLTable:
     def end_table(self):
         self.hf.write("</table>\n")
         if not self.divs is None:
-            for n in range(len(self.divs)):
+            for _ in range(len(self.divs)):
                 self.hf.write("</div>\n")
 
 
@@ -595,7 +595,7 @@ def report_single_test(suite, test, tests, failure_msg=None):
         variables_error = False
         no_bench_error = False
         particle_counts_differ_error = False
-        
+
         pcomp_line = get_particle_compare_command(diff_lines)
 
         for line in diff_lines:
@@ -797,7 +797,7 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
                    "<li><b>branch:</b> {}; <b>hash:</b> {}</li>" + \
                    "<li><b>changelog:</b> <a href=\"{}\">{}</a></li></ul></li>"
 
-        for k, r in suite.repos.items():
+        for _, r in suite.repos.items():
             if r.update:
                 if r.pr_wanted is not None:
                     branch = f"PR #{r.pr_wanted}"
@@ -1008,7 +1008,7 @@ def report_coverage(html_file, suite):
 
     tvars = (suite.covered_frac, suite.total, suite.covered_nonspecific_frac, suite.total_nonspecific)
     if not all(tvars): return
-    
+
     cols = ["coverage type", "coverage %", "# covered", "# uncovered"]
     ht = HTMLTable(html_file, len(cols), divs=["summary"])
 
@@ -1048,7 +1048,7 @@ def report_all_runs(suite, active_test_list, max_per_page=50):
     valid_dirs, all_tests = suite.get_run_history(active_test_list)
 
     if suite.do_timings_plots:
-        suite.make_timing_plots(valid_dirs=valid_dirs, all_tests=all_tests)
+        suite.make_timing_plots(all_tests=all_tests)
 
     # how many pages are we going to spread this over?
     npages = int(len(valid_dirs)/max_per_page)+1

@@ -8,8 +8,10 @@ import sys
 import test_util
 import tempfile as tf
 
-try: from json.decoder import JSONDecodeError
-except ImportError: JSONDecodeError = ValueError
+try:
+    from json.decoder import JSONDecodeError
+except ImportError:
+    JSONDecodeError = ValueError
 
 DO_TIMINGS_PLOTS = True
 
@@ -30,7 +32,7 @@ except:
         import matplotlib.pyplot as plt
 
     try:
-        import matplotlib.dates as dates
+        from matplotlib import dates
     except:
         DO_TIMINGS_PLOTS = False
 
@@ -172,11 +174,10 @@ class Test:
             filepath = os.path.join(output_dir, outfile)
 
             if not os.path.isfile(filepath) or self.crashed:
-
                 self.log.warn("test did not produce any output")
                 return ""
 
-            else: return outfile
+            return outfile
 
         plts = [d for d in os.listdir(output_dir) if \
                 (os.path.isdir(d) and
@@ -205,8 +206,10 @@ class Test:
         meets_threshold = ratio < self.performance_threshold
         percentage = 100 * (1 - ratio)
 
-        if percentage < 0: compare_str = "slower"
-        else: compare_str = "faster"
+        if percentage < 0:
+            compare_str = "slower"
+        else:
+            compare_str = "faster"
 
         return meets_threshold, abs(percentage), compare_str
 
@@ -219,7 +222,8 @@ class Test:
         """ Whether the test passed or not """
 
         compile = self.compile_successful
-        if self.compileTest or not compile: return compile
+        if self.compileTest or not compile:
+            return compile
 
         compare = not self.doComparison or self.compare_successful
         analysis = self.analysisRoutine == "" or self.analysis_successful
@@ -348,9 +352,11 @@ class Test:
     def get_performance_threshold(self):
         """ Returns the threshold at which to warn of a performance drop. """
 
-        if Test.performance_params: return float(Test.performance_params[0])
-        elif self._check_performance: return self._performance_threshold
-        else: return None
+        if Test.performance_params:
+            return float(Test.performance_params[0])
+        if self._check_performance:
+            return self._performance_threshold
+        return None
 
     def set_performance_threshold(self, value):
         """ Setter for performance_threshold. """
@@ -360,9 +366,11 @@ class Test:
     def get_runs_to_average(self):
         """ Returns the number of past runs to include in the running runtime average. """
 
-        if Test.performance_params: return int(Test.performance_params[1])
-        elif self._check_performance: return self._runs_to_average
-        else: return None
+        if Test.performance_params:
+            return int(Test.performance_params[1])
+        if self._check_performance:
+            return self._runs_to_average
+        return None
 
     def set_runs_to_average(self, value):
         """ Setter for runs_to_average. """
@@ -641,7 +649,8 @@ class Suite:
                 shutil.rmtree(full_test_dir)
         else:
             for i in range(1, maxRuns):
-                if not os.path.isdir(full_test_dir): break
+                if not os.path.isdir(full_test_dir):
+                    break
                 test_dir = today + f"-{i:03d}/"
                 full_test_dir = self.testTopDir + self.suiteName + "-tests/" + test_dir
 
@@ -719,7 +728,7 @@ class Suite:
                     # this is of the form: <li>Execution time: 412.930 s
                     return float(line.split(":")[1].strip().split(" ")[0])
 
-                elif "(seconds)" in line:
+                if "(seconds)" in line:
                     # this is the older form -- split on "="
                     # form: <p><b>Execution Time</b> (seconds) = 399.414828
                     return float(line.split("=")[1])
@@ -734,9 +743,11 @@ class Suite:
                 timings = json.load(open(json_file))
                 # Check for proper format
                 item = next(iter(timings.values()))
-                if not isinstance(item, dict): raise ValueError
+                if not isinstance(item, dict):
+                    raise ValueError
                 return timings
-            except (OSError, ValueError, JSONDecodeError, StopIteration): pass
+            except (OSError, ValueError, JSONDecodeError, StopIteration):
+                pass
 
         valid_dirs, all_tests = self.get_run_history(check_activity=False)
 
@@ -766,11 +777,15 @@ class Suite:
             for test in filter(lambda x: x in passed, all_tests):
 
                 file = f"{dir_path}/{test}.html"
-                try: file = open(file)
-                except: continue
+                try:
+                    file = open(file)
+                except:
+                    continue
 
-                try: time = extract_time(file)
-                except RuntimeError: continue
+                try:
+                    time = extract_time(file)
+                except RuntimeError:
+                    continue
 
                 test_dict = timings.setdefault(test, self.timing_default)
                 test_dict["runtimes"].append(time)
@@ -780,22 +795,21 @@ class Suite:
 
         return timings
 
-    def make_timing_plots(self, active_test_list=None, valid_dirs=None, all_tests=None):
+    def make_timing_plots(self, active_test_list=None, all_tests=None):
         """ plot the wallclock time history for all the valid tests """
 
         if active_test_list is not None:
-            valid_dirs, all_tests = self.get_run_history(active_test_list)
+            _, all_tests = self.get_run_history(active_test_list)
         timings = self.get_wallclock_history()
 
-        try: bokeh
+        try:
+            bokeh
         except NameError:
-
             convf = dates.datestr2num
             using_mpl = True
             self.plot_ext = "png"
 
         else:
-
             convf = lambda s: dt.strptime(s, '%Y-%m-%d')
             using_mpl = False
             self.plot_ext = "html"
@@ -803,7 +817,8 @@ class Suite:
         def convert_date(date):
             """ Convert to a matplotlib readable date"""
 
-            if len(date) > 10: date = date[:date.rfind("-")]
+            if len(date) > 10:
+                date = date[:date.rfind("-")]
             return convf(date)
 
         def hover_tool():
@@ -819,13 +834,16 @@ class Suite:
         # make the plots
         for t in all_tests:
 
-            try: test_dict = timings[t]
-            except KeyError: continue
+            try:
+                test_dict = timings[t]
+            except KeyError:
+                continue
 
             days = list(map(convert_date, test_dict["dates"]))
             times = test_dict["runtimes"]
 
-            if len(times) == 0: continue
+            if len(times) == 0:
+                continue
 
             if using_mpl:
 
@@ -857,7 +875,8 @@ class Suite:
                 source = ColumnDataSource(dict(date=days, runtime=times))
 
                 settings = dict(x_axis_type="datetime")
-                if max(times) / min(times) > 10.0: settings["y_axis_type"] = "log"
+                if max(times) / min(times) > 10.0:
+                    settings["y_axis_type"] = "log"
                 plot = figure(**settings)
                 plot.add_tools(hover_tool())
 
@@ -877,13 +896,13 @@ class Suite:
 
         # this will work through 2099
         if os.path.isdir(outdir):
-            dirs = [d for d in os.listdir(outdir) if (os.path.isdir(outdir + d) and
-                                                      d.startswith("20"))]
+            dirs = [d for d in os.listdir(outdir)
+                    if os.path.isdir(outdir + d) and d.startswith("20")]
             dirs.sort()
 
             return dirs[-1]
-        else:
-            return None
+
+        return None
 
     def get_test_failures(self, test_dir):
         """ look at the test run in test_dir and return the list of tests that
@@ -898,7 +917,8 @@ class Suite:
         failed = []
 
         for test in os.listdir("."):
-            if not os.path.isdir(test): continue
+            if not os.path.isdir(test):
+                continue
 
             # the status files are in the web dir
             status_file = f"{self.webTopDir}/{test_dir}/{test}.status"
@@ -959,10 +979,10 @@ class Suite:
             all_opts, self.COMP, c_make_additions, target)
 
         self.log.log(comp_string)
-        stdout, stderr, rc = test_util.run(comp_string, outfile=outfile)
+        _, _, rc = test_util.run(comp_string, outfile=outfile)
 
         # make returns 0 if everything was good
-        if not rc == 0:
+        if rc != 0:
             self.log.warn("build failed")
 
         return comp_string, rc
@@ -982,13 +1002,15 @@ class Suite:
 
         outfile = test.outfile
 
-        if test.run_as_script: errfile = None
-        else: errfile = test.errfile
+        if test.run_as_script:
+            errfile = None
+        else:
+            errfile = test.errfile
 
         self.log.log(test_run_command)
-        sout, serr, ierr = test_util.run(test_run_command, stdin=True,
-                                         outfile=outfile, errfile=errfile,
-                                         env=test_env)
+        _, _, ierr = test_util.run(test_run_command, stdin=True,
+                                   outfile=outfile, errfile=errfile,
+                                   env=test_env)
         test.run_command = test_run_command
         test.return_code = ierr
 
@@ -1031,17 +1053,21 @@ class Suite:
         self.make_realclean(repo="AMReX")
 
         ftools = self.ftools
-        if ("fextract" in self.extra_tools): ftools.append("fextract")
-        if ("fextrema" in self.extra_tools): ftools.append("fextrema")
-        if ("ftime" in self.extra_tools): ftools.append("ftime")
-        if any([t for t in test_list if t.tolerance is not None or t.abs_tolerance is not None]): ftools.append("fvarnames")
+        if "fextract" in self.extra_tools:
+            ftools.append("fextract")
+        if "fextrema" in self.extra_tools:
+            ftools.append("fextrema")
+        if "ftime" in self.extra_tools:
+            ftools.append("ftime")
+        if any(t for t in test_list if t.tolerance is not None or t.abs_tolerance is not None):
+            ftools.append("fvarnames")
 
         for t in ftools:
             self.log.log(f"building {t}...")
-            comp_string, rc = self.build_c(target=f"programs={t}",
-                                           opts="DEBUG=FALSE USE_MPI=FALSE USE_OMP=FALSE ",
-                                           c_make_additions="", outfile=f"{t}.make.out")
-            if not rc == 0:
+            _, rc = self.build_c(target=f"programs={t}",
+                                 opts="DEBUG=FALSE USE_MPI=FALSE USE_OMP=FALSE ",
+                                 c_make_additions="", outfile=f"{t}.make.out")
+            if rc != 0:
                 self.log.fail("unable to continue, tools not able to be built")
 
             exe = test_util.get_recent_filename(self.f_compare_tool_dir, t, ".ex")
@@ -1066,14 +1092,14 @@ class Suite:
         for t in ctools:
             self.log.log(f"building {t}...")
             comp_string, rc = self.build_c(opts=f"DEBUG=FALSE USE_MPI=FALSE EBASE={t}")
-            if not rc == 0:
+            if rc != 0:
                 self.log.fail("unable to continue, tools not able to be built")
 
             exe = test_util.get_recent_filename(self.c_compare_tool_dir, t, ".exe")
 
             self.tools[t] = f"{self.c_compare_tool_dir}/{exe}"
 
-        if ("DiffSameDomainRefined" in self.extra_tools):
+        if "DiffSameDomainRefined" in self.extra_tools:
             self.extra_tool_dir = "{}/Tools/C_util/Convergence/".format(
                 os.path.normpath(self.amrex_dir))
 
@@ -1082,18 +1108,24 @@ class Suite:
             self.make_realclean(repo="AMReX")
 
             extra_tools=[]
-            if ("DiffSameDomainRefined1d" in self.extra_tools): extra_tools.append("DiffSameDomainRefined1d")
-            if ("DiffSameDomainRefined2d" in self.extra_tools): extra_tools.append("DiffSameDomainRefined2d")
-            if ("DiffSameDomainRefined3d" in self.extra_tools): extra_tools.append("DiffSameDomainRefined3d")
+            if "DiffSameDomainRefined1d" in self.extra_tools:
+                extra_tools.append("DiffSameDomainRefined1d")
+            if "DiffSameDomainRefined2d" in self.extra_tools:
+                extra_tools.append("DiffSameDomainRefined2d")
+            if "DiffSameDomainRefined3d" in self.extra_tools:
+                extra_tools.append("DiffSameDomainRefined3d")
 
             for t in extra_tools:
-                if ("1d" in t): ndim=1
-                if ("2d" in t): ndim=2
-                if ("3d" in t): ndim=3
+                if "1d" in t:
+                    ndim=1
+                if "2d" in t:
+                    ndim=2
+                if "3d" in t:
+                    ndim=3
                 self.log.log(f"building {t}...")
                 comp_string, rc = self.build_c(opts=
                         f"EBASE=DiffSameDomainRefined DIM={ndim} DEBUG=FALSE USE_MPI=FALSE USE_OMP=FALSE ")
-                if not rc == 0:
+                if rc != 0:
                     self.log.fail("unable to continue, tools not able to be built")
 
                 exe = test_util.get_recent_filename(self.extra_tool_dir, t, ".ex")
@@ -1158,7 +1190,8 @@ class Suite:
         if self.COMP:
             ENV['CXX'] = self.COMP
 
-        if env is not None: ENV.update(env)
+        if env is not None:
+            ENV.update(env)
 
         # remove build and installation directories if present and re-make them
         if os.path.isdir(builddir):
@@ -1187,10 +1220,10 @@ class Suite:
             cmd += '-DAMReX_SPACEDIM='+str(test.dim)
                 
         self.log.log(cmd)
-        stdout, stderr, rc = test_util.run(cmd, outfile=coutfile, env=ENV)
+        _, _, rc = test_util.run(cmd, outfile=coutfile, env=ENV)
 
         # Check exit condition
-        if not rc == 0:
+        if rc != 0:
             errstr  = "\n \nERROR! CMake configuration failed for " + name + " \n"
             errstr += "Check " + coutfile + " for more information."
             self.log.fail(errstr)
@@ -1205,7 +1238,7 @@ class Suite:
         return builddir, installdir
 
 
-    def cmake_clean( self, name, path ):
+    def cmake_clean(self, name, path ):
         "Clean CMake build and install directories"
 
         self.log.outdent()
@@ -1224,9 +1257,7 @@ class Suite:
         if os.path.isdir(installdir):
             shutil.rmtree(installdir)
 
-        return
-
-    def cmake_build( self, name, target, path, opts = '', env = None, outfile = None ):
+    def cmake_build(self, name, target, path, opts = '', env = None, outfile = None ):
         "Build target for a repo configured via CMake"
 
         self.log.outdent()
@@ -1236,7 +1267,8 @@ class Suite:
 
         # Set enviroment
         ENV =  dict(os.environ) # Copy of current enviroment
-        if env is not None: ENV.update(env)
+        if env is not None:
+            ENV.update(env)
 
         if outfile is not None:
             coutfile = outfile
@@ -1248,10 +1280,10 @@ class Suite:
 
         cmd = f'{self.cmake} --build {self.source_build_dir} -j {self.numMakeJobs} -- {opts} {target}'
         self.log.log(cmd)
-        stdout, stderr, rc = test_util.run(cmd, outfile=coutfile, cwd=path, env=ENV )
+        _, _, rc = test_util.run(cmd, outfile=coutfile, cwd=path, env=ENV )
 
         # make returns 0 if everything was good
-        if not rc == 0:
+        if rc != 0:
             errstr  = "Failed to build target " + target
             errstr += ". Check " + coutfile + " for more information."
             self.log.fail(errstr)
@@ -1259,8 +1291,6 @@ class Suite:
         comp_string = cmd
 
         return rc, comp_string
-
-
 
     def build_test_cmake(self, test, opts="",  outfile=None):
         """ build an executable with CMake build system """
@@ -1271,7 +1301,7 @@ class Suite:
         # add additional CMake config options and re-configure on existing configured
         # build directory, if additional build cmakeSetupOpts are set
         if self.isSuperbuild or test.cmakeSetupOpts != "":
-            builddir, installdir = self.cmake_config(
+            builddir, _ = self.cmake_config(
                 name=test.name,
                 path=self.source_dir,
                 configOpts=self.amrex_cmake_opts + " " +
@@ -1299,7 +1329,7 @@ class Suite:
             path_to_exe = None
 
             # search by target name
-            for root, dirnames, filenames in os.walk(self.source_build_dir):
+            for root, _, filenames in os.walk(self.source_build_dir):
                 if test.target in filenames:
                     path_to_exe = os.path.join(root, test.target)
                     break
@@ -1321,7 +1351,7 @@ class Suite:
                         rc = 1
                 else:
                     # Find location of executable
-                    for root, dirnames, filenames in os.walk(path_to_bin):
+                    for root, _, filenames in os.walk(path_to_bin):
                         for f in filenames:
                             f_path = os.path.join(root, f)
                             if os.access(f_path, os.X_OK):
@@ -1347,17 +1377,19 @@ class Suite:
 def f_flag(opt, test_not=False):
     """ convert a test parameter into t if true for the Fortran build system """
     if test_not:
-        if opt: return " "
-        else: return "t"
-    else:
-        if opt: return "t"
-        else: return " "
+        if opt:
+            return " "
+        return "t"
+    if opt:
+        return "t"
+    return " "
 
 def c_flag(opt, test_not=False):
     """ convert a test parameter into t if true for the Fortran build system """
     if test_not:
-        if opt: return "FALSE"
-        else: return "TRUE"
-    else:
-        if opt: return "TRUE"
-        else: return "FALSE"
+        if opt:
+            return "FALSE"
+        return "TRUE"
+    if opt:
+        return "TRUE"
+    return "FALSE"
