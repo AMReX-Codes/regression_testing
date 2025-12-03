@@ -26,6 +26,7 @@ import params
 import test_util
 import test_report as report
 import test_coverage as coverage
+import test_asv
 
 safe_flags = ['TEST', 'USE_CUDA', 'USE_ACC', 'USE_MPI', 'USE_OMP', 'DEBUG', 'USE_GPU']
 
@@ -357,10 +358,8 @@ def test_suite(argv):
     #--------------------------------------------------------------------------
     # check bench dir and create output directories
     #--------------------------------------------------------------------------
+    bench_dir = suite.get_bench_dir()
     all_compile = all([t.compileTest == 1 for t in test_list])
-
-    if not all_compile:
-        bench_dir = suite.get_bench_dir()
 
     if not args.copy_benchmarks is None:
         last_run = suite.get_last_run()
@@ -522,6 +521,10 @@ def test_suite(argv):
 
         os.chdir(bdir)
 
+        comp_string = ""
+        executable = None
+        rc = 1
+
         if test.reClean == 1:
             # for one reason or another, multiple tests use different
             # build options, make clean again to be safe
@@ -613,6 +616,8 @@ def test_suite(argv):
                 act = shutil.move
             else:
                 suite.log.fail("invalid action")
+                skip_to_next_test = 1
+                break
 
             try:
                 act(nfile, output_dir)
@@ -1264,6 +1269,11 @@ def test_suite(argv):
     file_path = suite.get_wallclock_file()
     with open(file_path, 'w') as json_file:
         json.dump(runtimes, json_file, indent=4)
+
+    #--------------------------------------------------------------------------
+    # output ASV results
+    #--------------------------------------------------------------------------
+    test_asv.save_asv_history(suite, test_list)
 
     #--------------------------------------------------------------------------
     # parameter coverage

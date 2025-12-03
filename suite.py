@@ -8,6 +8,11 @@ import sys
 import test_util
 import tempfile as tf
 
+plt = None
+dates = None
+HAVE_MPL = False
+HAVE_BOKEH = False
+
 try: from json.decoder import JSONDecodeError
 except ImportError: JSONDecodeError = ValueError
 
@@ -19,6 +24,7 @@ try:
     from bokeh.resources import CDN
     from bokeh.models import HoverTool
     from datetime import datetime as dt
+    HAVE_BOKEH = True
 
 except:
     try:
@@ -28,11 +34,13 @@ except:
     else:
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
+        HAVE_MPL = True
 
     try:
         import matplotlib.dates as dates
     except:
         DO_TIMINGS_PLOTS = False
+        HAVE_MPL = False
 
 class Test:
 
@@ -787,18 +795,19 @@ class Suite:
             valid_dirs, all_tests = self.get_run_history(active_test_list)
         timings = self.get_wallclock_history()
 
-        try: bokeh
-        except NameError:
+        if not DO_TIMINGS_PLOTS:
+            return
 
-            convf = dates.datestr2num
-            using_mpl = True
-            self.plot_ext = "png"
-
-        else:
-
+        if HAVE_BOKEH:
             convf = lambda s: dt.strptime(s, '%Y-%m-%d')
             using_mpl = False
             self.plot_ext = "html"
+        elif HAVE_MPL and dates is not None:
+            convf = dates.datestr2num
+            using_mpl = True
+            self.plot_ext = "png"
+        else:
+            return
 
         def convert_date(date):
             """ Convert to a matplotlib readable date"""
@@ -1087,9 +1096,13 @@ class Suite:
             if ("DiffSameDomainRefined3d" in self.extra_tools): extra_tools.append("DiffSameDomainRefined3d")
 
             for t in extra_tools:
+                ndim = None
                 if ("1d" in t): ndim=1
-                if ("2d" in t): ndim=2
-                if ("3d" in t): ndim=3
+                elif ("2d" in t): ndim=2
+                elif ("3d" in t): ndim=3
+                else:
+                    self.log.fail(f"unable to determine dimension for tool {t}")
+                    continue
                 self.log.log(f"building {t}...")
                 comp_string, rc = self.build_c(opts=
                         f"EBASE=DiffSameDomainRefined DIM={ndim} DEBUG=FALSE USE_MPI=FALSE USE_OMP=FALSE ")

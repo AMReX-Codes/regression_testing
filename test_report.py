@@ -333,6 +333,9 @@ def report_single_test(suite, test, tests, failure_msg=None):
     # we stored compilation success in the test object
     compile_successful = test.compile_successful
 
+    compare_successful = False
+    diff_lines = []
+
     analysis_successful = True
     if test.analysisRoutine != '':
         analysis_successful = test.analysis_successful
@@ -846,6 +849,7 @@ def report_this_test_run(suite, make_benchmarks, note, update_time,
             status_file = "%s.status" % (test.name)
 
             status = None
+            td_class = "unknown"
             with open(status_file) as sf:
                 for line in sf:
                     if line.find("PASSED") >= 0:
