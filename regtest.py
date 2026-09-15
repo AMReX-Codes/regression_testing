@@ -159,7 +159,9 @@ def copy_benchmarks(old_full_test_dir, full_web_dir, test_list, bench_dir, log):
                 p = p[:idx]
 
             store_file = p
-            if not t.outputFile == "":
+            if not t.benchmarkFile == "":
+                store_file = t.benchmarkFile
+            elif not t.outputFile == "":
                 store_file = f"{t.name}_{p}"
 
             try:
@@ -777,6 +779,8 @@ def test_suite(argv):
                 compare_file = test.name+'_'+output_file
 
 
+            benchmark_file = test.benchmarkFile if test.benchmarkFile != "" else compare_file
+
             # get the number of levels for reporting
             if not test.run_as_script and "fboxinfo" in suite.tools:
 
@@ -798,7 +802,7 @@ def test_suite(argv):
                 test.compare_file_used = output_file
 
                 if not test.restartTest:
-                    bench_file = bench_dir + compare_file
+                    bench_file = os.path.join(bench_dir, benchmark_file)
                 else:
                     bench_file = orig_last_file
 
@@ -918,11 +922,11 @@ def test_suite(argv):
 
                     suite.log.log(f"storing output of {test.name} as the new benchmark...")
                     suite.log.indent()
-                    suite.log.warn(f"new benchmark file: {compare_file}")
+                    suite.log.warn(f"new benchmark file: {benchmark_file}")
                     suite.log.outdent()
 
                     if test.run_as_script:
-                        bench_path = os.path.join(bench_dir, compare_file)
+                        bench_path = os.path.join(bench_dir, benchmark_file)
                         try:
                             os.remove(bench_path)
                         except:
@@ -931,14 +935,14 @@ def test_suite(argv):
 
                     else:
                         try:
-                            shutil.rmtree(f"{bench_dir}/{compare_file}")
+                            shutil.rmtree(os.path.join(bench_dir, benchmark_file))
                         except:
                             pass
 
-                        shutil.copytree(source_file, f"{bench_dir}/{compare_file}")
+                        shutil.copytree(source_file, os.path.join(bench_dir, benchmark_file))
 
                     with open(f"{test.name}.status", 'w') as cf:
-                        cf.write(f"benchmarks updated.  New file:  {compare_file}\n")
+                        cf.write(f"benchmarks updated.  New file:  {benchmark_file}\n")
 
                 else:
                     with open(f"{test.name}.status", 'w') as cf:
