@@ -833,6 +833,9 @@ def test_suite(argv):
                             if test.abs_tolerance is not None:
                                 command += " --abs_tol {}".format(test.abs_tolerance)
 
+                            if test.fcompareOpts != "":
+                                command += " {}".format(test.fcompareOpts)
+
                             command += " {} {}".format(bench_file, output_file)
 
                         sout, _, ierr = test_util.run(command,

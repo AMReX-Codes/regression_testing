@@ -103,6 +103,7 @@ class Test:
 
         self.diffDir = ""
         self.diffOpts = ""
+        self.fcompareOpts = ""
 
         self.cmakeSetupOpts = ""
         self.addToCompileString = ""
