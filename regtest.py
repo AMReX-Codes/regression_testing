@@ -492,6 +492,12 @@ def test_suite(argv):
     runtimes = suite.get_wallclock_history()
 
     #--------------------------------------------------------------------------
+    # Track if we're running multiple tests for incremental build optimization
+    #--------------------------------------------------------------------------
+    running_multiple_tests = len(test_list) > 1
+    first_cmake_build_done = False
+
+    #--------------------------------------------------------------------------
     # main loop over tests
     #--------------------------------------------------------------------------
     for test in test_list:
@@ -525,15 +531,20 @@ def test_suite(argv):
         os.chdir(bdir)
 
         if test.reClean == 1:
-            # for one reason or another, multiple tests use different
-            # build options, make clean again to be safe
-            suite.log.log("re-making clean...")
-            if not test.extra_build_dir == "":
-                suite.make_realclean(repo=test.extra_build_dir)
-            elif suite.sourceTree in ["AMReX", "amrex"]:
-                suite.make_realclean(repo="AMReX")
+            # Skip clean for subsequent tests when running multiple tests with cmake
+            # to enable incremental builds
+            if suite.useCmake and running_multiple_tests and first_cmake_build_done:
+                suite.log.log("skipping clean for incremental cmake build...")
             else:
-                suite.make_realclean()
+                # for one reason or another, multiple tests use different
+                # build options, make clean again to be safe
+                suite.log.log("re-making clean...")
+                if not test.extra_build_dir == "":
+                    suite.make_realclean(repo=test.extra_build_dir)
+                elif suite.sourceTree in ["AMReX", "amrex"]:
+                    suite.make_realclean(repo="AMReX")
+                else:
+                    suite.make_realclean()
 
         # Register start time
         test.build_time = time.time()
@@ -544,7 +555,9 @@ def test_suite(argv):
 
         if suite.sourceTree == "C_Src" or test.testSrcTree == "C_Src":
             if suite.useCmake:
-                comp_string, rc = suite.build_test_cmake(test=test, outfile=coutfile)
+                # Skip cmake configuration for subsequent tests when running multiple tests
+                skip_config = running_multiple_tests and first_cmake_build_done
+                comp_string, rc = suite.build_test_cmake(test=test, outfile=coutfile, skip_config=skip_config)
             else:
                 comp_string, rc = suite.build_c(test=test, outfile=coutfile)
 
@@ -555,6 +568,9 @@ def test_suite(argv):
         # make return code is 0 if build was successful
         if rc == 0:
             test.compile_successful = True
+            # Mark that we've successfully completed the first cmake build
+            if suite.useCmake and not first_cmake_build_done:
+                first_cmake_build_done = True
         # Compute compile time
         test.build_time = time.time() - test.build_time
         suite.log.log(f"Compilation time: {test.build_time:.3f} s")
