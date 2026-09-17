@@ -98,6 +98,7 @@ class Test:
 
         self.outputFile = ""
         self.compareFile = ""
+        self.benchmarkFile = ""
 
         self.compare_file_used = ""
 
