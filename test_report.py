@@ -1045,7 +1045,10 @@ def report_all_runs(suite, active_test_list, max_per_page=50):
 
     create_css(table_height=table_height)
 
-    valid_dirs, all_tests = suite.get_run_history(active_test_list)
+    status_names_by_run = {}
+    valid_dirs, all_tests = suite.get_run_history(
+        active_test_list, status_names_by_run=status_names_by_run)
+    report_tests = set(all_tests)
 
     if suite.do_timings_plots:
         suite.make_timing_plots(valid_dirs=valid_dirs, all_tests=all_tests)
@@ -1101,14 +1104,13 @@ def report_all_runs(suite, active_test_list, max_per_page=50):
 
             # first look to see if there are any valid tests at all --
             # otherwise we don't do anything for this date
-            valid = 0
-            for test in all_tests:
-                status_file = f"{suite.webTopDir}/{tdir}/{test}.status"
-                if os.path.isfile(status_file):
-                    valid = 1
-                    break
-
-            if not valid: continue
+            run_dir = os.path.join(suite.webTopDir, tdir)
+            run_tests = {
+                test for test in status_names_by_run[tdir] & report_tests
+                if os.path.isfile(os.path.join(run_dir, f"{test}.status"))
+            }
+            if not run_tests:
+                continue
 
             # did we run on a non-default branch?
             try:
@@ -1125,13 +1127,11 @@ def report_all_runs(suite, active_test_list, max_per_page=50):
             for test in all_tests:
 
                 # look to see if the current test was part of this suite run
-                status_file = f"{suite.webTopDir}/{tdir}/{test}.status"
-
                 status = None
 
-                if os.path.isfile(status_file):
+                if test in run_tests:
 
-                    with open(status_file) as sf:
+                    with open(os.path.join(run_dir, f"{test}.status")) as sf:
 
                         for line in sf:
                             if line.find("PASSED") >= 0:
