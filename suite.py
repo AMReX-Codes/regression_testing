@@ -668,13 +668,16 @@ class Suite:
         self.full_test_dir = full_test_dir
         self.full_web_dir = full_web_dir
 
-    def get_run_history(self, active_test_list=None, check_activity=True):
-        """ return the list of output directories run over the
-            history of the suite and a separate list of the tests
-            run (unique names) """
+    def get_run_history(self, active_test_list=None, check_activity=True, *,
+                        status_names_by_run=None):
+        """Return run directories and unique test names.
+
+        If supplied, fill status_names_by_run with the test names found in
+        each directory before applying the active-test filter.
+        """
 
         valid_dirs = []
-        all_tests = []
+        all_tests = set()
 
         # start by finding the list of valid test directories
         for f in os.listdir(self.webTopDir):
@@ -688,24 +691,23 @@ class Suite:
                 if os.path.isfile(status_file):
                     valid_dirs.append(f)
 
-        valid_dirs.sort()
-        valid_dirs.reverse()
+        valid_dirs.sort(reverse=True)
 
         # now find all of the unique problems in the test directories
         for d in valid_dirs:
 
-            for f in os.listdir(self.webTopDir + d):
-                if f.endswith(".status") and not (f.startswith("20") or f == "branch.status"):
-                    index = f.rfind(".status")
-                    test_name = f[0:index]
+            status_names = {
+                f[:-len(".status")] for f in os.listdir(os.path.join(self.webTopDir, d))
+                if f.endswith(".status") and not (f.startswith("20") or f == "branch.status")
+            }
+            if status_names_by_run is not None:
+                status_names_by_run[d] = status_names
+            all_tests.update(status_names)
 
-                    if all_tests.count(test_name) == 0:
-                        if (not (self.reportActiveTestsOnly and check_activity)) or (test_name in active_test_list):
-                            all_tests.append(test_name)
+        if all_tests and self.reportActiveTestsOnly and check_activity:
+            all_tests.intersection_update(active_test_list)
 
-        all_tests.sort()
-
-        return valid_dirs, all_tests
+        return valid_dirs, sorted(all_tests)
 
     def get_wallclock_history(self):
         """ returns the wallclock time history for all the valid tests as a dictionary
