@@ -1175,7 +1175,12 @@ class Suite:
             os.mkdir(installdir)
 
         # Logfile
-        coutfile = f'{self.full_test_dir}{name}.cmake.log'
+        # Use generic 'cmake.log' for test configurations (since we only configure once)
+        # Keep specific names for AMReX and suite configurations
+        if test is not None:
+            coutfile = f'{self.full_test_dir}cmake.log'
+        else:
+            coutfile = f'{self.full_test_dir}{name}.cmake.log'
 
         # Run cmake
         cmd = f'{self.cmake} {configOpts} -S {path} -B {builddir} '
@@ -1264,7 +1269,7 @@ class Suite:
 
 
 
-    def build_test_cmake(self, test, opts="",  outfile=None):
+    def build_test_cmake(self, test, opts="",  outfile=None, skip_config=False):
         """ build an executable with CMake build system """
 
         env = {"AMReX_ROOT":self.amrex_install_dir}
@@ -1272,7 +1277,8 @@ class Suite:
         # super-builds always need a configure now, all other builds might
         # add additional CMake config options and re-configure on existing configured
         # build directory, if additional build cmakeSetupOpts are set
-        if self.isSuperbuild or test.cmakeSetupOpts != "":
+        # skip_config can be used to skip reconfiguration for incremental builds
+        if not skip_config and (self.isSuperbuild or test.cmakeSetupOpts != ""):
             builddir, installdir = self.cmake_config(
                 name=test.name,
                 path=self.source_dir,
